@@ -1,4 +1,4 @@
-import type { Department, Employee, Machine } from "../types"
+import type { Department, Employee, Skill } from "../types"
 
 // Enhanced departments with more detailed machine assignments
 export const enhancedDepartments: Department[] = [
@@ -9,14 +9,20 @@ export const enhancedDepartments: Department[] = [
   { id: "5", name: "Packaging" },
 ]
 
+
+
+export enum SkillCategory {
+  MACHINE = "MACHINE",
+  LABOUR = "LABOUR",
+}
+
 // Enhanced machines with critical and female eligibility data
-export const enhancedMachines: Machine[] = [
-  // Injection Molding Department
+export const enhancedSkills: Skill[] = [
   {
     id: "M001",
     name: "Computer Skills SAP",
     departmentId: "1",
-    category: "Computer",
+    category: SkillCategory.LABOUR,
     isCritical: false,
     femaleEligible: false,
   },
@@ -24,167 +30,44 @@ export const enhancedMachines: Machine[] = [
     id: "M002",
     name: "Material Loading",
     departmentId: "1",
-    category: "Material Handling",
+    category: SkillCategory.LABOUR,
     isCritical: true,
     femaleEligible: false,
   },
   {
     id: "M003",
-    name: "Mold Loading (Small)",
+    name: "Lifting Heavy Boxes",
     departmentId: "1",
-    category: "Molding",
+    category: SkillCategory.LABOUR,
     isCritical: true,
-    femaleEligible: true,
+    femaleEligible: false,
   },
   {
     id: "M004",
-    name: "Mold Loading (Heavy)",
-    departmentId: "1",
-    category: "Molding",
-    isCritical: true,
-    femaleEligible: false,
+    name: "Product Sorting",
+    departmentId: "2",
+    category: SkillCategory.LABOUR,
+    isCritical: false,
+    femaleEligible: true,
   },
   {
     id: "M005",
-    name: "Crusher - Part Cutting",
-    departmentId: "1",
-    category: "Cutting",
-    isCritical: false,
-    femaleEligible: true,
-  },
-  {
-    id: "M006",
-    name: "Crusher - Machine Operation",
-    departmentId: "1",
-    category: "Operation",
-    isCritical: true,
-    femaleEligible: true,
-  },
-  {
-    id: "M007",
-    name: "Trouble Shooting",
-    departmentId: "1",
-    category: "Maintenance",
-    isCritical: true,
-    femaleEligible: true,
-  },
-  {
-    id: "M008",
-    name: "Machine Operation Small",
-    departmentId: "1",
-    category: "Operation",
-    isCritical: false,
-    femaleEligible: true,
-  },
-  {
-    id: "M009",
-    name: "Flashing Small + Medium",
-    departmentId: "1",
-    category: "Finishing",
-    isCritical: false,
-    femaleEligible: true,
-  },
-  {
-    id: "M010",
-    name: "Quality & Packing Small",
-    departmentId: "1",
-    category: "Quality",
-    isCritical: true,
-    femaleEligible: true,
-  },
-  {
-    id: "M011",
-    name: "Machine Operation Heavy",
-    departmentId: "1",
-    category: "Operation",
-    isCritical: true,
-    femaleEligible: false,
-  },
-  {
-    id: "M012",
-    name: "Flashing Heavy Molding",
-    departmentId: "1",
-    category: "Finishing",
-    isCritical: false,
-    femaleEligible: false,
-  },
-  {
-    id: "M013",
-    name: "Quality & Packing Heavy",
-    departmentId: "1",
-    category: "Quality",
-    isCritical: true,
-    femaleEligible: true,
-  },
-  {
-    id: "M014",
-    name: "Machine PLC",
-    departmentId: "1",
-    category: "Programming",
-    isCritical: true,
-    femaleEligible: false,
-  },
-
-  // Quality Control Department
-  {
-    id: "M015",
-    name: "Quality Scanner",
+    name: "Packaging Assistance",
     departmentId: "2",
-    category: "Testing",
-    isCritical: true,
-    femaleEligible: true,
-  },
-  {
-    id: "M016",
-    name: "Testing Equipment",
-    departmentId: "2",
-    category: "Testing",
-    isCritical: true,
-    femaleEligible: true,
-  },
-  {
-    id: "M017",
-    name: "Calibration Tools",
-    departmentId: "2",
-    category: "Calibration",
+    category: SkillCategory.LABOUR,
     isCritical: false,
     femaleEligible: true,
-  },
-
-  // Maintenance Department
-  {
-    id: "M018",
-    name: "Hydraulic Press",
-    departmentId: "3",
-    category: "Hydraulics",
-    isCritical: true,
-    femaleEligible: false,
-  },
-  {
-    id: "M019",
-    name: "Electrical Systems",
-    departmentId: "3",
-    category: "Electrical",
-    isCritical: true,
-    femaleEligible: false,
-  },
-  {
-    id: "M020",
-    name: "Pneumatic Tools",
-    departmentId: "3",
-    category: "Pneumatics",
-    isCritical: false,
-    femaleEligible: false,
   },
 ]
+
 
 // Enhanced employees with gender and detailed skills
 export const enhancedEmployees: Employee[] = [
   {
-    id: "T007530",
+    displayId: "T007530",
     name: "M.NASIR",
     departmentId: "1",
-    gender: "male",
+    gender: "MALE",
     skills: {
       "Computer Skills SAP": "None",
       "Material Loading": "None",
@@ -205,10 +88,10 @@ export const enhancedEmployees: Employee[] = [
     averageSkillLevel: 2.1,
   },
   {
-    id: "T007769",
+    displayId: "T007769",
     name: "MOHAMMAD SHAHZAD",
     departmentId: "1",
-    gender: "male",
+    gender: "MALE",
     skills: {
       "Computer Skills SAP": "None",
       "Material Loading": "Highly Skilled",
@@ -229,10 +112,10 @@ export const enhancedEmployees: Employee[] = [
     averageSkillLevel: 3.2,
   },
   {
-    id: "T007695",
+    displayId: "T007695",
     name: "ADNAN",
     departmentId: "1",
-    gender: "male",
+    gender: "MALE",
     skills: {
       "Computer Skills SAP": "None",
       "Material Loading": "Semi Skilled",
@@ -253,10 +136,10 @@ export const enhancedEmployees: Employee[] = [
     averageSkillLevel: 2.0,
   },
   {
-    id: "T007462",
+    displayId: "T007462",
     name: "Maria Iqbal",
     departmentId: "1",
-    gender: "female",
+    gender: "FEMALE",
     skills: {
       "Computer Skills SAP": "None",
       "Material Loading": "None",
@@ -277,10 +160,10 @@ export const enhancedEmployees: Employee[] = [
     averageSkillLevel: 1.8,
   },
   {
-    id: "T007765",
+    displayId: "T007765",
     name: "SHAHEEN",
     departmentId: "1",
-    gender: "female",
+    gender: "FEMALE",
     skills: {
       "Computer Skills SAP": "None",
       "Material Loading": "None",
@@ -301,10 +184,10 @@ export const enhancedEmployees: Employee[] = [
     averageSkillLevel: 1.5,
   },
   {
-    id: "T007670",
+    displayId: "T007670",
     name: "ANEES",
     departmentId: "1",
-    gender: "male",
+    gender: "MALE",
     skills: {
       "Computer Skills SAP": "None",
       "Material Loading": "None",

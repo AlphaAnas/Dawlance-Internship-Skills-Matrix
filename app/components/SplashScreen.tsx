@@ -32,19 +32,25 @@ export default function SplashScreen({ show }: SplashScreenProps) {
               className="mb-8"
             >
               <div
-                className={`mx-auto w-24 h-24 rounded-2xl flex items-center justify-center ${
+                className={`mx-auto w-32 h-32 rounded-2xl flex items-center justify-center ${
                   isDark
-                    ? "bg-gradient-to-br from-blue-500 to-purple-600"
-                    : "bg-gradient-to-br from-blue-600 to-purple-700"
+                    ? "bg-white/10 backdrop-blur-sm"
+                    : "bg-white/80 backdrop-blur-sm"
                 } shadow-2xl`}
               >
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
-                  className="text-white text-3xl font-bold"
-                >
-                  ⚡
-                </motion.div>
+                <motion.img
+                  src="/dawlance-logo.png"
+                  alt="Dawlance Logo"
+                  animate={{ 
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: Number.POSITIVE_INFINITY, 
+                    ease: "easeInOut" 
+                  }}
+                  className="w-28 h-auto object-contain"
+                />
               </div>
             </motion.div>
 

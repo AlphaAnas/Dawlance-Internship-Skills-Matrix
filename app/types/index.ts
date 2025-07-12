@@ -1,32 +1,39 @@
+
 export interface Department {
   id: string
   name: string
 }
 
 export interface Employee {
-  id: string
   name: string
+  displayId: string
   departmentId: string
-  gender?: "male" | "female"
+  gender?: "MALE" | "FEMALE"
   skills: Record<string, string>
   totalSkills?: number
   averageSkillLevel?: number
 }
 
-export interface Machine {
+
+
+export enum SkillCategory {
+  MACHINE = "MACHINE",
+  LABOUR = "LABOUR",
+}
+export interface Skill {
   id: string
   name: string
   departmentId: string
-  category: string
+  category: SkillCategory // will tell if it is labor work or machine work
   isCritical?: boolean
   femaleEligible?: boolean
 }
 
-export interface Skill {
-  id: string
-  name: string
-  category: string
-}
+// export interface Skill {
+//   id: string
+//   name: string
+//   category: string // will tell if it is labor work or machine work
+// }
 
 export interface EmployeeHistory {
   employeeId: string
