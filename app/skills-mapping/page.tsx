@@ -13,11 +13,11 @@ import { Search } from "lucide-react";
 
 // Map department IDs to user-friendly names
 const departmentMap: Record<string, string> = {
-  "dept-01": "Production",
-  "dept-02": "Quality Control",
-  "dept-03": "Maintenance",
-  "dept-04": "Packaging",
-  "dept-05": "Logistics",
+  "1": "Production",
+  "2": "Quality Control",
+  "3": "Maintenance",
+  "4": "Packaging",
+  "5": "Logistics",
   // Add more mappings as needed
 };
 
@@ -119,7 +119,10 @@ export default function SkillsMappingPage() {
               Select a department
             </option>
             {departmentOptions.map((deptId) => (
+              // Use the departmentMap to get the user-friendly name
+              // show the dept name instead of its id
               <option key={deptId} value={deptId}>
+
                 {departmentMap[deptId] || deptId}
               </option>
             ))}
