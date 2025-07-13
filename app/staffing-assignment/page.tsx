@@ -14,7 +14,7 @@ import {
   Star,
   Info,
 } from "lucide-react"
-import Layout from "../components/Layout"
+
 import Select from "../components/Select"
 import Button from "../components/Button"
 import EmployeeMatchCard from "../components/EmployeeMatchCard"
@@ -131,7 +131,7 @@ export default function StaffingAssignmentPage() {
   const allRequiredSkills = getAllRequiredSkills()
 
   return (
-    <Layout>
+
       <div className="space-y-6">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -601,6 +601,6 @@ export default function StaffingAssignmentPage() {
           </>
         )}
       </div>
-    </Layout>
+
   )
 }

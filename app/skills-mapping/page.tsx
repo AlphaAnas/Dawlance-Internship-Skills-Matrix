@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { SkillCategory } from "../types/index";
-import Layout from "../components/Layout";
 import TextField from "../components/TextField";
 import EnhancedSkillIndicator from "../components/EnhancedSkillIndicator";
 import MachineTagBadge from "../components/MachineTagBadge";
@@ -75,16 +74,16 @@ export default function SkillsMappingPage() {
 
   if (isLoading) {
     return (
-      <Layout>
+  
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      </Layout>
+ 
     );
   }
 
   return (
-    <Layout>
+ 
       <div className="space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -197,7 +196,7 @@ export default function SkillsMappingPage() {
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredEmployees.map((employee, index) => (
                     <motion.tr
-                      key={employee.id}
+                      key={employee.displayId}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05, duration: 0.3 }}
@@ -221,7 +220,7 @@ export default function SkillsMappingPage() {
                           <div>
                             <div className="font-medium">{employee.name}</div>
                             <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {employee.id}
+                              {employee.displayId}
                             </div>
                           </div>
                         </div>
@@ -324,6 +323,6 @@ export default function SkillsMappingPage() {
           </div>
         </motion.div>
       </div>
-    </Layout>
+
   );
 }

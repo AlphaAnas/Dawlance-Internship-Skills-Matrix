@@ -42,7 +42,7 @@ export default function EmployeesPage() {
     // Simulate API call
     setTimeout(() => {
       const employee = mockEmployees.find(
-        (emp) => emp.id === searchEmployeeId.trim() || emp.name.toLowerCase().includes(searchEmployeeId.toLowerCase()),
+        (emp) => emp.displayId === searchEmployeeId.trim() || emp.name.toLowerCase().includes(searchEmployeeId.toLowerCase()),
       )
       setSearchedEmployee(employee || null)
       setIsSearching(false)
@@ -71,7 +71,7 @@ export default function EmployeesPage() {
   ]
 
   return (
-    <Layout>
+    <div>
       <div className="space-y-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">All Employees</h1>
@@ -133,7 +133,7 @@ export default function EmployeesPage() {
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                             {searchedEmployee.name}
                           </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Employee ID: {searchedEmployee.id}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">Employee ID: {searchedEmployee.displayId}</p>
                         </div>
                         <motion.button
                           whileHover={{ scale: 1.05 }}
@@ -196,6 +196,6 @@ export default function EmployeesPage() {
         isOpen={!!selectedEmployeeForInspection}
         onClose={() => setSelectedEmployeeForInspection(null)}
       />
-    </Layout>
+   </div>
   )
 }

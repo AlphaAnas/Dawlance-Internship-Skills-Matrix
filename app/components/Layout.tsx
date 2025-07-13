@@ -22,7 +22,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = [
     { name: "Employees", href: "/employees", icon: Users, color: "from-purple-500 to-pink-500" },
     { name: "Skills Mapping", href: "/skills-mapping", icon: Map, color: "from-green-500 to-emerald-500" },
-    // { name: "Department Overview", href: "/department-overview", icon: BarChart3, color: "from-orange-500 to-red-500" },
+    { name: "Add a New Skills Matrix", href: "/skills_matrix_maker", icon: BarChart3, color: "from-orange-500 to-red-500" },
     { name: "Staffing Assignment", href: "/staffing-assignment", icon: UserCheck, color: "from-blue-500 to-cyan-500" },
   ]
 
