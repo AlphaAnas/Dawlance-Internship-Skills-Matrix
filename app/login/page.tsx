@@ -24,7 +24,7 @@ export default function LoginPage() {
     // Simple authentication - accept any email/password
     setTimeout(() => {
       setIsLoading(false)
-      router.push("/employees")
+      router.push("/landing")
     }, 1000)
   }
 

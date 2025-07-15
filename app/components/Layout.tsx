@@ -19,16 +19,22 @@ export default function Layout({ children }: LayoutProps) {
   const pathname = usePathname()
   const { isDark, toggleTheme } = useTheme()
 
+
+  
+
   const navigation = [
     { name: "Employees", href: "/employees", icon: Users, color: "from-purple-500 to-pink-500" },
     { name: "Skills Mapping", href: "/skills-mapping", icon: Map, color: "from-green-500 to-emerald-500" },
     { name: "Add a New Skills Matrix", href: "/skills_matrix_maker", icon: BarChart3, color: "from-orange-500 to-red-500" },
-    { name: "Staffing Assignment", href: "/staffing-assignment", icon: UserCheck, color: "from-blue-500 to-cyan-500" },
+    // { name: "Staffing Assignment", href: "/staffing-assignment", icon: UserCheck, color: "from-blue-500 to-cyan-500" },
   ]
 
   const handleLogout = () => {
     router.push("/login")
   }
+
+  const hideNavbar = pathname === "/login";
+
 
   return (
     <div
@@ -39,6 +45,7 @@ export default function Layout({ children }: LayoutProps) {
       }`}
     >
       {/* Navigation */}
+     {!hideNavbar && (
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -213,16 +220,22 @@ export default function Layout({ children }: LayoutProps) {
         </AnimatePresence>
       </motion.nav>
 
+     )}
+
       {/* Main content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+
+ 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="px-4 py-6 sm:px-0"
         >
+    
           {children}
         </motion.div>
+    
       </main>
     </div>
   )

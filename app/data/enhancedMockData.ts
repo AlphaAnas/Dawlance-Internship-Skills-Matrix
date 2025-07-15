@@ -2,11 +2,14 @@ import type { Department, Employee, Skill } from "../types"
 
 // Enhanced departments with more detailed machine assignments
 export const enhancedDepartments: Department[] = [
-  { id: "1", name: "Injection Molding" },
+
+  { id: "1", name: "Plastic Extrusion" },
   { id: "2", name: "Quality Control" },
   { id: "3", name: "Maintenance" },
   { id: "4", name: "Assembly" },
   { id: "5", name: "Packaging" },
+  { id: "6", name: "Injection Molding" },
+
 ]
 
 

@@ -44,8 +44,9 @@ export const mockMachines: Machine[] = [
 
 export const mockEmployees: Employee[] = [
   {
-    id: "EMP001",
+    displayId: "EMP001",
     name: "Ahmed Raza",
+    gender:"MALE",
     departmentId: "1",
     skills: {
       "CNC Machine": "High",
@@ -54,8 +55,9 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    id: "EMP002",
+    displayId: "EMP002",
     name: "Fatima Noor",
+    gender:"FEMALE",
     departmentId: "1",
     skills: {
       "CNC Machine": "Advanced",
@@ -64,8 +66,9 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    id: "EMP003",
+    displayId: "EMP003",
     name: "Bilal Khan",
+    gender:"MALE",
     departmentId: "2",
     skills: {
       "Quality Scanner": "Advanced",
@@ -74,8 +77,9 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    id: "EMP004",
+    displayId: "EMP004",
     name: "Ayesha Siddiqui",
+    gender:"FEMALE",
     departmentId: "2",
     skills: {
       "Testing Equipment": "Advanced",
@@ -84,8 +88,9 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    id: "EMP005",
+    displayId: "EMP005",
     name: "Usman Javed",
+    gender:"MALE",
     departmentId: "3",
     skills: {
       "Hydraulic Press": "Advanced",
@@ -94,8 +99,9 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    id: "EMP006",
+    displayId: "EMP006",
     name: "Zainab Ali",
+    gender:"FEMALE",
     departmentId: "3",
     skills: {
       "Electrical Systems": "Advanced",
@@ -104,8 +110,9 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    id: "EMP007",
+    displayId: "EMP007",
     name: "Hassan Tariq",
+    gender:"MALE",
     departmentId: "4",
     skills: {
       "Assembly Line": "Advanced",
@@ -114,8 +121,9 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    id: "EMP008",
+    displayId: "EMP008",
     name: "Maria Naseem",
+    gender:"FEMALE",
     departmentId: "4",
     skills: {
       "Robotic Arms": "Advanced",
@@ -124,8 +132,9 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    id: "EMP009",
+    displayId: "EMP009",
     name: "Ali Haider",
+    gender:"MALE",
     departmentId: "5",
     skills: {
       "Packaging Machine": "Advanced",
@@ -134,8 +143,9 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    id: "EMP010",
+    displayId: "EMP010",
     name: "Hira Zafar",
+    gender:"FEMALE",
     departmentId: "5",
     skills: {
       "Labeling System": "Advanced",
@@ -144,8 +154,9 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    id: "EMP011",
+    displayId: "EMP011",
     name: "Tariq Mehmood",
+    gender:"MALE",
     departmentId: "1",
     skills: {
       "CNC Machine": "Medium",
@@ -154,8 +165,9 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    id: "EMP012",
+    displayId: "EMP012",
     name: "Sana Iqbal",
+    gender:"FEMALE",
     departmentId: "2",
     skills: {
       "Quality Scanner": "Medium",

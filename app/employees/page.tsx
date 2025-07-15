@@ -2,12 +2,24 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Search, User, Award } from "lucide-react"
-import Layout from "../components/Layout"
+import { Search, User, Award, Plus, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Separator } from "@/components/ui/separator"
 import Table from "../components/Table"
-import TextField from "../components/TextField"
-import Chip from "../components/Chip"
-import { mockEmployees } from "../data/mockData"
+import { mockEmployees, mockDepartments } from "../data/mockData"
 import type { Employee } from "../types"
 import EmployeeInspectionModal from "../components/EmployeeInspectionModal"
 
@@ -18,159 +30,400 @@ export default function EmployeesPage() {
   const [searchedEmployee, setSearchedEmployee] = useState<Employee | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [selectedEmployeeForInspection, setSelectedEmployeeForInspection] = useState<Employee | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    name: "",
+    displayId: "",
+    gender: "MALE",
+    departmentId: "",
+  })
+
+  // State for department metrics
+  const [departmentMetrics, setDepartmentMetrics] = useState<
+    {
+      departmentId: string
+      departmentName: string
+      employeeCount: number
+      topPerformer: Employee | null
+    }[]
+  >([])
+
+  // Helper function to calculate department metrics
+  const calculateDepartmentMetrics = (emps: Employee[]) => {
+    return mockDepartments.map((dept) => {
+      const deptEmployees = emps.filter((emp) => emp.departmentId === dept.id)
+      const topPerformer = deptEmployees.reduce(
+        (top, emp) => (!top || emp.totalSkills > top.totalSkills ? emp : top),
+        null as Employee | null
+      )
+      return {
+        departmentId: dept.id,
+        departmentName: dept.name,
+        employeeCount: deptEmployees.length,
+        topPerformer,
+      }
+    })
+  }
 
   useEffect(() => {
     // Simulate API call
+
+
+    // function for fetching the data of employees
     setTimeout(() => {
       const employeesWithTotalSkills = mockEmployees.map((emp) => ({
         ...emp,
-        totalSkills: Object.keys(emp.skills).length,
+        totalSkills: Object.keys(emp.skills || {}).length,
+        departmentName: getDepartmentName(emp.departmentId),
       }))
       setEmployees(employeesWithTotalSkills)
+      setDepartmentMetrics(calculateDepartmentMetrics(employeesWithTotalSkills))
       setIsLoading(false)
     }, 500)
   }, [])
 
+  // Helper function to get department name by ID
+  const getDepartmentName = (departmentId: string) => {
+    const department = mockDepartments.find((dept) => dept.id === departmentId)
+    return department ? department.name : "Unknown Department"
+  }
+
+
+
+  // function for handling searching of employees
   const handleEmployeeSearch = () => {
     if (!searchEmployeeId.trim()) {
       setSearchedEmployee(null)
       return
     }
-
     setIsSearching(true)
-
-    // Simulate API call
+    // Call the API call
+    
     setTimeout(() => {
       const employee = mockEmployees.find(
-        (emp) => emp.displayId === searchEmployeeId.trim() || emp.name.toLowerCase().includes(searchEmployeeId.toLowerCase()),
+        (emp) =>
+          emp.displayId === searchEmployeeId.trim() ||
+          emp.name.toLowerCase().includes(searchEmployeeId.toLowerCase())
       )
-      setSearchedEmployee(employee || null)
-      setIsSearching(false)
-    }, 300)
+
+  }
+)
   }
 
   const getSkillColor = (level: string) => {
     switch (level) {
       case "Advanced":
-        return "bg-green-600 text-white dark:bg-green-500"
+        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-300 dark:border-green-800"
       case "High":
-        return "bg-yellow-600 text-white dark:bg-yellow-500"
+        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-800"
       case "Medium":
-        return "bg-orange-600 text-white dark:bg-orange-500"
+        return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-800"
       case "Low":
-        return "bg-yellow-700 text-white dark:bg-yellow-600"
+        return "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900 dark:text-orange-300 dark:border-orange-800"
       default:
-        return "bg-gray-500 text-white dark:bg-gray-400"
+        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-800"
     }
   }
 
   const columns = [
-    { key: "id", label: "Employee ID" },
+    { key: "displayId", label: "Employee ID" },
     { key: "name", label: "Name" },
+    { key: "departmentName", label: "Department" },
     { key: "totalSkills", label: "Total Skills" },
   ]
 
+  // ========================ADD A NEW EMPLOYEE=============================
+  const handleNewEmployee = async (data: any) => {
+    const newEmployee = {
+      name: data.name?.trim() || "",
+      displayId: data.displayId?.trim() || "",
+      gender: data.gender || "MALE",
+      current_department_id: parseInt(data.departmentId, 10) || 0,
+    }
+
+    console.log("Sending newEmployee:", newEmployee)
+
+    try {
+      const response = await fetch("/api/employees", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newEmployee),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to add employee. Status ${response.status}`)
+      }
+
+      const resText = await response.text()
+      let savedEmployee
+      try {
+        savedEmployee = JSON.parse(resText)
+        console.log("Employee added:", savedEmployee)
+      } catch (jsonErr) {
+        console.error("Response not valid JSON:", resText)
+        return
+      }
+
+      const updatedEmployee: Employee = {
+        ...savedEmployee,
+        skills: savedEmployee.skills || {}, // Default to empty skills if not provided
+        totalSkills: Object.keys(savedEmployee.skills || {}).length,
+        departmentName: getDepartmentName(savedEmployee.departmentId),
+      }
+      setEmployees((prev) => [...prev, updatedEmployee])
+
+      // Update department metrics
+      setDepartmentMetrics((prev) =>
+        prev.map((metric) => {
+          if (metric.departmentId === savedEmployee.departmentId) {
+            const updatedCount = metric.employeeCount + 1
+            const deptEmployees = [
+              ...employees.filter((emp) => emp.departmentId === savedEmployee.departmentId),
+              updatedEmployee,
+            ]
+            const topPerformer = deptEmployees.reduce(
+              (top, emp) => (!top || emp.totalSkills > top.totalSkills ? emp : top),
+              null as Employee | null
+            )
+            return {
+              ...metric,
+              employeeCount: updatedCount,
+              topPerformer,
+            }
+          }
+          return metric
+        })
+      )
+    } catch (error) {
+      console.error("Error adding employee:", error)
+    }
+  }
+
   return (
-    <div>
-      <div className="space-y-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">All Employees</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Complete list of employees and their skill counts
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Department Metrics Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                  <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                Department Metrics
+              </CardTitle>
+              <CardDescription className="text-base">
+                Overview of employee counts and top performers by department
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {departmentMetrics.map((metric) => (
+                  <Card
+                    key={metric.departmentId}
+                    className="border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50/50 to-blue-50/50 dark:from-purple-950/50 dark:to-blue-950/50"
+                  >
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg">{metric.departmentName}</CardTitle>
+                      <CardDescription>Employee Count: {metric.employeeCount}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {metric.topPerformer ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Award className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                            <span className="font-semibold">Top Performer</span>
+                          </div>
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                              <User className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-gray-900 dark:text-white">
+                                {metric.topPerformer.name}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                ID: {metric.topPerformer.displayId} • Skills: {metric.topPerformer.totalSkills}
+                              </p>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedEmployeeForInspection(metric.topPerformer)}
+                                className="mt-2"
+                              >
+                                Inspect Skills
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No employees in this department</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
-        {/* Employee ID Search Section */}
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center space-y-4"
+        >
+   
+         
+        </motion.div>
+
+        {/* Employee Search Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.5 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
         >
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <Search className="h-5 w-5 text-blue-600" />
-            Search Employee by ID or Name
-          </h2>
-
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <TextField
-                placeholder="Enter Employee ID or Name (e.g., '1' or 'John')"
-                value={searchEmployeeId}
-                onChange={(e) => setSearchEmployeeId(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleEmployeeSearch()}
-                icon={<Search className="h-5 w-5" />}
-              />
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleEmployeeSearch}
-              disabled={isSearching}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 disabled:opacity-50"
-            >
-              {isSearching ? "Searching..." : "Search"}
-            </motion.button>
-          </div>
-
-          {/* Search Results */}
-          {searchEmployeeId && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="mt-6"
-            >
-              {searchedEmployee ? (
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 rounded-lg p-4 border border-blue-200 dark:border-gray-600">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                      <User className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {searchedEmployee.name}
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Employee ID: {searchedEmployee.displayId}</p>
-                        </div>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setSelectedEmployeeForInspection(searchedEmployee)}
-                          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
-                        >
-                          <Award className="h-4 w-4" />
-                          Inspect Skills
-                        </motion.button>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Award className="h-4 w-4 text-blue-600" />
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Machine Skills ({Object.keys(searchedEmployee.skills).length} total):
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {Object.entries(searchedEmployee.skills).map(([skill, level]) => (
-                            <Chip key={skill} label={`${skill}: ${level}`} className={getSkillColor(level)} />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+          <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-3 text-xl">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                  <Search className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                Employee Search
+              </CardTitle>
+              <CardDescription className="text-base">
+                Search for employees by their ID or name to view detailed information
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="search-input" className="text-sm font-medium">
+                    Employee ID or Name
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="search-input"
+                      placeholder="Enter Employee ID or Name (e.g., '1' or 'John')"
+                      value={searchEmployeeId}
+                      onChange={(e) => setSearchEmployeeId(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleEmployeeSearch()}
+                      className="pl-10 h-12 text-base"
+                    />
                   </div>
                 </div>
-              ) : (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                  <p className="text-red-700 dark:text-red-400 text-sm">
-                    No employee found with ID or name "{searchEmployeeId}". Please check the ID and try again.
-                  </p>
+                <div className="flex items-end">
+                  <Button
+                    onClick={handleEmployeeSearch}
+                    disabled={isSearching}
+                    size="lg"
+                    className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
+                  >
+                    {isSearching ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Searching...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="h-4 w-4 mr-2" />
+                        Search
+                      </>
+                    )}
+                  </Button>
                 </div>
+              </div>
+
+              {/* Search Results */}
+              {searchEmployeeId && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="pt-4"
+                >
+                  <Separator className="mb-6" />
+                  {searchedEmployee ? (
+                    <Card className="border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/50 dark:to-purple-950/50">
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-6">
+                          <div className="flex-shrink-0">
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                              <User className="h-8 w-8 text-white" />
+                            </div>
+                          </div>
+                          <div className="flex-1 space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-1">
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                  {searchedEmployee.name}
+                                </h3>
+                                <p className="text-muted-foreground font-medium">
+                                  Employee ID: {searchedEmployee.displayId} • Department: {getDepartmentName(
+                                    searchedEmployee.departmentId
+                                  )}
+                                </p>
+                              </div>
+                              <Button
+                                onClick={() => setSelectedEmployeeForInspection(searchedEmployee)}
+                                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+                              >
+                                <Award className="h-4 w-4 mr-2" />
+                                Inspect Skills
+                              </Button>
+                            </div>
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <Award className="h-5 w-5 text-blue-600" />
+                                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                                  Machine Skills ({Object.keys(searchedEmployee.skills || {}).length} total)
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {Object.entries(searchedEmployee.skills || {}).map(([skill, level]) => (
+                                  <Badge
+                                    key={skill}
+                                    variant="outline"
+                                    className={`${getSkillColor(level)} font-medium px-3 py-1`}
+                                  >
+                                    {skill}: {level}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card className="border-2 border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/50">
+                      <CardContent className="p-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                            <X className="h-5 w-5 text-red-600 dark:text-red-400" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-red-800 dark:text-red-300">No Employee Found</h4>
+                            <p className="text-red-600 dark:text-red-400">
+                              No employee found with ID or name "{searchEmployeeId}". Please check and try again.
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </motion.div>
               )}
-            </motion.div>
-          )}
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* All Employees Table */}
@@ -179,23 +432,163 @@ export default function EmployeesPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <Table
-            columns={columns}
-            data={employees}
-            isLoading={isLoading}
-            emptyMessage="No employees found"
-            onInspect={(employee) => setSelectedEmployeeForInspection(employee)}
-          />
+          <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-xl">All Employees</CardTitle>
+              <CardDescription>Complete list of employees and their skill counts</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table
+                columns={columns}
+                data={employees}
+                isLoading={isLoading}
+                emptyMessage="No employees found"
+                onInspect={(employee) => setSelectedEmployeeForInspection(employee)}
+              />
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
 
-      
       {/* Employee Inspection Modal */}
       <EmployeeInspectionModal
         employee={selectedEmployeeForInspection}
         isOpen={!!selectedEmployeeForInspection}
         onClose={() => setSelectedEmployeeForInspection(null)}
       />
-   </div>
+
+      {/* Add New Employee Modal */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Add New Employee</DialogTitle>
+            <DialogDescription>Enter the employee details to add them to the system.</DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleNewEmployee(formData)
+              setIsModalOpen(false)
+              setFormData({
+                name: "",
+                displayId: "",
+                gender: "MALE",
+                departmentId: "",
+              })
+            }}
+            className="space-y-6"
+          >
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-sm font-medium">
+                  Full Name *
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Enter full name"
+                  className="h-11"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="displayId" className="text-sm font-medium">
+                  Card Number (Display ID) *
+                </Label>
+                <Input
+                  id="displayId"
+                  type="text"
+                  value={formData.displayId}
+                  onChange={(e) => setFormData({ ...formData, displayId: e.target.value })}
+                  placeholder="Enter card number"
+                  className="h-11"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="gender" className="text-sm font-medium">
+                  Gender
+                </Label>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value) => setFormData({ ...formData, gender: value as "MALE" | "FEMALE" })}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MALE">Male</SelectItem>
+                    <SelectItem value="FEMALE">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="departmentId" className="text-sm font-medium">
+                  Department *
+                </Label>
+                <Select
+                  value={formData.departmentId}
+                  onValueChange={(value) => setFormData({ ...formData, departmentId: value })}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mockDepartments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsModalOpen(false)
+                  setFormData({
+                    name: "",
+                    displayId: "",
+                    gender: "MALE",
+                    departmentId: "",
+                  })
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!formData.name.trim() || !formData.displayId.trim() || !formData.departmentId}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save Employee
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Floating Action Button */}
+      <motion.div className="fixed bottom-8 right-8 z-50" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          size="lg"
+          className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl border-0"
+          title="Add New Employee"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      </motion.div>
+    </div>
   )
 }
