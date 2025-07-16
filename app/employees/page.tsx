@@ -69,6 +69,19 @@ export default function EmployeesPage() {
     // Simulate API call
 
 
+  // {
+  //   displayId: "EMP001",
+  //   name: "Ahmed Raza",
+  //   gender:"MALE",
+  //   departmentId: "1",
+  //   skills: {
+  //     "CNC Machine": "High",
+  //     "Welding Robot": "Medium",
+  //     "Assembly Line": "Advanced",
+  //   },
+  // },
+
+
     // function for fetching the data of employees
     setTimeout(() => {
       const employeesWithTotalSkills = mockEmployees.map((emp) => ({
@@ -99,6 +112,22 @@ export default function EmployeesPage() {
     setIsSearching(true)
     // Call the API call
     
+
+    // FETCH EMPLOYEES DATA:
+    const fetchEmployees = async () => {
+      try {
+        const res = await fetch("/api/employees")
+        const data = await res.json()
+        setEmployees(data)
+      } catch (err) {
+        console.error("Fetch failed:", err)
+      }
+    }
+
+    fetchEmployees()
+
+
+
     setTimeout(() => {
       const employee = mockEmployees.find(
         (emp) =>
