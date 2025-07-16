@@ -95,6 +95,7 @@ useEffect(() => {
         
         // Calculate department metrics after both employees and departments are set
         const metrics = calculateDepartmentMetricsFromData(employees, deptData.data);
+        console.log(metrics);
         setDepartmentMetrics(metrics);
       }
     } catch (err) {
@@ -116,10 +117,15 @@ useEffect(() => {
 
   // Helper function to calculate department metrics from data
   const calculateDepartmentMetricsFromData = (employeesList: Employee[], departmentsList: Department[]) => {
+    console.log("Departments:", departmentsList);
+    console.log("Employees:", employeesList);
+    
     return departmentsList.map((dept) => {
       const deptEmployees = employeesList.filter(
-        (emp) => emp.departmentId === dept.id
+        
+        (emp) => emp.current_department_id === dept.id
       );
+      // console.log("Department Employees:", deptEmployees);
       const topPerformer = deptEmployees.reduce(
         (top, emp) => (!top || (emp.totalSkills || 0) > (top.totalSkills || 0) ? emp : top),
         null as Employee | null
