@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Search, User, Award, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,9 +41,6 @@ export default function EmployeesPage() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchEmployeeId, setSearchEmployeeId] = useState("");
-  const [searchedEmployee, setSearchedEmployee] = useState<Employee | null>(
-    null
-  );
   const [isSearching, setIsSearching] = useState(false);
   const [selectedEmployeeForInspection, setSelectedEmployeeForInspection] =
     useState<Employee | null>(null);
@@ -115,6 +112,65 @@ useEffect(() => {
     return department ? department.name : "Unknown Department";
   };
 
+  // Enhanced search filter logic using useMemo for performance optimization
+  const filteredEmployees = useMemo(() => {
+    if (!searchEmployeeId.trim()) {
+      return employees;
+    }
+
+    const searchTerm = searchEmployeeId.toLowerCase().trim();
+    
+    return employees.filter((employee) => {
+      // Safe field extraction with fallbacks
+      const name = employee.name?.toLowerCase() || '';
+      const displayId = employee.display_id?.toLowerCase() || '';
+      const departmentName = (employee as any).departmentName?.toLowerCase() || '';
+      
+      // Basic field matching
+      if (name.includes(searchTerm) || 
+          displayId.includes(searchTerm) || 
+          departmentName.includes(searchTerm)) {
+        return true;
+      }
+
+      // Advanced skill-based matching
+      const skillProfile = employee.skill_profile;
+      if (skillProfile && skillProfile.skills) {
+        const skills = skillProfile.skills;
+        
+        // Check skill names
+        const skillNames = Object.keys(skills).map(skill => skill.toLowerCase());
+        if (skillNames.some(skillName => skillName.includes(searchTerm))) {
+          return true;
+        }
+        
+        // Check skill levels
+        const skillLevels = Object.values(skills).map(level => level.toLowerCase());
+        if (skillLevels.some(level => level.includes(searchTerm))) {
+          return true;
+        }
+
+        // Check combined skill+level combinations (e.g., "cnc skilled")
+        const skillCombinations = Object.entries(skills).map(([skill, level]) => 
+          `${skill.toLowerCase()} ${level.toLowerCase()}`
+        );
+        if (skillCombinations.some(combo => combo.includes(searchTerm))) {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  }, [employees, searchEmployeeId, departments]);
+
+  // Get the first matching employee for single employee display
+  const searchedEmployee = useMemo(() => {
+    if (!searchEmployeeId.trim()) {
+      return null;
+    }
+    return filteredEmployees.length > 0 ? filteredEmployees[0] : null;
+  }, [filteredEmployees, searchEmployeeId]);
+
   // Helper function to calculate department metrics from data
   const calculateDepartmentMetricsFromData = (employeesList: Employee[], departmentsList: Department[]) => {
     console.log("Departments:", departmentsList);
@@ -122,7 +178,6 @@ useEffect(() => {
     
     return departmentsList.map((dept) => {
       const deptEmployees = employeesList.filter(
-        
         (emp) => emp.current_department_id === dept.id
       );
       // console.log("Department Employees:", deptEmployees);
@@ -139,30 +194,11 @@ useEffect(() => {
     });
   };
 
-  // function for handling searching of employees
-  const handleEmployeeSearch = () => {
-    if (!searchEmployeeId.trim()) {
-      setSearchedEmployee(null);
-      return;
-    }
-    setIsSearching(true);
-
-
-      const employee = employees.find(
-        (emp) =>
-          emp.displayId === searchEmployeeId.trim() ||
-          emp.name.toLowerCase().includes(searchEmployeeId.toLowerCase())
-      );
-
-      if (employee) {
-        setSearchedEmployee(employee);
-      } else {
-        setSearchedEmployee(null);
-      }
-
-    setIsSearching(false);
-
-    }
+  // Helper function to get department name for display
+  const getDepartmentName = (departmentId: number) => {
+    const department = departments.find((dept) => dept.id === departmentId);
+    return department ? department.name : "Unknown Department";
+  };
 
 
   const getSkillColor = (level: string) => {
@@ -219,41 +255,39 @@ useEffect(() => {
             } catch (jsonErr) {
               console.error("Response not valid JSON:", resText);
               return;
-            }
+            }          const updatedEmployee: Employee = {
+            ...savedEmployee,
+            skill_profile: savedEmployee.skill_profile || { skills: {} }, // Default to empty skills if not provided
+            totalSkills: Object.keys(savedEmployee.skill_profile?.skills || {}).length,
+            departmentName: getDepartmentName(savedEmployee.current_department_id),
+          } as any;
+          setEmployees((prev) => [...prev, updatedEmployee]);
 
-            const updatedEmployee: Employee = {
-              ...savedEmployee,
-              skills: savedEmployee.skills || {}, // Default to empty skills if not provided
-              totalSkills: Object.keys(savedEmployee.skills || {}).length,
-              departmentName: getDepartmentName(savedEmployee.departmentId),
-            };
-            setEmployees((prev) => [...prev, updatedEmployee]);
-
-            // Update department metrics
-            setDepartmentMetrics((prev) =>
-              prev.map((metric) => {
-                if (metric.departmentId === savedEmployee.departmentId) {
-                  const updatedCount = metric.employeeCount + 1;
-                  const deptEmployees = [
-                    ...employees.filter(
-                      (emp) => emp.departmentId === savedEmployee.departmentId
-                    ),
-                    updatedEmployee,
-                  ];
-                  const topPerformer = deptEmployees.reduce(
-                    (top, emp) =>
-                      !top || emp.totalSkills > top.totalSkills ? emp : top,
-                    null as Employee | null
-                  );
-                  return {
-                    ...metric,
-                    employeeCount: updatedCount,
-                    topPerformer,
-                  };
-                }
-                return metric;
-              })
-            );
+          // Update department metrics
+          setDepartmentMetrics((prev) =>
+            prev.map((metric) => {
+              if (metric.departmentId === savedEmployee.current_department_id) {
+                const updatedCount = metric.employeeCount + 1;
+                const deptEmployees = [
+                  ...employees.filter(
+                    (emp) => emp.current_department_id === savedEmployee.current_department_id
+                  ),
+                  updatedEmployee,
+                ];
+                const topPerformer = deptEmployees.reduce(
+                  (top, emp) =>
+                    !top || (emp.totalSkills || 0) > (top.totalSkills || 0) ? emp : top,
+                  null as Employee | null
+                );
+                return {
+                  ...metric,
+                  employeeCount: updatedCount,
+                  topPerformer,
+                };
+              }
+              return metric;
+            })
+          );
           } catch (error) {
             console.error("Error adding employee:", error);
           }
@@ -312,7 +346,7 @@ useEffect(() => {
                                 {metric.topPerformer.name}
                               </h4>
                               <p className="text-sm text-muted-foreground">
-                                ID: {metric.topPerformer.displayId} • Skills:{" "}
+                                ID: {metric.topPerformer.display_id} • Skills:{" "}
                                 {metric.topPerformer.totalSkills}
                               </p>
                               <Button
@@ -383,32 +417,9 @@ useEffect(() => {
                       placeholder="Enter Employee ID or Name (e.g., '1' or 'John')"
                       value={searchEmployeeId}
                       onChange={(e) => setSearchEmployeeId(e.target.value)}
-                      onKeyPress={(e) =>
-                        e.key === "Enter" && handleEmployeeSearch()
-                      }
                       className="pl-10 h-12 text-base"
                     />
                   </div>
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    onClick={handleEmployeeSearch}
-                    disabled={isSearching}
-                    size="lg"
-                    className="h-12 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
-                  >
-                    {isSearching ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Searching...
-                      </>
-                    ) : (
-                      <>
-                        <Search className="h-4 w-4 mr-2" />
-                        Search
-                      </>
-                    )}
-                  </Button>
                 </div>
               </div>
 
@@ -437,10 +448,10 @@ useEffect(() => {
                                   {searchedEmployee.name}
                                 </h3>
                                 <p className="text-muted-foreground font-medium">
-                                  Employee ID: {searchedEmployee.displayId} •
+                                  Employee ID: {searchedEmployee.display_id} •
                                   Department:{" "}
                                   {getDepartmentName(
-                                    searchedEmployee.departmentId
+                                    searchedEmployee.current_department_id
                                   )}
                                 </p>
                               </div>
@@ -462,7 +473,7 @@ useEffect(() => {
                                 <span className="font-semibold text-gray-700 dark:text-gray-300">
                                   Machine Skills (
                                   {
-                                    Object.keys(searchedEmployee.skills || {})
+                                    Object.keys(searchedEmployee.skill_profile?.skills || {})
                                       .length
                                   }{" "}
                                   total)
@@ -470,16 +481,16 @@ useEffect(() => {
                               </div>
                               <div className="flex flex-wrap gap-2">
                                 {Object.entries(
-                                  searchedEmployee.skills || {}
+                                  searchedEmployee.skill_profile?.skills || {}
                                 ).map(([skill, level]) => (
                                   <Badge
                                     key={skill}
                                     variant="outline"
                                     className={`${getSkillColor(
-                                      level
+                                      level as string
                                     )} font-medium px-3 py-1`}
                                   >
-                                    {skill}: {level}
+                                    {skill}: {level as string}
                                   </Badge>
                                 ))}
                               </div>
@@ -530,7 +541,7 @@ useEffect(() => {
             <CardContent>
               <Table
                 columns={columns}
-                data={employees}
+                data={filteredEmployees}
                 isLoading={isLoading}
                 emptyMessage="No employees found"
                 onInspect={(employee) =>
@@ -646,8 +657,8 @@ useEffect(() => {
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockDepartments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
                         {dept.name}
                       </SelectItem>
                     ))}
