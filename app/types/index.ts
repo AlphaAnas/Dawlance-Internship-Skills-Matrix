@@ -1,11 +1,14 @@
 
 export interface Department {
-  id: string
-  name: string
+	id :number
+  name : string
+  created_at: string
+  updated_at: string
 }
 
+
 export interface Employee {
-  // id: number
+  id: number
   name: string
   displayId: string
   departmentId: number

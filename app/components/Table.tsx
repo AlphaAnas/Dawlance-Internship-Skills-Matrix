@@ -22,6 +22,8 @@ interface TableProps {
 export default function Table({ columns, data, isLoading, emptyMessage = "No data available", onInspect }: TableProps) {
   const { isDark } = useTheme()
 
+  // console.log("Table rendered with data:", data)
+
   if (isLoading) {
     return (
       <div className={`bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden`}>
