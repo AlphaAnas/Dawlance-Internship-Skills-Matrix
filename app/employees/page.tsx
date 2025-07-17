@@ -62,52 +62,60 @@ export default function EmployeesPage() {
     }[]
   >([]);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [empRes, deptRes] = await Promise.all([
+          fetch("/api/all/employees"),
+          fetch("/api/all/departments"),
+        ]);
 
+        const empData = await empRes.json();
+        const deptData = await deptRes.json();
 
-useEffect(() => {
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      const [empRes, deptRes] = await Promise.all([
-        fetch("/api/all/employees"),
-        fetch("/api/all/departments")
-      ]);
+        if (deptData.success) {
+          // console.log("Departments:", deptData.data);
+          setDepartments(deptData.data);
 
-      const empData = await empRes.json();
-      const deptData = await deptRes.json();
+          // Now map employees with department names using the fetched departments
+          const employees = empData.data.map((emp: any) => ({
+            ...emp,
+            skill_profile: JSON.parse(emp.skill_profile),
+            totalSkills: Object.keys(
+              JSON.parse(emp.skill_profile)?.skills || {}
+            ).length,
+            departmentName: getDepartmentNameFromList(
+              emp.current_department_id,
+              deptData.data
+            ),
+          }));
 
-      if (deptData.success) {
-        // console.log("Departments:", deptData.data); 
-        setDepartments(deptData.data);
-        
-        // Now map employees with department names using the fetched departments
-        const employees = empData.data.map((emp: any) => ({
-          ...emp,
-          skill_profile: JSON.parse(emp.skill_profile),
-          totalSkills: Object.keys(JSON.parse(emp.skill_profile)?.skills || {}).length,
-          departmentName: getDepartmentNameFromList(emp.current_department_id, deptData.data),
-        }));
+          setEmployees(employees);
 
-        setEmployees(employees);
-        
-        // Calculate department metrics after both employees and departments are set
-        const metrics = calculateDepartmentMetricsFromData(employees, deptData.data);
-        console.log(metrics);
-        setDepartmentMetrics(metrics);
+          // Calculate department metrics after both employees and departments are set
+          const metrics = calculateDepartmentMetricsFromData(
+            employees,
+            deptData.data
+          );
+          console.log(metrics);
+          setDepartmentMetrics(metrics);
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching data:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  fetchData();
-}, []);
-
+    fetchData();
+  }, []);
 
   // Helper function to get department name by ID from a list
-  const getDepartmentNameFromList = (departmentId: number, departmentsList: Department[]) => {
+  const getDepartmentNameFromList = (
+    departmentId: number,
+    departmentsList: Department[]
+  ) => {
     const department = departmentsList.find((dept) => dept.id === departmentId);
     return department ? department.name : "Unknown Department";
   };
@@ -119,17 +127,20 @@ useEffect(() => {
     }
 
     const searchTerm = searchEmployeeId.toLowerCase().trim();
-    
+
     return employees.filter((employee) => {
       // Safe field extraction with fallbacks
-      const name = employee.name?.toLowerCase() || '';
-      const displayId = employee.display_id?.toLowerCase() || '';
-      const departmentName = (employee as any).departmentName?.toLowerCase() || '';
-      
+      const name = employee.name?.toLowerCase() || "";
+      const displayId = employee.display_id?.toLowerCase() || "";
+      const departmentName =
+        (employee as any).departmentName?.toLowerCase() || "";
+
       // Basic field matching
-      if (name.includes(searchTerm) || 
-          displayId.includes(searchTerm) || 
-          departmentName.includes(searchTerm)) {
+      if (
+        name.includes(searchTerm) ||
+        displayId.includes(searchTerm) ||
+        departmentName.includes(searchTerm)
+      ) {
         return true;
       }
 
@@ -137,24 +148,28 @@ useEffect(() => {
       const skillProfile = employee.skill_profile;
       if (skillProfile && skillProfile.skills) {
         const skills = skillProfile.skills;
-        
+
         // Check skill names
-        const skillNames = Object.keys(skills).map(skill => skill.toLowerCase());
-        if (skillNames.some(skillName => skillName.includes(searchTerm))) {
+        const skillNames = Object.keys(skills).map((skill) =>
+          skill.toLowerCase()
+        );
+        if (skillNames.some((skillName) => skillName.includes(searchTerm))) {
           return true;
         }
-        
+
         // Check skill levels
-        const skillLevels = Object.values(skills).map(level => level.toLowerCase());
-        if (skillLevels.some(level => level.includes(searchTerm))) {
+        const skillLevels = Object.values(skills).map((level) =>
+          level.toLowerCase()
+        );
+        if (skillLevels.some((level) => level.includes(searchTerm))) {
           return true;
         }
 
         // Check combined skill+level combinations (e.g., "cnc skilled")
-        const skillCombinations = Object.entries(skills).map(([skill, level]) => 
-          `${skill.toLowerCase()} ${level.toLowerCase()}`
+        const skillCombinations = Object.entries(skills).map(
+          ([skill, level]) => `${skill.toLowerCase()} ${level.toLowerCase()}`
         );
-        if (skillCombinations.some(combo => combo.includes(searchTerm))) {
+        if (skillCombinations.some((combo) => combo.includes(searchTerm))) {
           return true;
         }
       }
@@ -172,19 +187,24 @@ useEffect(() => {
   }, [filteredEmployees, searchEmployeeId]);
 
   // Helper function to calculate department metrics from data
-  const calculateDepartmentMetricsFromData = (employeesList: Employee[], departmentsList: Department[]) => {
+  const calculateDepartmentMetricsFromData = (
+    employeesList: Employee[],
+    departmentsList: Department[]
+  ) => {
     console.log("Departments:", departmentsList);
     console.log("Employees:", employeesList);
-    
+
     return departmentsList.map((dept) => {
       const deptEmployees = employeesList.filter(
         (emp) => emp.current_department_id === dept.id
       );
       // console.log("Department Employees:", deptEmployees);
       const topPerformer = deptEmployees.reduce(
-        (top, emp) => (!top || (emp.totalSkills || 0) > (top.totalSkills || 0) ? emp : top),
+        (top, emp) =>
+          !top || (emp.totalSkills || 0) > (top.totalSkills || 0) ? emp : top,
         null as Employee | null
       );
+      // console.log("Top Performer:", topPerformer);
       return {
         departmentId: dept.id,
         departmentName: dept.name,
@@ -199,7 +219,6 @@ useEffect(() => {
     const department = departments.find((dept) => dept.id === departmentId);
     return department ? department.name : "Unknown Department";
   };
-
 
   const getSkillColor = (level: string) => {
     switch (level) {
@@ -225,72 +244,78 @@ useEffect(() => {
 
   // ========================ADD A NEW EMPLOYEE=============================
   const handleNewEmployee = async (data: any) => {
-          const newEmployee = {
-            name: data.name?.trim() || "",
-            displayId: data.displayId?.trim() || "",
-            gender: data.gender || "MALE",
-            current_department_id: parseInt(data.departmentId, 10) || 0,
-          };
+    const newEmployee = {
+      name: data.name?.trim() || "",
+      displayId: data.displayId?.trim() || "",
+      gender: data.gender || "MALE",
+      current_department_id: parseInt(data.departmentId, 10) || 0,
+    };
 
-          // console.log("Sending newEmployee:", newEmployee)
+    // console.log("Sending newEmployee:", newEmployee)
 
-          try {
-            const response = await fetch("/api/employees", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(newEmployee),
-            });
+    try {
+      const response = await fetch("/api/employees", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newEmployee),
+      });
 
-            if (!response.ok) {
-              throw new Error(`Failed to add employee. Status ${response.status}`);
-            }
+      if (!response.ok) {
+        throw new Error(`Failed to add employee. Status ${response.status}`);
+      }
 
-            const resText = await response.text();
-            let savedEmployee;
-            try {
-              savedEmployee = JSON.parse(resText);
-              // console.log("Employee added:", savedEmployee)
-            } catch (jsonErr) {
-              console.error("Response not valid JSON:", resText);
-              return;
-            }          const updatedEmployee: Employee = {
-            ...savedEmployee,
-            skill_profile: savedEmployee.skill_profile || { skills: {} }, // Default to empty skills if not provided
-            totalSkills: Object.keys(savedEmployee.skill_profile?.skills || {}).length,
-            departmentName: getDepartmentName(savedEmployee.current_department_id),
-          } as any;
-          setEmployees((prev) => [...prev, updatedEmployee]);
+      const resText = await response.text();
+      let savedEmployee;
+      try {
+        savedEmployee = JSON.parse(resText);
+        // console.log("Employee added:", savedEmployee)
+      } catch (jsonErr) {
+        console.error("Response not valid JSON:", resText);
+        return;
+      }
+      const updatedEmployee: Employee = {
+        ...savedEmployee,
+        skill_profile: savedEmployee.skill_profile || { skills: {} }, // Default to empty skills if not provided
+        totalSkills: Object.keys(savedEmployee.skill_profile?.skills || {})
+          .length,
+        departmentName: getDepartmentName(savedEmployee.current_department_id),
+      } as any;
+      setEmployees((prev) => [...prev, updatedEmployee]);
 
-          // Update department metrics
-          setDepartmentMetrics((prev) =>
-            prev.map((metric) => {
-              if (metric.departmentId === savedEmployee.current_department_id) {
-                const updatedCount = metric.employeeCount + 1;
-                const deptEmployees = [
-                  ...employees.filter(
-                    (emp) => emp.current_department_id === savedEmployee.current_department_id
-                  ),
-                  updatedEmployee,
-                ];
-                const topPerformer = deptEmployees.reduce(
-                  (top, emp) =>
-                    !top || (emp.totalSkills || 0) > (top.totalSkills || 0) ? emp : top,
-                  null as Employee | null
-                );
-                return {
-                  ...metric,
-                  employeeCount: updatedCount,
-                  topPerformer,
-                };
-              }
-              return metric;
-            })
-          );
-          } catch (error) {
-            console.error("Error adding employee:", error);
+      // Update department metrics
+      setDepartmentMetrics((prev) =>
+        prev.map((metric) => {
+          if (metric.departmentId === savedEmployee.current_department_id) {
+            const updatedCount = metric.employeeCount + 1;
+            const deptEmployees = [
+              ...employees.filter(
+                (emp) =>
+                  emp.current_department_id ===
+                  savedEmployee.current_department_id
+              ),
+              updatedEmployee,
+            ];
+            const topPerformer = deptEmployees.reduce(
+              (top, emp) =>
+                !top || (emp.totalSkills || 0) > (top.totalSkills || 0)
+                  ? emp
+                  : top,
+              null as Employee | null
+            );
+            return {
+              ...metric,
+              employeeCount: updatedCount,
+              topPerformer,
+            };
           }
+          return metric;
+        })
+      );
+    } catch (error) {
+      console.error("Error adding employee:", error);
+    }
   };
 
   return (
@@ -473,8 +498,10 @@ useEffect(() => {
                                 <span className="font-semibold text-gray-700 dark:text-gray-300">
                                   Machine Skills (
                                   {
-                                    Object.keys(searchedEmployee.skill_profile?.skills || {})
-                                      .length
+                                    Object.keys(
+                                      searchedEmployee.skill_profile?.skills ||
+                                        {}
+                                    ).length
                                   }{" "}
                                   total)
                                 </span>
@@ -556,7 +583,7 @@ useEffect(() => {
       {/* Employee Inspection Modal */}
       <EmployeeInspectionModal
         employee={selectedEmployeeForInspection}
-        isOpen={!!selectedEmployeeForInspection}
+        isOpen={!!selectedEmployeeForInspection} // !! at the start to ensure boolean
         onClose={() => setSelectedEmployeeForInspection(null)}
       />
 
