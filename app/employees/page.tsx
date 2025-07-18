@@ -155,6 +155,7 @@ export default function EmployeesPage() {
   }
 
   const columns = [
+    
     { key: "displayId", label: "Employee ID" },
     { key: "name", label: "Name" },
     { key: "departmentName", label: "Department" },
@@ -232,7 +233,8 @@ export default function EmployeesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="w-full space-y-8">
+
         {/* Department Metrics Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -258,10 +260,21 @@ export default function EmployeesPage() {
                     key={metric.departmentId}
                     className="border-2 border-purple-200 dark:border-purple-800 bg-gradient-to-r from-purple-50/50 to-blue-50/50 dark:from-purple-950/50 dark:to-blue-950/50"
                   >
-                    <CardHeader className="pb-2">
+<CardHeader className="pb-2 space-y-2">
+  <div className="flex justify-between items-start">
                       <CardTitle className="text-lg">{metric.departmentName}</CardTitle>
-                      <CardDescription>Employee Count: {metric.employeeCount}</CardDescription>
-                    </CardHeader>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedEmployeeForInspection(metric.topPerformer)}
+                        className="ml-4 bg-green-500"
+                      >
+                        Inspect Skills
+                      </Button>
+                    </div>
+                    <CardDescription>Employee Count: {metric.employeeCount}</CardDescription>
+                  </CardHeader>
+
                     <CardContent>
                       {metric.topPerformer ? (
                         <div className="space-y-2">
@@ -280,14 +293,6 @@ export default function EmployeesPage() {
                               <p className="text-sm text-muted-foreground">
                                 ID: {metric.topPerformer.displayId} • Skills: {metric.topPerformer.totalSkills}
                               </p>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedEmployeeForInspection(metric.topPerformer)}
-                                className="mt-2"
-                              >
-                                Inspect Skills
-                              </Button>
                             </div>
                           </div>
                         </div>
@@ -325,23 +330,17 @@ export default function EmployeesPage() {
                 <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
                   <Search className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                Employee Search
+                 Search
               </CardTitle>
-              <CardDescription className="text-base">
-                Search for employees by their ID or name to view detailed information
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="search-input" className="text-sm font-medium">
-                    Employee ID or Name
-                  </Label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    {/* <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" /> */}
                     <Input
                       id="search-input"
-                      placeholder="Enter Employee ID or Name (e.g., '1' or 'John')"
+                      placeholder=""
                       value={searchEmployeeId}
                       onChange={(e) => setSearchEmployeeId(e.target.value)}
                       onKeyPress={(e) => e.key === "Enter" && handleEmployeeSearch()}
@@ -440,10 +439,8 @@ export default function EmployeesPage() {
                             <X className="h-5 w-5 text-red-600 dark:text-red-400" />
                           </div>
                           <div>
-                            <h4 className="font-semibold text-red-800 dark:text-red-300">No Employee Found</h4>
-                            <p className="text-red-600 dark:text-red-400">
-                              No employee found with ID or name "{searchEmployeeId}". Please check and try again.
-                            </p>
+                            <h4 className="font-semibold text-red-800 dark:text-red-300">No Employee Found:  "{searchEmployeeId}"</h4>
+                          
                           </div>
                         </div>
                       </CardContent>
@@ -453,7 +450,7 @@ export default function EmployeesPage() {
               )}
             </CardContent>
           </Card>
-        </motion.div>
+        {/* </motion.div> */}
 
         {/* All Employees Table */}
         <motion.div
@@ -462,10 +459,7 @@ export default function EmployeesPage() {
           transition={{ delay: 0.2, duration: 0.5 }}
         >
           <Card className="shadow-lg border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-xl">All Employees</CardTitle>
-              <CardDescription>Complete list of employees and their skill counts</CardDescription>
-            </CardHeader>
+           
             <CardContent>
               <Table
                 columns={columns}
@@ -477,6 +471,7 @@ export default function EmployeesPage() {
             </CardContent>
           </Card>
         </motion.div>
+                </motion.div>
       </div>
 
       {/* Employee Inspection Modal */}

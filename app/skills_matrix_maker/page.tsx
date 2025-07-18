@@ -1,6 +1,5 @@
 "use client"
 
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Users, 
   Plus, 
@@ -27,52 +27,74 @@ import {
   Edit,
   Menu,
   Clock,
-  Database
+  Database,
+  UserPlus,
+  Building2,
+  AlertCircle
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
-// Mock data
-const departments = [
+// Enhanced departments with Pakistani factory context
+const initialDepartments = [
   { id: 'plastic-extrusion', name: 'Plastic Extrusion', area: 'Production' },
   { id: 'assembly', name: 'Assembly', area: 'Production' },
   { id: 'quality', name: 'Quality Control', area: 'QC' },
-  { id: 'maintenance', name: 'Maintenance', area: 'Support' }
+  { id: 'maintenance', name: 'Maintenance', area: 'Support' },
+  { id: 'injection-molding', name: 'Injection Molding', area: 'Production' },
+  { id: 'packaging', name: 'Packaging & Dispatch', area: 'Logistics' },
+  { id: 'warehouse', name: 'Warehouse', area: 'Logistics' }
 ];
 
-const allEmployees = [
-  { id: 'T1208382', name: 'Muhammad Owais', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1207850', name: 'Sarwar Khan', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1208438', name: 'Muhammad Asdullah', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1208060', name: 'Munavar Ali', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1207956', name: 'Muhammad Mannan', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1208349', name: 'Waqas Ali', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1208217', name: 'Muhammad Shaheen', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1207934', name: 'Muhammad Kashif', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1208144', name: 'Muhammad Sohaib', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1207856', name: 'Arfa Rehman', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1208262', name: 'Maqsood Ali', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1208101', name: 'Ali Asghar Solangi', department: 'plastic-extrusion', area: 'Production' },
-  { id: 'T1209001', name: 'Ahmed Hassan', department: 'assembly', area: 'Production' },
-  { id: 'T1209002', name: 'Fatima Ali', department: 'assembly', area: 'Production' },
-  { id: 'T1209003', name: 'Hassan Khan', department: 'assembly', area: 'Production' },
-  { id: 'T1209004', name: 'Ayesha Malik', department: 'assembly', area: 'Production' },
-  { id: 'T1210001', name: 'Imran Sheikh', department: 'quality', area: 'QC' },
-  { id: 'T1210002', name: 'Saba Ahmed', department: 'quality', area: 'QC' },
-  { id: 'T1210003', name: 'Tariq Mahmood', department: 'quality', area: 'QC' },
-  { id: 'T1211001', name: 'Rashid Hussain', department: 'maintenance', area: 'Support' },
-  { id: 'T1211002', name: 'Zain Abbas', department: 'maintenance', area: 'Support' },
+// Enhanced Pakistani employees with realistic names and varied skill levels
+const initialEmployees = [
+  // Plastic Extrusion Department
+  { id: 'T1208382', name: 'Muhammad Owais Khan', department: 'plastic-extrusion', area: 'Production', joinDate: '2022-03-15', experience: '2 years' },
+  { id: 'T1207850', name: 'Sarwar Ahmed', department: 'plastic-extrusion', area: 'Production', joinDate: '2021-08-20', experience: '3 years' },
+  { id: 'T1208438', name: 'Muhammad Asadullah', department: 'plastic-extrusion', area: 'Production', joinDate: '2023-01-10', experience: '1 year' },
+  { id: 'T1208060', name: 'Munawar Ali Shah', department: 'plastic-extrusion', area: 'Production', joinDate: '2020-11-05', experience: '4 years' },
+  { id: 'T1207956', name: 'Muhammad Mannan', department: 'plastic-extrusion', area: 'Production', joinDate: '2022-07-12', experience: '2 years' },
+  
+  // Assembly Department
+  { id: 'T1209001', name: 'Ahmed Hassan Malik', department: 'assembly', area: 'Production', joinDate: '2021-05-18', experience: '3 years' },
+  { id: 'T1209002', name: 'Fatima Bibi', department: 'assembly', area: 'Production', joinDate: '2022-09-22', experience: '2 years' },
+  { id: 'T1209003', name: 'Hassan Ali Khan', department: 'assembly', area: 'Production', joinDate: '2023-02-14', experience: '1 year' },
+  { id: 'T1209004', name: 'Ayesha Malik', department: 'assembly', area: 'Production', joinDate: '2021-12-08', experience: '2 years' },
+  
+  // Quality Control Department
+  { id: 'T1210001', name: 'Imran Sheikh', department: 'quality', area: 'QC', joinDate: '2020-04-25', experience: '4 years' },
+  { id: 'T1210002', name: 'Saba Ahmed', department: 'quality', area: 'QC', joinDate: '2021-10-30', experience: '3 years' },
+  { id: 'T1210003', name: 'Tariq Mahmood', department: 'quality', area: 'QC', joinDate: '2022-06-15', experience: '2 years' },
+  
+  // Maintenance Department
+  { id: 'T1211001', name: 'Rashid Hussain', department: 'maintenance', area: 'Support', joinDate: '2019-08-12', experience: '5 years' },
+  { id: 'T1211002', name: 'Zain Abbas', department: 'maintenance', area: 'Support', joinDate: '2021-03-28', experience: '3 years' },
+  
+  // Injection Molding Department
+  { id: 'T1212001', name: 'Bilal Ahmad', department: 'injection-molding', area: 'Production', joinDate: '2022-01-20', experience: '2 years' },
+  { id: 'T1212002', name: 'Nadia Sultana', department: 'injection-molding', area: 'Production', joinDate: '2021-11-10', experience: '3 years' },
+  
+  // Packaging Department
+  { id: 'T1213001', name: 'Kashif Raza', department: 'packaging', area: 'Logistics', joinDate: '2023-04-05', experience: '1 year' },
+  { id: 'T1213002', name: 'Rubina Khatoon', department: 'packaging', area: 'Logistics', joinDate: '2022-08-18', experience: '2 years' },
+  
+  // Warehouse Department
+  { id: 'T1214001', name: 'Shahzad Iqbal', department: 'warehouse', area: 'Logistics', joinDate: '2020-12-03', experience: '4 years' },
+  { id: 'T1214002', name: 'Amna Riaz', department: 'warehouse', area: 'Logistics', joinDate: '2022-05-25', experience: '2 years' }
 ];
 
+// Enhanced skills with realistic Pakistani factory context
 const predefinedSkills = {
   'plastic-extrusion': [
     'Material Mixing + Material Loading',
     'Machine SOP / Operation',
     'Quality of Sheet Extrusion',
-    'Packing',
+    'Packing & Labeling',
     'Quality of Gasket Extrusion',
     'Quality of Trim Extrusion',
-    '5S',
-    'Rework',
-    'Fire & Safety Training'
+    '5S Implementation',
+    'Rework & Waste Management',
+    'Fire & Safety Training',
+    'Machine Maintenance'
   ],
   'assembly': [
     'Component Assembly',
@@ -109,6 +131,42 @@ const predefinedSkills = {
     'Welding & Fabrication',
     'Lubrication Systems',
     'Safety Lockout/Tagout'
+  ],
+  'injection-molding': [
+    'Injection Molding Setup',
+    'Mold Changing',
+    'Temperature Control',
+    'Pressure Settings',
+    'Cycle Time Optimization',
+    'Material Handling',
+    'Quality Control',
+    'Machine Troubleshooting',
+    'Safety Procedures',
+    'Production Planning'
+  ],
+  'packaging': [
+    'Product Packaging',
+    'Label Application',
+    'Quality Checking',
+    'Carton Assembly',
+    'Shrink Wrapping',
+    'Palletizing',
+    'Inventory Tracking',
+    'Dispatch Coordination',
+    'Documentation',
+    'Safety Protocols'
+  ],
+  'warehouse': [
+    'Inventory Management',
+    'Forklift Operation',
+    'Stock Receiving',
+    'Order Picking',
+    'Storage Organization',
+    'Documentation',
+    'Safety Procedures',
+    'Equipment Maintenance',
+    'Quality Control',
+    'Dispatch Coordination'
   ]
 };
 
@@ -117,6 +175,27 @@ const skillLevelColors = {
   'Intermediate': { bg: '#f59e0b', text: '#ffffff' },
   'Advanced': { bg: '#10b981', text: '#ffffff' },
   'Expert': { bg: '#3b82f6', text: '#ffffff' }
+};
+
+// Generate realistic skill levels based on employee experience
+const generateSkillLevels = (employee, skills) => {
+  const levels = {};
+  const experienceYears = parseInt(employee.experience) || 1;
+  
+  skills.forEach(skill => {
+    // Base skill level on experience with some randomization
+    let level;
+    if (experienceYears >= 4) {
+      level = Math.random() > 0.3 ? 'Expert' : 'Advanced';
+    } else if (experienceYears >= 2) {
+      level = Math.random() > 0.4 ? 'Advanced' : 'Intermediate';
+    } else {
+      level = Math.random() > 0.5 ? 'Intermediate' : 'Beginner';
+    }
+    levels[`${employee.name}-${skill}`] = level;
+  });
+  
+  return levels;
 };
 
 const PieChartSkillIndicator = ({ level, size = 80 }) => {
@@ -131,7 +210,7 @@ const PieChartSkillIndicator = ({ level, size = 80 }) => {
   return (
     <div className="flex flex-col items-center gap-2">
       <div 
-        className="rounded-full flex items-center justify-center font-bold text-sm"
+        className="rounded-full flex items-center justify-center font-bold text-sm transition-transform hover:scale-110"
         style={{ 
           width: size, 
           height: size, 
@@ -152,7 +231,7 @@ const SaveSuccessPopup = ({ isVisible, onClose, matrixName }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+      <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-in fade-in-0 zoom-in-95">
         <div className="text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="h-8 w-8 text-green-600" />
@@ -170,7 +249,101 @@ const SaveSuccessPopup = ({ isVisible, onClose, matrixName }) => {
   );
 };
 
+// New Department Creation Dialog
+const CreateDepartmentDialog = ({ isOpen, onClose, onCreateDepartment }) => {
+  const [departmentName, setDepartmentName] = useState('');
+  const [departmentArea, setDepartmentArea] = useState('');
+
+  const handleCreate = () => {
+    if (departmentName.trim() && departmentArea.trim()) {
+      const newDepartment = {
+        id: departmentName.toLowerCase().replace(/\s+/g, '-'),
+        name: departmentName.trim(),
+        area: departmentArea.trim()
+      };
+      onCreateDepartment(newDepartment);
+      setDepartmentName('');
+      setDepartmentArea('');
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Create New Department
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Department Name
+            </label>
+            <Input
+              value={departmentName}
+              onChange={(e) => setDepartmentName(e.target.value)}
+              placeholder="e.g., Blow Molding"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Area
+            </label>
+            <Select value={departmentArea} onValueChange={setDepartmentArea}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select area" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Production">Production</SelectItem>
+                <SelectItem value="QC">Quality Control</SelectItem>
+                <SelectItem value="Support">Support</SelectItem>
+                <SelectItem value="Logistics">Logistics</SelectItem>
+                <SelectItem value="Administration">Administration</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex gap-2 pt-4">
+            <Button onClick={onClose} variant="outline" className="flex-1">
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreate} 
+              className="flex-1"
+              disabled={!departmentName.trim() || !departmentArea.trim()}
+            >
+              Create Department
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Empty State Component for No Employees
+const NoEmployeesState = ({ departmentName, onAddEmployee }) => {
+  return (
+    <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <Users className="h-8 w-8 text-blue-600" />
+      </div>
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">No Employees Found</h3>
+      <p className="text-gray-600 mb-6">
+        There are no employees in the {departmentName} department yet.
+      </p>
+      <Button onClick={onAddEmployee} className="bg-blue-600 hover:bg-blue-700">
+        <UserPlus className="h-5 w-5 mr-2" />
+        Add Employee
+      </Button>
+    </div>
+  );
+};
+
 const SkillsMatrixManager = () => {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [matrixName, setMatrixName] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -189,6 +362,11 @@ const SkillsMatrixManager = () => {
   const [savedMatrices, setSavedMatrices] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedMatrix, setSelectedMatrix] = useState(null);
+  
+  // New state for department and employee management
+  const [departments, setDepartments] = useState(initialDepartments);
+  const [allEmployees, setAllEmployees] = useState(initialEmployees);
+  const [showCreateDepartment, setShowCreateDepartment] = useState(false);
 
   const steps = [
     { id: 1, title: 'Matrix Setup', desc: 'Name your matrix and select department' },
@@ -212,6 +390,31 @@ const SkillsMatrixManager = () => {
     !skills.includes(skill)
   );
 
+  // Initialize skill levels when employees and skills are selected
+  useEffect(() => {
+    if (selectedEmployees.length > 0 && skills.length > 0) {
+      const newSkillLevels = {};
+      selectedEmployees.forEach(employee => {
+        const employeeSkillLevels = generateSkillLevels(employee, skills);
+        Object.assign(newSkillLevels, employeeSkillLevels);
+      });
+      setSkillLevels(prev => ({ ...prev, ...newSkillLevels }));
+    }
+  }, [selectedEmployees, skills]);
+
+  // Department management functions
+  const handleCreateDepartment = (newDepartment) => {
+    setDepartments(prev => [...prev, newDepartment]);
+    // Initialize empty skills array for new department
+    predefinedSkills[newDepartment.id] = [];
+  };
+
+  // Employee management functions
+  const handleAddEmployee = () => {
+    // Navigate to employees page
+    router.push('/employees');
+  };
+
   const addEmployee = (employee) => {
     setSelectedEmployees([...selectedEmployees, employee]);
   };
@@ -226,7 +429,9 @@ const SkillsMatrixManager = () => {
       id: newId,
       name: 'New Employee',
       department: selectedDepartment,
-      area: departments.find(d => d.id === selectedDepartment)?.area || 'Production'
+      area: departments.find(d => d.id === selectedDepartment)?.area || 'Production',
+      joinDate: new Date().toISOString().split('T')[0],
+      experience: '1 year'
     };
     setSelectedEmployees([...selectedEmployees, newEmployee]);
     setEditingEmployee(newId);
@@ -360,7 +565,7 @@ const SkillsMatrixManager = () => {
 
   if (showFinalTable) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50 flex">
         {/* Sidebar */}
         <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 bg-white shadow-lg overflow-hidden`}>
           <div className="p-6">
@@ -377,8 +582,8 @@ const SkillsMatrixManager = () => {
               {savedMatrices.map((matrix) => (
                 <div
                   key={matrix.id}
-                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                    selectedMatrix?.id === matrix.id ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 hover:bg-gray-100'
+                  className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
+                    selectedMatrix?.id === matrix.id ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 hover:bg-gray-100'
                   }`}
                   onClick={() => loadMatrix(matrix)}
                 >
@@ -415,6 +620,7 @@ const SkillsMatrixManager = () => {
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                   variant="outline"
                   size="sm"
+                  className="hover:bg-orange-50 hover:border-orange-300"
                 >
                   <Menu className="h-4 w-4 mr-2" />
                   Matrices ({savedMatrices.length})
@@ -422,15 +628,18 @@ const SkillsMatrixManager = () => {
                 <Button 
                   onClick={resetMatrix}
                   variant="outline"
+                  className="hover:bg-blue-50 hover:border-blue-300"
                 >
                   ← Back to Matrix Builder
                 </Button>
               </div>
-              <h1 className="text-4xl font-bold text-gray-900 mb-2">Skills Matrix</h1>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-blue-500 bg-clip-text text-transparent mb-2">
+                Skills Matrix
+              </h1>
               <p className="text-xl text-gray-600">View and manage employee skill levels</p>
             </div>
 
-            <Card className="border-0 bg-white/90 backdrop-blur-sm">
+            <Card className="border-0 bg-white/90 backdrop-blur-sm shadow-xl">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -476,7 +685,7 @@ const SkillsMatrixManager = () => {
                       <Button
                         onClick={handleSave}
                         size="lg"
-                        className="h-16 px-10 text-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                        className="h-16 px-10 text-xl bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600"
                       >
                         {saved ? (
                           <>
@@ -499,8 +708,8 @@ const SkillsMatrixManager = () => {
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="bg-slate-800 hover:bg-slate-800">
-                          <TableHead className="text-white font-bold text-xl py-6 px-8 sticky left-0 z-20 bg-slate-800 min-w-[280px]">
+                        <TableRow className="bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600">
+                          <TableHead className="text-white font-bold text-xl py-6 px-8 sticky left-0 z-20 bg-gradient-to-r from-orange-500 to-blue-500 min-w-[280px]">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <User className="h-5 w-5" />
@@ -537,7 +746,7 @@ const SkillsMatrixManager = () => {
                                   ) : (
                                     <span
                                       onClick={() => isEditMode && setEditingSkill(index)}
-                                      className={isEditMode ? "cursor-pointer hover:bg-slate-700 px-2 py-1 rounded" : ""}
+                                      className={isEditMode ? "cursor-pointer hover:bg-orange-600 px-2 py-1 rounded" : ""}
                                     >
                                       {skill}
                                     </span>
@@ -574,12 +783,12 @@ const SkillsMatrixManager = () => {
                             key={`emp-${idx}`}
                             className={`${
                               idx % 2 === 0 ? "bg-white" : "bg-gray-50"
-                            } hover:bg-blue-50 transition-colors`}
+                            } hover:bg-orange-50 transition-colors duration-200`}
                           >
                             <TableCell className="font-semibold text-lg py-8 px-8 sticky left-0 z-10 bg-inherit border-r-2 border-gray-200">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
-                                  <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                                  <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-blue-500 rounded-xl flex items-center justify-center">
                                     <span className="text-white font-bold text-lg">
                                       {emp.name
                                         .split(" ")
@@ -609,6 +818,7 @@ const SkillsMatrixManager = () => {
                                       </div>
                                     )}
                                     <div className="text-lg text-gray-500">ID: {emp.id}</div>
+                                    <div className="text-sm text-gray-400">{emp.experience} experience</div>
                                   </div>
                                 </div>
                                 {isEditMode && (
@@ -673,10 +883,12 @@ const SkillsMatrixManager = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50 p-6">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Skills Matrix Builder</h1>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-blue-500 bg-clip-text text-transparent mb-2">
+            Skills Matrix Builder
+          </h1>
           <p className="text-xl text-gray-600">Create and manage employee skill matrices</p>
         </div>
 
@@ -685,15 +897,15 @@ const SkillsMatrixManager = () => {
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
                 <div className={`
-                  w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm
-                  ${currentStep >= step.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}
+                  w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-200
+                  ${currentStep >= step.id ? 'bg-gradient-to-r from-orange-500 to-blue-500 text-white shadow-lg' : 'bg-gray-200 text-gray-500'}
                 `}>
                   {step.id}
                 </div>
                 {index < steps.length - 1 && (
                   <div className={`
-                    w-24 h-1 mx-4
-                    ${currentStep > step.id ? 'bg-blue-600' : 'bg-gray-200'}
+                    w-24 h-1 mx-4 transition-all duration-200
+                    ${currentStep > step.id ? 'bg-gradient-to-r from-orange-500 to-blue-500' : 'bg-gray-200'}
                   `} />
                 )}
               </div>
@@ -707,7 +919,7 @@ const SkillsMatrixManager = () => {
           </div>
         </div>
 
-        <Card className="border-0 bg-white/90 backdrop-blur-sm mb-8">
+        <Card className="border-0 bg-white/90 backdrop-blur-sm mb-8 shadow-xl">
           <CardContent className="p-8">
             {currentStep === 1 && (
               <div className="space-y-6">
@@ -723,9 +935,20 @@ const SkillsMatrixManager = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Department
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Department
+                    </label>
+                    <Button
+                      onClick={() => setShowCreateDepartment(true)}
+                      size="sm"
+                      variant="outline"
+                      className="text-xs hover:bg-orange-50 hover:border-orange-300"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      New Department
+                    </Button>
+                  </div>
                   <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select department" />
@@ -747,112 +970,141 @@ const SkillsMatrixManager = () => {
 
             {currentStep === 2 && (
               <div className="space-y-6">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                  <h3 className="font-semibold text-orange-900 mb-2 flex items-center gap-2">
                     <User className="h-5 w-5" />
                     Table Rows: Employees
                   </h3>
-                  <p className="text-blue-800">
+                  <p className="text-orange-800">
                     Each employee you select will become a row in your skills matrix table.
                   </p>
                 </div>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <h3 className="text-lg font-semibold">Available Employees</h3>
-                      <Badge variant="secondary">{availableEmployees.length}</Badge>
-                    </div>
-                    <div className="mb-4">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                        <Input
-                          value={employeeFilter}
-                          onChange={(e) => setEmployeeFilter(e.target.value)}
-                          placeholder="Search employees..."
-                          className="pl-10"
-                        />
+                {availableEmployees.length === 0 && filteredEmployees.length === 0 ? (
+                  <NoEmployeesState 
+                    departmentName={departments.find(d => d.id === selectedDepartment)?.name || 'selected'}
+                    onAddEmployee={handleAddEmployee}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <h3 className="text-lg font-semibold">Available Employees</h3>
+                        <Badge variant="secondary">{availableEmployees.length}</Badge>
                       </div>
-                    </div>
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {availableEmployees.map((emp) => (
-                        <div
-                          key={emp.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                              <span className="text-white font-bold text-xs">
-                                {emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                              </span>
-                            </div>
-                            <div>
-                              <div className="font-medium">{emp.name}</div>
-                              <div className="text-sm text-gray-500">{emp.id}</div>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            onClick={() => addEmployee(emp)}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
+                      <div className="mb-4">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            value={employeeFilter}
+                            onChange={(e) => setEmployeeFilter(e.target.value)}
+                            placeholder="Search employees..."
+                            className="pl-10"
+                          />
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2 mb-4">
-                      <h3 className="text-lg font-semibold">Selected Employees</h3>
-                      <Badge variant="default">{selectedEmployees.length}</Badge>
-                    </div>
-                    <div className="space-y-2 max-h-80 overflow-y-auto">
-                      {selectedEmployees.map((emp) => (
-                        <div
-                          key={emp.id}
-                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                              <span className="text-white font-bold text-xs">
-                                {emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                              </span>
-                            </div>
-                            <div>
-                              <div className="font-medium">{emp.name}</div>
-                              <div className="text-sm text-gray-500">{emp.id}</div>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => removeEmployee(emp.id)}
+                      </div>
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {availableEmployees.map((emp) => (
+                          <div
+                            key={emp.id}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                           >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                      {selectedEmployees.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          No employees selected yet
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-blue-500 rounded-lg flex items-center justify-center">
+                                <span className="text-white font-bold text-xs">
+                                  {emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                                </span>
+                              </div>
+                              <div>
+                                <div className="font-medium">{emp.name}</div>
+                                <div className="text-sm text-gray-500">{emp.id} • {emp.experience}</div>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => addEmployee(emp)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        {availableEmployees.length === 0 && filteredEmployees.length > 0 && (
+                          <div className="text-center py-4 text-gray-500">
+                            All employees from this department are already selected
+                          </div>
+                        )}
+                      </div>
+                      {filteredEmployees.length > 0 && (
+                        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="flex items-center gap-2 text-blue-800">
+                            <AlertCircle className="h-4 w-4" />
+                            <span className="text-sm">
+                              Need more employees? 
+                              <Button 
+                                variant="link" 
+                                className="p-0 ml-1 h-auto text-blue-600 hover:text-blue-800"
+                                onClick={handleAddEmployee}
+                              >
+                                Add new employees
+                              </Button>
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>
+
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <h3 className="text-lg font-semibold">Selected Employees</h3>
+                        <Badge variant="default">{selectedEmployees.length}</Badge>
+                      </div>
+                      <div className="space-y-2 max-h-80 overflow-y-auto">
+                        {selectedEmployees.map((emp) => (
+                          <div
+                            key={emp.id}
+                            className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-blue-500 rounded-lg flex items-center justify-center">
+                                <span className="text-white font-bold text-xs">
+                                  {emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                                </span>
+                              </div>
+                              <div>
+                                <div className="font-medium">{emp.name}</div>
+                                <div className="text-sm text-gray-500">{emp.id} • {emp.experience}</div>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => removeEmployee(emp.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        {selectedEmployees.length === 0 && (
+                          <div className="text-center py-8 text-gray-500">
+                            No employees selected yet
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
             {currentStep === 3 && (
               <div className="space-y-6">
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
                     <Cog className="h-5 w-5" />
                     Table Columns: Skills/Machines
                   </h3>
-                  <p className="text-green-800">
+                  <p className="text-blue-800">
                     Each skill you add will become a column in your skills matrix table.
                   </p>
                 </div>
@@ -911,12 +1163,12 @@ const SkillsMatrixManager = () => {
                           placeholder="Enter custom skill name"
                           onKeyPress={(e) => e.key === 'Enter' && addSkill()}
                         />
-                        <Button onClick={addSkill} className="w-full">
+                        <Button onClick={addSkill} className="w-full bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600">
                           <Plus className="h-4 w-4 mr-2" />
                           Add Custom Skill
                         </Button>
                       </div>
-                      <div className="bg-blue-50 p-3 rounded-lg">
+                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                         <p className="text-sm text-blue-800">
                           <strong>Tip:</strong> Use the predefined skills from the left panel or create your own custom skills.
                         </p>
@@ -933,10 +1185,10 @@ const SkillsMatrixManager = () => {
                       {skills.map((skill, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between p-3 bg-green-50 rounded-lg"
+                          className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200"
                         >
                           <div className="flex items-center gap-3">
-                            <Cog className="h-5 w-5 text-green-600" />
+                            <Cog className="h-5 w-5 text-blue-600" />
                             <span className="font-medium text-sm">{skill}</span>
                           </div>
                           <Button
@@ -961,7 +1213,7 @@ const SkillsMatrixManager = () => {
 
             {currentStep === 4 && (
               <div className="space-y-6">
-                <div className="bg-purple-50 p-4 rounded-lg">
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                   <h3 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
                     <FileText className="h-5 w-5" />
                     Matrix Summary
@@ -972,7 +1224,7 @@ const SkillsMatrixManager = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card>
+                  <Card className="border border-orange-200">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Building className="h-5 w-5" />
@@ -995,7 +1247,7 @@ const SkillsMatrixManager = () => {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="border border-blue-200">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Users className="h-5 w-5" />
@@ -1016,7 +1268,7 @@ const SkillsMatrixManager = () => {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="border border-green-200">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Cog className="h-5 w-5" />
@@ -1042,7 +1294,7 @@ const SkillsMatrixManager = () => {
                   <Button
                     onClick={() => setShowFinalTable(true)}
                     size="lg"
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg"
+                    className="bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600 text-white px-8 py-4 text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                   >
                     <FileText className="h-6 w-6 mr-2" />
                     Create Skills Matrix Table
@@ -1059,7 +1311,7 @@ const SkillsMatrixManager = () => {
             disabled={currentStep === 1}
             variant="outline"
             size="lg"
-            className="px-8 py-4"
+            className="px-8 py-4 hover:bg-gray-50"
           >
             Previous
           </Button>
@@ -1067,13 +1319,20 @@ const SkillsMatrixManager = () => {
             onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
             disabled={currentStep === 4 || !canProceedToNext()}
             size="lg"
-            className="px-8 py-4"
+            className="px-8 py-4 bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600"
           >
             Next
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
         </div>
       </div>
+
+      {/* Create Department Dialog */}
+      <CreateDepartmentDialog
+        isOpen={showCreateDepartment}
+        onClose={() => setShowCreateDepartment(false)}
+        onCreateDepartment={handleCreateDepartment}
+      />
     </div>
   );
 };

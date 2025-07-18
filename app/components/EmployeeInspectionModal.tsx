@@ -1,12 +1,14 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { X, User, Award, TrendingUp, Calendar, Building2, Star, Target, Zap } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { X, User, Award, TrendingUp, Calendar, Building2, Star, Target, Zap, Activity, Briefcase } from "lucide-react"
 import { useTheme } from "./ThemeProvider"
 import Button from "./Button"
 import Chip from "./Chip"
 import SkillIndicator from "./SkillIndicator"
 import type { Employee } from "../types"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts"
 
 interface EmployeeInspectionModalProps {
   employee: Employee | null
@@ -15,6 +17,7 @@ interface EmployeeInspectionModalProps {
 }
 
 export default function EmployeeInspectionModal({ employee, isOpen, onClose }: EmployeeInspectionModalProps) {
+  const router = useRouter()
   const { isDark } = useTheme()
 
   if (!employee) return null
@@ -56,6 +59,65 @@ export default function EmployeeInspectionModal({ employee, isOpen, onClose }: E
     return distribution
   }
 
+  // Enhanced bar chart data with better colors and animations
+  const skillData = Object.entries(employee.skills)
+    .map(([skill, level]) => ({
+      skill: skill.length > 15 ? skill.substring(0, 15) + "..." : skill,
+      fullSkill: skill,
+      level: level === "Advanced" ? 4 : level === "High" ? 3 : level === "Medium" ? 2 : 1,
+      levelLabel: level,
+      color:
+        level === "Advanced" ? "#10b981" : level === "High" ? "#3b82f6" : level === "Medium" ? "#f59e0b" : "#ef4444",
+    }))
+    .sort((a, b) => b.level - a.level)
+
+  const getBarGradient = (level: number) => {
+    switch (level) {
+      case 4:
+        return "url(#advancedGradient)"
+      case 3:
+        return "url(#highGradient)"
+      case 2:
+        return "url(#mediumGradient)"
+      case 1:
+        return "url(#lowGradient)"
+      default:
+        return "#6b7280"
+    }
+  }
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload
+      return (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`p-4 rounded-xl shadow-2xl border backdrop-blur-sm ${
+            isDark ? "bg-gray-800/95 border-gray-600 text-white" : "bg-white/95 border-gray-200 text-gray-900"
+          }`}
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-4 h-4 rounded-full" style={{ backgroundColor: data.color }} />
+            <p className="font-bold text-xl">{data.fullSkill}</p>
+          </div>
+          <div className="space-y-1">
+            <p className={`text-base font-medium ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+              Skill Level:{" "}
+              <span className="font-bold" style={{ color: data.color }}>
+                {data.levelLabel}
+              </span>
+            </p>
+            <p className={`text-base ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              Score: <span className="font-semibold">{data.level}/4</span>
+            </p>
+          </div>
+        </motion.div>
+      )
+    }
+    return null
+  }
+
   const totalSkills = Object.keys(employee.skills).length
   const totalScore = calculateScore(employee.skills)
   const averageLevel = calculateAverageSkillLevel(employee.skills)
@@ -68,252 +130,374 @@ export default function EmployeeInspectionModal({ employee, isOpen, onClose }: E
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
           onClick={onClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.85, y: 50 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className={`w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl ${
-              isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"
+            exit={{ opacity: 0, scale: 0.85, y: 50 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className={`w-full max-w-7xl max-h-[95vh] overflow-hidden rounded-3xl shadow-2xl border-2 ${
+              isDark
+                ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border-gray-700/50"
+                : "bg-gradient-to-br from-white via-gray-50 to-white border-gray-200/50"
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
+            {/* Enhanced Header with Glassmorphism */}
             <div
-              className={`px-6 py-4 border-b ${
+              className={`px-8 py-6 border-b backdrop-blur-xl ${
                 isDark
-                  ? "border-gray-700 bg-gradient-to-r from-gray-800 to-gray-750"
-                  : "border-gray-200 bg-gradient-to-r from-gray-50 to-blue-50"
+                  ? "border-gray-700/50 bg-gradient-to-r from-gray-800/80 to-gray-700/80"
+                  : "border-gray-200/50 bg-gradient-to-r from-white/80 to-gray-50/80"
               }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-lg">
-                      {employee.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </span>
-                  </div>
-                  <div>
-                    <h2 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{employee.name}</h2>
-                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                      Employee ID: {employee.id} • Individual Skills Inspection
-                    </p>
+                <div className="flex items-center gap-6">
+                  <motion.div
+                    className="relative flex-shrink-0"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-2xl">
+                      <span className="text-white font-bold text-2xl">
+                        {employee.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </span>
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-white dark:border-gray-800"></div>
+                  </motion.div>
+                  <div className="flex flex-col justify-center">
+                    <motion.h2
+                      className={`text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight ${
+                        isDark ? "text-white" : ""
+                      }`}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {employee.name}
+                    </motion.h2>
+                    <motion.p
+                      className={`text-2xl ${isDark ? "text-gray-300" : "text-gray-600"} font-medium mt-1`}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      Manufacturing Specialist
+                    </motion.p>
                   </div>
                 </div>
-                <Button onClick={onClose} variant="ghost" size="sm" className="p-2">
-                  <X className="h-6 w-6" />
-                </Button>
+                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="flex-shrink-0">
+                  <Button
+                    onClick={onClose}
+                    variant="ghost"
+                    size="sm"
+                    className={`p-3 rounded-xl ${
+                      isDark
+                        ? "hover:bg-gray-700/50 text-gray-300 hover:text-white"
+                        : "hover:bg-gray-100/50 text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    <X className="h-6 w-6" />
+                  </Button>
+                </motion.div>
               </div>
             </div>
 
-            {/* Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-              <div className="space-y-8">
-                {/* Stats Overview */}
+            {/* Enhanced Content */}
+            <div className="p-8 overflow-y-auto max-h-[calc(95vh-140px)] custom-scrollbar">
+              <div className="space-y-10">
+                {/* Enhanced Employee Info */}
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="grid grid-cols-1 md:grid-cols-4 gap-4"
-                >
-                  <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-4 text-white">
-                    <div className="flex items-center gap-3">
-                      <Award className="h-8 w-8" />
-                      <div>
-                        <h3 className="text-2xl font-bold">{totalSkills}</h3>
-                        <p className="text-blue-100 text-sm">Total Skills</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-4 text-white">
-                    <div className="flex items-center gap-3">
-                      <Zap className="h-8 w-8" />
-                      <div>
-                        <h3 className="text-2xl font-bold">{totalScore}</h3>
-                        <p className="text-purple-100 text-sm">Total Score</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl p-4 text-white">
-                    <div className="flex items-center gap-3">
-                      <TrendingUp className="h-8 w-8" />
-                      <div>
-                        <h3 className="text-2xl font-bold">{averageLevel}</h3>
-                        <p className="text-emerald-100 text-sm">Avg Level</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-r from-orange-600 to-red-600 rounded-xl p-4 text-white">
-                    <div className="flex items-center gap-3">
-                      <Star className="h-8 w-8" />
-                      <div>
-                        <h3 className="text-2xl font-bold">{skillDistribution.Advanced}</h3>
-                        <p className="text-orange-100 text-sm">Advanced Skills</p>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Employee Info */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className={`p-6 rounded-xl border ${
-                    isDark ? "bg-gray-700/50 border-gray-600" : "bg-gray-50 border-gray-200"
+                  className={`p-8 rounded-2xl backdrop-blur-xl border shadow-xl ${
+                    isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white/70 border-gray-200/50"
                   }`}
                 >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
-                      <User className="h-5 w-5 text-white" />
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <User className="h-6 w-6 text-white" />
                     </div>
-                    <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                    <h3 className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                       Employee Information
                     </h3>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-blue-600" />
-                      <span className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                        Department: <strong>Manufacturing</strong>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-green-600" />
-                      <span className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                        Active Since: <strong>Jan 15, 2023</strong>
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Target className="h-4 w-4 text-purple-600" />
-                      <span className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                        Performance: <strong>Excellent</strong>
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Individual Skills Breakdown */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className={`p-6 rounded-xl border ${
-                    isDark ? "bg-gray-700/50 border-gray-600" : "bg-gray-50 border-gray-200"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-8 h-8 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-lg flex items-center justify-center">
-                      <Award className="h-5 w-5 text-white" />
-                    </div>
-                    <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                      Individual Machine Skills ({totalSkills} total)
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Object.entries(employee.skills).map(([skill, level], index) => (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[
+                      { icon: Building2, label: "Department", value: "Manufacturing", color: "text-blue-600" },
+                      { icon: Calendar, label: "Active Since", value: "Jan 15, 2023", color: "text-green-600" },
+                      { icon: Target, label: "Performance", value: "Excellent", color: "text-purple-600" },
+                    ].map((info, index) => (
                       <motion.div
-                        key={skill}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.6 + index * 0.05 }}
-                        className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-lg ${
-                          isDark
-                            ? "bg-gray-600/50 border-gray-500 hover:bg-gray-600/70"
-                            : "bg-white border-gray-200 hover:bg-gray-50"
+                        key={info.label}
+                        className={`flex items-center gap-3 p-4 rounded-xl ${
+                          isDark ? "bg-gray-700/30" : "bg-gray-50/50"
                         }`}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 + index * 0.1 }}
+                        whileHover={{ scale: 1.02 }}
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="flex-shrink-0">
-                            <SkillIndicator level={level} size={56} showTooltip={true} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className={`font-semibold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
-                              {skill}
-                            </h4>
-                            <div className="mt-2">
-                              <Chip label={level} className={getSkillColor(level)} />
-                            </div>
-                            <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                              {level === "Advanced" && "Expert level - Can train others"}
-                              {level === "High" && "Proficient - Works independently"}
-                              {level === "Medium" && "Competent - Occasional guidance needed"}
-                              {level === "Low" && "Basic - Requires supervision"}
-                            </p>
-                          </div>
+                        <info.icon className={`h-5 w-5 ${info.color} flex-shrink-0`} />
+                        <div className="flex flex-col justify-center">
+                          <p className={`text-base font-medium ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                            {info.label}
+                          </p>
+                          <p className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"} mt-1`}>
+                            {info.value}
+                          </p>
                         </div>
                       </motion.div>
                     ))}
                   </div>
                 </motion.div>
 
-                {/* Performance Insights */}
+                {/* Enhanced Stats Overview with Glassmorphism Cards */}
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 }}
-                  className={`p-6 rounded-xl border-2 ${
-                    isDark
-                      ? "bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-blue-500/30"
-                      : "bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200"
+                  transition={{ delay: 0.2 }}
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                >
+                  {[
+                    {
+                      icon: Award,
+                      value: totalSkills,
+                      label: "Total Skills",
+                      gradient: "from-blue-500 to-cyan-500",
+                      bgGradient: "from-blue-500/10 to-cyan-500/10",
+                      delay: 0.1,
+                    },
+                    {
+                      icon: Zap,
+                      value: totalScore,
+                      label: "Total Score",
+                      gradient: "from-purple-500 to-pink-500",
+                      bgGradient: "from-purple-500/10 to-pink-500/10",
+                      delay: 0.2,
+                    },
+                    {
+                      icon: TrendingUp,
+                      value: averageLevel,
+                      label: "Avg Level",
+                      gradient: "from-emerald-500 to-teal-500",
+                      bgGradient: "from-emerald-500/10 to-teal-500/10",
+                      delay: 0.3,
+                    },
+                    {
+                      icon: Star,
+                      value: skillDistribution.Advanced,
+                      label: "Advanced Skills",
+                      gradient: "from-orange-500 to-red-500",
+                      bgGradient: "from-orange-500/10 to-red-500/10",
+                      delay: 0.4,
+                    },
+                  ].map((stat, index) => (
+                    <motion.div
+                      key={stat.label}
+                      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: stat.delay, type: "spring", stiffness: 300 }}
+                      whileHover={{ scale: 1.05, y: -5 }}
+                      className={`relative p-6 rounded-2xl backdrop-blur-xl border shadow-xl ${
+                        isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white/70 border-gray-200/50"
+                      }`}
+                    >
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} rounded-2xl opacity-50`}
+                      ></div>
+                      <div className="relative flex items-center gap-4">
+                        <div
+                          className={`w-14 h-14 bg-gradient-to-br ${stat.gradient} rounded-xl flex items-center justify-center shadow-lg flex-shrink-0`}
+                        >
+                          <stat.icon className="h-7 w-7 text-white" />
+                        </div>
+                        <div className="flex flex-col justify-center">
+                          <motion.h3
+                            className={`text-4xl font-bold ${isDark ? "text-white" : "text-gray-900"} leading-tight`}
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: stat.delay + 0.2, type: "spring", stiffness: 500 }}
+                          >
+                            {stat.value}
+                          </motion.h3>
+                          <p className={`text-base font-medium ${isDark ? "text-gray-300" : "text-gray-600"} mt-1`}>
+                            {stat.label}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* Enhanced Skills Bar Chart */}
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className={`p-8 rounded-2xl backdrop-blur-xl border shadow-xl ${
+                    isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white/70 border-gray-200/50"
                   }`}
                 >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg flex items-center justify-center">
-                      <Star className="h-5 w-5 text-white" />
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-10 h-10 bg-gradient-to-br from-cyan-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <Activity className="h-6 w-6 text-white" />
                     </div>
-                    <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                      Performance Insights
+                    <h3 className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                      Skills Performance
                     </h3>
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className={`font-medium mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}>Strengths</h4>
-                      <ul className="space-y-2">
-                        {Object.entries(employee.skills)
-                          .filter(([, level]) => level === "Advanced" || level === "High")
-                          .slice(0, 3)
-                          .map(([skill, level]) => (
-                            <li key={skill} className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                                {skill} ({level})
-                              </span>
-                            </li>
+                  <div className="h-[500px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={skillData}
+                        margin={{
+                          top: 30,
+                          right: 30,
+                          left: 20,
+                          bottom: 80,
+                        }}
+                        barCategoryGap="15%"
+                      >
+                        <defs>
+                          <linearGradient id="advancedGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
+                            <stop offset="100%" stopColor="#059669" stopOpacity={0.8} />
+                          </linearGradient>
+                          <linearGradient id="highGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#3b82f6" stopOpacity={1} />
+                            <stop offset="100%" stopColor="#2563eb" stopOpacity={0.8} />
+                          </linearGradient>
+                          <linearGradient id="mediumGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#f59e0b" stopOpacity={1} />
+                            <stop offset="100%" stopColor="#d97706" stopOpacity={0.8} />
+                          </linearGradient>
+                          <linearGradient id="lowGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#ef4444" stopOpacity={1} />
+                            <stop offset="100%" stopColor="#dc2626" stopOpacity={0.8} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke={isDark ? "#374151" : "#e5e7eb"}
+                          opacity={0.3}
+                          vertical={false}
+                        />
+                        <XAxis
+                          dataKey="skill"
+                          stroke={isDark ? "#9ca3af" : "#6b7280"}
+                          fontSize={15}
+                          fontWeight={500}
+                          angle={-45}
+                          textAnchor="end"
+                          height={100}
+                          interval={0}
+                          tick={{ fill: isDark ? "#d1d5db" : "#374151" }}
+                        />
+                        <YAxis
+                          stroke={isDark ? "#9ca3af" : "#6b7280"}
+                          fontSize={15}
+                          fontWeight={500}
+                          domain={[0, 4]}
+                          ticks={[1, 2, 3, 4]}
+                          tick={{ fill: isDark ? "#d1d5db" : "#374151" }}
+                          tickFormatter={(value) => {
+                            const labels = { 1: "Advanced", 2: "High", 3: "Medium", 4: "Low" }
+                            return labels[value as keyof typeof labels] || value
+                          }}
+                        />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: "transparent" }} />
+                        <Bar
+                          dataKey="level"
+                          radius={[8, 8, 0, 0]}
+                          stroke={isDark ? "#374151" : "#e5e7eb"}
+                          strokeWidth={1}
+                        >
+                          {skillData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={getBarGradient(entry.level)} />
                           ))}
-                      </ul>
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {/* Enhanced Legend */}
+                  <div className="flex justify-center mt-6">
+                    <div className="flex flex-wrap justify-center items-center gap-6 p-4 rounded-xl bg-gradient-to-r from-gray-50/50 to-gray-100/50 dark:from-gray-700/30 dark:to-gray-600/30">
+                      {[
+                        { level: "Advanced", color: "#10b981", score: "4" },
+                        { level: "High", color: "#3b82f6", score: "3" },
+                        { level: "Medium", color: "#f59e0b", score: "2" },
+                        { level: "Low", color: "#ef4444", score: "1" },
+                      ].map((item) => (
+                        <div key={item.level} className="flex items-center gap-2">
+                          <div
+                            className="w-4 h-4 rounded-full shadow-sm flex-shrink-0"
+                            style={{ backgroundColor: item.color }}
+                          ></div>
+                          <span className={`text-base font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                            {item.level} ({item.score})
+                          </span>
+                        </div>
+                      ))}
                     </div>
+                  </div>
+                </motion.div>
 
-                    <div>
-                      <h4 className={`font-medium mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                        Development Areas
-                      </h4>
-                      <ul className="space-y-2">
-                        {Object.entries(employee.skills)
-                          .filter(([, level]) => level === "Low" || level === "Medium")
-                          .slice(0, 3)
-                          .map(([skill, level]) => (
-                            <li key={skill} className="flex items-center gap-2">
-                              <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                              <span className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                                {skill} ({level})
-                              </span>
-                            </li>
-                          ))}
-                      </ul>
+                {/* Enhanced Individual Skills */}
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className={`p-8 rounded-2xl backdrop-blur-xl border shadow-xl ${
+                    isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white/70 border-gray-200/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                      <Briefcase className="h-6 w-6 text-white" />
                     </div>
+                    <h3 className={`text-3xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                       Skills ({totalSkills} total)
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Object.entries(employee.skills).map(([skill, level], index) => (
+                      <motion.div
+                        key={skill}
+                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ delay: 0.6 + index * 0.05, type: "spring", stiffness: 300 }}
+                        whileHover={{ scale: 1.03, y: -2 }}
+                        onClick={() => router.push(`/skills-mapping?skill=${encodeURIComponent(skill)}`)}
+                        className={`cursor-pointer p-6 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
+                          isDark
+                            ? "bg-gray-700/40 border-gray-600/50 hover:bg-gray-700/60 hover:border-gray-500"
+                            : "bg-white/60 border-gray-200/50 hover:bg-white/80 hover:border-gray-300"
+                        } shadow-lg hover:shadow-xl`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="flex-shrink-0">
+                            <SkillIndicator level={level} size={64} showTooltip={true} />
+                          </div>
+                          <div className="flex-1 min-w-0 flex flex-col justify-center">
+                            <h4
+                              className={`font-bold text-xl ${isDark ? "text-white" : "text-gray-900"} leading-tight`}
+                            >
+                              {skill}
+                            </h4>
+                            <div className="mt-2">
+                              <Chip label={level} className={`${getSkillColor(level)} text-base px-3 py-1`} />
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
                 </motion.div>
               </div>

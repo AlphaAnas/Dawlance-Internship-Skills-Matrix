@@ -8,8 +8,9 @@ import { Eye, EyeOff, User, ArrowRight } from "lucide-react"
 import TextField from "../components/TextField"
 import Button from "../components/Button"
 import { useTheme } from "../components/ThemeProvider"
+import AnimatedBackground from "../components/AnimatedBackground"
 
-export default function LoginPage() {
+export default function EnhancedLoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -30,21 +31,24 @@ export default function LoginPage() {
 
   return (
     <div
-      className={`min-h-screen flex items-center justify-center px-4 ${
+      className={`min-h-screen flex items-center justify-center px-4 relative ${
         isDark
           ? "bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900"
           : "bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50"
       }`}
     >
+      {/* Enhanced Animated Background */}
+      <AnimatedBackground />
+
       <motion.div
         initial={{ opacity: 0, y: 50, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className={`max-w-md w-full space-y-8 p-8 rounded-2xl shadow-2xl backdrop-blur-sm ${
-          isDark ? "bg-gray-800/80 border border-gray-700/50" : "bg-white/80 border border-white/50"
+        className={`max-w-md w-full space-y-8 p-8 rounded-2xl shadow-2xl backdrop-blur-md relative z-10 ${
+          isDark ? "bg-gray-800/95 border border-gray-700/60" : "bg-white/95 border border-white/60"
         }`}
       >
-        {/* Logo and Header */}
+        {/* Logo and Header with enhanced colors */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -55,14 +59,18 @@ export default function LoginPage() {
             whileHover={{ scale: 1.05, rotate: 5 }}
             transition={{ type: "spring", stiffness: 300 }}
             className={`mx-auto h-16 w-16 rounded-xl flex items-center justify-center ${
-              isDark ? "bg-gradient-to-br from-blue-500 to-purple-600" : "bg-gradient-to-br from-blue-600 to-purple-700"
-            } shadow-lg`}
+              isDark
+                ? "bg-gradient-to-br from-orange-500 via-red-500 to-pink-500"
+                : "bg-gradient-to-br from-orange-600 via-red-600 to-pink-600"
+            } shadow-lg shadow-orange-500/25`}
           >
             <User className="h-8 w-8 text-white" />
           </motion.div>
           <h2
             className={`mt-6 text-3xl font-bold ${
-              isDark ? "bg-gradient-to-r from-blue-400 to-purple-400" : "bg-gradient-to-r from-blue-600 to-purple-600"
+              isDark
+                ? "bg-gradient-to-r from-orange-400 via-red-400 to-pink-400"
+                : "bg-gradient-to-r from-orange-600 via-red-600 to-pink-600"
             } bg-clip-text text-transparent`}
           >
             Welcome Back
@@ -115,7 +123,7 @@ export default function LoginPage() {
                 whileTap={{ scale: 0.9 }}
                 type="button"
                 className={`absolute right-3 top-9 ${
-                  isDark ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-700"
+                  isDark ? "text-gray-400 hover:text-orange-400" : "text-gray-500 hover:text-orange-600"
                 } transition-colors`}
                 onClick={() => setShowPassword(!showPassword)}
               >
@@ -133,7 +141,7 @@ export default function LoginPage() {
               type="submit"
               variant="primary"
               size="lg"
-              className="w-full group relative overflow-hidden"
+              className="w-full group relative overflow-hidden bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
               disabled={isLoading}
             >
               <motion.div

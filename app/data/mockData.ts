@@ -52,6 +52,7 @@ export const mockEmployees: Employee[] = [
       "CNC Machine": "High",
       "Welding Robot": "Medium",
       "Assembly Line": "Advanced",
+      "Molding": "Advanced",
     },
   },
   {

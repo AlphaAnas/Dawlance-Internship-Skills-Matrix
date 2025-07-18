@@ -1,5 +1,4 @@
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<
@@ -9,7 +8,8 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      // ⬇️ Increased default min height + added visible border
+      "rounded-lg border bg-card text-card-foreground shadow-sm min-h-[160px] border-black", 
       className
     )}
     {...props}
@@ -35,8 +35,9 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
+    // ⬇️ Increased font size from text-3xl → text-4xl
     className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
+      "text-4xl font-semibold leading-none tracking-tight", 
       className
     )}
     {...props}
@@ -50,7 +51,8 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
+    // ⬇️ Increased font size from text-sm → text-base
+    className={cn("text-base text-muted-foreground", className)}
     {...props}
   />
 ))
@@ -60,7 +62,12 @@ const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+  <div 
+    ref={ref} 
+    // ⬇️ Added default text size (text-lg)
+    className={cn("p-6 pt-0 text-lg", className)} 
+    {...props} 
+  />
 ))
 CardContent.displayName = "CardContent"
 
