@@ -18,14 +18,15 @@ interface workHistory{
         gender: string,
         departmentId: number,
         skills: string
-
-
 }
 
+interface workHistoryResponse {
+  data: workHistory[]
+}
 
 interface workHistoryInspectionModalProps {
   employee : any
-  workHistory: workHistory | null
+  workHistory: workHistoryResponse | null
   isOpen: boolean
   onClose: () => void
 }
@@ -37,6 +38,53 @@ export default function workHistoryInspectionModal({ employee, workHistory, isOp
 
   // Log the received work history data
   console.log("Modal received workHistory:", workHistory)
+
+
+  const navigateToSkillsMatrix = async (skill: string) => {
+    try {
+      setLoading(true)
+      
+      // Get the matrix ID for this skill and employee
+      const matrixId = await matrix_id(skill, employeeData.displayId)
+      
+      if (matrixId) {
+        // Close the modal first
+        onClose()
+        
+        // Navigate to skills-mapping page with the matrix ID
+        router.push(`/skills-mapping?selectedMatrix=${matrixId}&skill=${encodeURIComponent(skill)}`)
+      } else {
+        console.error("No matrix found for this skill and employee")
+        // Fallback navigation to skills-mapping page with just the skill
+        onClose()
+        router.push(`/skills-mapping?skill=${encodeURIComponent(skill)}`)
+      }
+    } catch (error) {
+      console.error("Error navigating to skills matrix:", error)
+      // Fallback navigation
+      onClose()
+      router.push(`/skills-mapping?skill=${encodeURIComponent(skill)}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const matrix_id = async (skill_name: string, employee_id: number) => {
+  try {
+    const response = await fetch(
+      `/api/all/skillsMatrix/fetch_using_employee?employee_id=${employee_id}&skill_name=${skill_name}`
+    );
+    if (!response.ok) throw new Error("Failed to fetch matrix ID");
+
+    const data = await response.json();
+    return data?.id || null;  // assuming `id` is returned
+  } catch (error) {
+    console.error("Error fetching matrix ID:", error);
+    return null;
+  }
+};
+
+
 
   // Early return after all hooks to follow Rules of Hooks
   if (!workHistory || !workHistory.data || !workHistory.data[0]) return null
@@ -515,12 +563,12 @@ export default function workHistoryInspectionModal({ employee, workHistory, isOp
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         transition={{ delay: 0.6 + index * 0.05, type: "spring", stiffness: 300 }}
                         whileHover={{ scale: 1.03, y: -2 }}
-                        onClick={() => router.push(`/skills-mapping?skill=${encodeURIComponent(skill)}`)}
+                        onClick={() => navigateToSkillsMatrix(skill)}
                         className={`cursor-pointer p-6 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
                           isDark
                             ? "bg-gray-700/40 border-gray-600/50 hover:bg-gray-700/60 hover:border-gray-500"
                             : "bg-white/60 border-gray-200/50 hover:bg-white/80 hover:border-gray-300"
-                        } shadow-lg hover:shadow-xl`}
+                        } shadow-lg hover:shadow-xl ${loading ? 'opacity-50 pointer-events-none' : ''}`}
                       >
                         <div className="flex items-center gap-4">
                           <div className="flex-shrink-0">

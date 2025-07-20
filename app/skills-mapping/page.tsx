@@ -24,7 +24,7 @@ import {
   getMatrixById,
   type SkillsMatrix,
 } from "../data/skillMatrices";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const skillLevelColors = {
   None: "bg-gray-100 text-gray-600 border-gray-200",
@@ -233,6 +233,7 @@ const TableCell = ({
 
 export default function EnhancedSkillsMapping() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedMatrix, setSelectedMatrix] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
@@ -247,6 +248,20 @@ export default function EnhancedSkillsMapping() {
   const [apiLoading, setApiLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [departments, setDepartments] = useState<any[]>([]);
+
+  // Handle URL parameters for auto-selecting matrix and skill
+  useEffect(() => {
+    const matrixIdFromUrl = searchParams.get('selectedMatrix');
+    const skillFromUrl = searchParams.get('skill');
+    
+    if (matrixIdFromUrl) {
+      setSelectedMatrix(matrixIdFromUrl);
+    }
+    
+    if (skillFromUrl) {
+      setSearchTerm(skillFromUrl);
+    }
+  }, [searchParams]);
 
   // Load data with animation
   useEffect(() => {
@@ -326,13 +341,11 @@ export default function EnhancedSkillsMapping() {
               description: item.description || "",
               departmentId: item.department_id?.toString() || "",
               department: department?.name || item.department || "Unknown Department",
-              matrixData,
               skills: matrixData.skills || [],
               employees: matrixData.employees || [],
               createdAt: item.created_at || "",
               createdBy: item.created_by || "",
-              updatedAt: item.updated_at || "",
-              isActive: item.is_active || false,
+              lastModified: item.updated_at || item.created_at || "",
               color: department?.color || item.color || "from-blue-500 to-indigo-500",
             };
           });
@@ -357,6 +370,75 @@ export default function EnhancedSkillsMapping() {
 
     fetchData();
   }, []); // FIXED: Empty dependency array - only fetch once on mount
+
+  // Function to fetch a specific matrix by ID
+  const fetchMatrixById = useCallback(async (matrixId: string) => {
+    try {
+      setApiLoading(true);
+      const response = await fetch(`/api/all/skillsMatrix?id=${matrixId}`);
+      const data = await response.json();
+
+      if (data.success && data.data.length > 0) {
+        const item = data.data[0];
+        const matrixData = JSON.parse(item.matrix_data || "{}");
+        
+        // Find the department for this matrix
+        const department = departments.find((d: any) => 
+          d.id === item.department_id?.toString() || 
+          d.id === item.departmentId?.toString()
+        );
+
+        const transformedMatrix: SkillsMatrix = {
+          id: item.id?.toString() || "",
+          name: item.matrix_name || "",
+          description: item.description || "",
+          departmentId: item.department_id?.toString() || "",
+          department: department?.name || item.department || "Unknown Department",
+          skills: matrixData.skills || [],
+          employees: matrixData.employees || [],
+          createdAt: item.created_at || "",
+          createdBy: item.created_by || "",
+          lastModified: item.updated_at || item.created_at || "",
+          color: department?.color || item.color || "from-blue-500 to-indigo-500",
+        };
+
+        // Add or update this matrix in the matrices array
+        setMatrices(prevMatrices => {
+          const existingIndex = prevMatrices.findIndex(m => m.id === matrixId);
+          if (existingIndex >= 0) {
+            const updated = [...prevMatrices];
+            updated[existingIndex] = transformedMatrix;
+            return updated;
+          } else {
+            return [...prevMatrices, transformedMatrix];
+          }
+        });
+
+        return transformedMatrix;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error fetching matrix by ID:", error);
+      return null;
+    } finally {
+      setApiLoading(false);
+    }
+  }, [departments]);
+
+  // Handle URL parameters and fetch specific matrix if needed
+  useEffect(() => {
+    const matrixIdFromUrl = searchParams.get('selectedMatrix');
+    
+    if (matrixIdFromUrl && departments.length > 0) {
+      // Check if we already have this matrix
+      const existingMatrix = matrices.find(m => m.id === matrixIdFromUrl);
+      
+      if (!existingMatrix) {
+        // Fetch the specific matrix
+        fetchMatrixById(matrixIdFromUrl);
+      }
+    }
+  }, [searchParams, matrices, departments, fetchMatrixById]);
 
   // Helper function to get all matrices (replaces the imported getAllMatrices)
   const getAllMatrices = useCallback(() => {
