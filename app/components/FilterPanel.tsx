@@ -1,6 +1,11 @@
 import React from 'react';
 import { Filter, X, Search, Building2, Table2 } from 'lucide-react';
-import { departments } from '../data/skillMatrices';
+
+interface Department {
+  id: string;
+  name: string;
+  color?: string;
+}
 
 interface FilterPanelProps {
   selectedDepartment: string;
@@ -10,6 +15,7 @@ interface FilterPanelProps {
   onClearFilters: () => void;
   showMatricesOnly: boolean;
   onToggleMatricesOnly: () => void;
+  departments: Department[];
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
@@ -19,7 +25,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   onSearchChange,
   onClearFilters,
   showMatricesOnly,
-  onToggleMatricesOnly
+  onToggleMatricesOnly,
+  departments
 }) => {
   const hasActiveFilters = selectedDepartment || searchTerm || showMatricesOnly;
 
@@ -96,7 +103,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
             Department
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {departments.map((dept) => (
+            {departments.map((dept: Department) => (
               <button
                 key={dept.id}
                 onClick={() => onDepartmentChange(dept.id === selectedDepartment ? '' : dept.id)}
