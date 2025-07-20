@@ -31,6 +31,11 @@ export default function Layout({ children }: LayoutProps) {
 
   const hideNavbar = pathname === "/login"
 
+  // If it's the login page, return children without any wrapper
+  if (pathname === "/login") {
+    return <>{children}</>
+  }
+
   return (
     <div
       className={`min-h-screen transition-all duration-300 ${

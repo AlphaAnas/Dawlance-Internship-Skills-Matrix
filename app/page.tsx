@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-// import SplashScreen from "./components/SplashScreen"
 import Component from "./components/Pre_loader"
 
 export default function Home() {
@@ -14,12 +13,11 @@ export default function Home() {
       setShowSplash(false)
       setTimeout(() => {
         router.push("/login")
-      }, 500) // Small delay for smooth transition
-    }, 4000)
+      }, 500)
+    }, 4000) // Show splash for 4s
 
     return () => clearTimeout(timer)
   }, [router])
 
-  // return <SplashScreen show={showSplash} />
-    return <Component />
+  return showSplash ? <Component /> : null
 }

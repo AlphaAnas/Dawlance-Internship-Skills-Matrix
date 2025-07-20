@@ -44,7 +44,7 @@ export const mockMachines: Machine[] = [
 
 export const mockEmployees: Employee[] = [
   {
-    displayId: "EMP001",
+    displayId: "1",
     name: "Ahmed Raza",
     gender:"MALE",
     departmentId: "1",
@@ -52,11 +52,10 @@ export const mockEmployees: Employee[] = [
       "CNC Machine": "High",
       "Welding Robot": "Medium",
       "Assembly Line": "Advanced",
-      "Molding": "Advanced",
     },
   },
   {
-    displayId: "EMP002",
+    displayId: "2",
     name: "Fatima Noor",
     gender:"FEMALE",
     departmentId: "1",
@@ -67,7 +66,7 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    displayId: "EMP003",
+    displayId: "3",
     name: "Bilal Khan",
     gender:"MALE",
     departmentId: "2",
@@ -78,7 +77,7 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    displayId: "EMP004",
+    displayId: "4",
     name: "Ayesha Siddiqui",
     gender:"FEMALE",
     departmentId: "2",
@@ -89,7 +88,7 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    displayId: "EMP005",
+    displayId: "5",
     name: "Usman Javed",
     gender:"MALE",
     departmentId: "3",
@@ -100,7 +99,7 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    displayId: "EMP006",
+    displayId: "6",
     name: "Zainab Ali",
     gender:"FEMALE",
     departmentId: "3",
@@ -111,7 +110,7 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    displayId: "EMP007",
+    displayId: "7",
     name: "Hassan Tariq",
     gender:"MALE",
     departmentId: "4",
@@ -122,7 +121,7 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    displayId: "EMP008",
+    displayId: "8",
     name: "Maria Naseem",
     gender:"FEMALE",
     departmentId: "4",
@@ -133,7 +132,7 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    displayId: "EMP009",
+    displayId: "9",
     name: "Ali Haider",
     gender:"MALE",
     departmentId: "5",
@@ -144,7 +143,7 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    displayId: "EMP010",
+    displayId: "10",
     name: "Hira Zafar",
     gender:"FEMALE",
     departmentId: "5",
@@ -155,7 +154,7 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    displayId: "EMP011",
+    displayId: "11",
     name: "Tariq Mehmood",
     gender:"MALE",
     departmentId: "1",
@@ -166,7 +165,7 @@ export const mockEmployees: Employee[] = [
     },
   },
   {
-    displayId: "EMP012",
+    displayId: "12",
     name: "Sana Iqbal",
     gender:"FEMALE",
     departmentId: "2",

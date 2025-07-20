@@ -1,292 +1,348 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react"
+import { motion } from "framer-motion"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import {
+  Search,
+  Plus,
   Users,
+  BookOpen,
   Building2,
-  FileText,
   TrendingUp,
-  MapPin,
-  Clock,
-  ChevronRight,
-  BarChart3,
   Target,
   Award,
-} from "lucide-react";
-import Link from "next/link";
-import Image from "next/image";
+  MoreHorizontal,
+  ArrowRight,
+  Folder,
+  Star,
+  Sparkles,
+  
+} from "lucide-react"
+import { useRouter } from "next/navigation"
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
-// Dummy data
-const dashboardData = {
-  user: {
-    name: "Ahmad Hassan",
-    role: "Skills Matrix Administrator",
-    department: "Human Resources",
-    avatar: "/placeholder.svg?height=40&width=40",
-    lastLogin: "2024-01-15 09:30 AM",
-  },
-  metrics: {
-    totalSkillsMatrices: 45,
-    totalEmployees: 1247,
-    totalDepartments: 12,
-    skillsGapAnalysis: 23,
-  },
-  departments: [
-    { name: "Manufacturing", employees: 456, skillsMatrices: 15 },
-    { name: "Quality Control", employees: 123, skillsMatrices: 8 },
-    { name: "Maintenance", employees: 89, skillsMatrices: 6 },
-    { name: "Engineering", employees: 234, skillsMatrices: 12 },
-  ],
-  recentActivity: [
+export default function Dashboard() {
+  const [selectedMatrix, setSelectedMatrix] = useState<string | null>(null)
+  const router = useRouter()
+  const kpiData = [
     {
-      action: "New skills matrix created",
-      department: "Manufacturing",
-      time: "2 hours ago",
+      title: "Recent Skills Matrices",
+      count: "24",
+      percentage: "15% Updated",
+      size: "This Month",
+      icon: Target,
+      color: "from-emerald-400 to-emerald-600",
     },
     {
-      action: "Employee skills updated",
-      department: "Quality Control",
-      time: "4 hours ago",
+      title: "Total Employees",
+      count: "1,247",
+      percentage: "8% Growth",
+      size: "This Quarter",
+      icon: Users,
+      color: "from-purple-400 to-purple-600",
     },
     {
-      action: "Skills gap analysis completed",
-      department: "Engineering",
-      time: "1 day ago",
+      title: "Skills Matrices",
+      count: "89",
+      percentage: "12% Active",
+      size: "Departments",
+      icon: BookOpen,
+      color: "from-blue-400 to-blue-600",
     },
-  ],
-};
+    {
+      title: "Departments",
+      count: "16",
+      percentage: "100% Coverage",
+      size: "All Active",
+      icon: Building2,
+      color: "from-orange-400 to-orange-600",
+    },
+    {
+      title: "Skill Assessments",
+      count: "456",
+      percentage: "23% Completed",
+      size: "This Month",
+      icon: Award,
+      color: "from-rose-400 to-rose-600",
+    },
+    {
+      title: "Training Programs",
+      count: "32",
+      percentage: "18% In Progress",
+      size: "Active",
+      icon: TrendingUp,
+      color: "from-cyan-400 to-cyan-600",
+    },
+  ]
 
-export default function DawlanceDashboard() {
-  const [mounted, setMounted] = useState(false);
-  const [animateCards, setAnimateCards] = useState(false);
+const skillsMatrices = [
+  { id: 1, name: "Sheet Metal Fabrication", files: 45, department: "Sheet Metal" },
+  { id: 2, name: "Compressor Installation", files: 38, department: "Refrigeration Systems" },
+  { id: 3, name: "Electrical Wiring Standards", files: 22, department: "Electrical" },
+  { id: 4, name: "Assembly Line Operations", files: 31, department: "Assembly" },
+  { id: 5, name: "Workplace Safety Training", files: 18, department: "Health & Safety" },
+  { id: 6, name: "Quality Inspection Procedures", files: 29, department: "Quality Control" },
+  { id: 7, name: "Powder Coating Process", files: 26, department: "Paint & Coating" },
+  { id: 8, name: "Packaging and Logistics", files: 19, department: "Logistics" },
+];
 
-  useEffect(() => {
-    setMounted(true);
-    const timer = setTimeout(() => setAnimateCards(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
+  const skillsGrowthData = [
+    { month: "Jan", skills: 65, assessments: 45 },
+    { month: "Feb", skills: 72, assessments: 52 },
+    { month: "Mar", skills: 78, assessments: 58 },
+    { month: "Apr", skills: 85, assessments: 65 },
+    { month: "May", skills: 89, assessments: 72 },
+    { month: "Jun", skills: 94, assessments: 78 },
+  ]
 
-  if (!mounted) return null;
+  const floatingShapes = [
+    { id: 1, size: "w-16 h-16", position: "top-20 left-20", delay: 0 },
+    { id: 2, size: "w-12 h-12", position: "top-40 right-32", delay: 0.5 },
+    { id: 3, size: "w-20 h-20", position: "bottom-32 left-16", delay: 1 },
+    { id: 4, size: "w-8 h-8", position: "bottom-20 right-20", delay: 1.5 },
+  ]
+
+  const handleMatrixClick = (matrixId: number, matrixName: string) => {
+    setSelectedMatrix(matrixName)
+    // Navigate to skills matrix page
+    console.log(`Navigating to skills matrix: ${matrixName}`)
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-orange-50 relative overflow-hidden">
-      <div className="container mx-auto px-2">
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[
-            {
-              title: "Total Skills Matrices",
-              value: dashboardData.metrics.totalSkillsMatrices,
-              icon: FileText,
-              color: "text-blue-600",
-              bgColor: "bg-blue-500/10",
-              change: "+12%",
-            },
-            {
-              title: "Total Employees",
-              value: dashboardData.metrics.totalEmployees,
-              icon: Users,
-              color: "text-orange-600",
-              bgColor: "bg-orange-500/10",
-              change: "+5%",
-            },
-            {
-              title: "Departments",
-              value: dashboardData.metrics.totalDepartments,
-              icon: Building2,
-              color: "text-blue-600",
-              bgColor: "bg-blue-500/10",
-              change: "0%",
-            },
-            {
-              title: "Skills Gap Analysis",
-              value: dashboardData.metrics.skillsGapAnalysis,
-              icon: TrendingUp,
-              color: "text-orange-600",
-              bgColor: "bg-orange-500/10",
-              change: "-8%",
-            },
-          ].map((metric, index) => (
-            <Card
-              key={metric.title}
-              className={`bg-white/70 border-black-500 backdrop-blur-sm transition-all duration-500 hover:bg-white/90 hover:scale-105 hover:shadow-lg ${
-                animateCards
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-4 opacity-0"
-              }`}
-              style={{ transitionDelay: `${index * 100}ms` }}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    {/* ⬇️ Increased title font */}
-                    <p className="text-base font-semibold text-slate-600 mb-2">
-                      {metric.title}
-                    </p>
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-100 via-blue-100 to-purple-200">
+      {/* Animated Background Shapes */}
+      {floatingShapes.map((shape) => (
+        <motion.div
+          key={shape.id}
+          className={`absolute ${shape.size} ${shape.position} rounded-3xl bg-gradient-to-br from-white/40 to-white/20 backdrop-blur-sm`}
+          animate={{
+            y: [0, -20, 0],
+            rotate: [0, 180, 360],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 8,
+            delay: shape.delay,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
 
-                    {/* ⬇️ Increased metric value font */}
-                    <p className="text-3xl font-bold text-slate-800">
-                      {metric.value.toLocaleString()}
-                    </p>
+      {/* Decorative Elements */}
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+        className="absolute top-8 left-8"
+      >
+        <Star className="w-6 h-6 text-blue-400/60" />
+      </motion.div>
 
-                    <div className="flex items-center mt-2">
-                      {/* ⬇️ Increased change text font */}
-                      <span
-                        className={`text-sm font-medium ${
-                          metric.change.startsWith("+")
-                            ? "text-green-600"
-                            : metric.change.startsWith("-")
-                            ? "text-orange-600"
-                            : "text-slate-500"
-                        }`}
-                      >
-                        {metric.change} from last month
-                      </span>
+      <motion.div
+        animate={{ scale: [1, 1.2, 1] }}
+        transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
+        className="absolute bottom-16 right-16"
+      >
+        <Sparkles className="w-5 h-5 text-purple-400/60" />
+      </motion.div>
+
+    
+
+      <div className="p-6">
+        {/* Top Section */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-8"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-medium text-gray-800">All Metrics</h2>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                <Input
+                  placeholder="Search..."
+                  className="pl-10 w-64 bg-white/70 border-white/60 text-gray-800 placeholder:text-gray-500 focus:border-blue-400 focus:ring-blue-200"
+                />
+              </div>
+              <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Matrix
+              </Button>
+            </div>
+          </div>
+
+          {/* KPI Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {kpiData.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.1 * index }}
+                whileHover={{ scale: 1.02 }}
+              >
+                <Card className="bg-white/70 backdrop-blur-md border-white/60 hover:bg-white/80 transition-all duration-300 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div
+                          className={`w-12 h-12 rounded-lg bg-gradient-to-r ${item.color} flex items-center justify-center mb-4`}
+                        >
+                          <item.icon className="w-6 h-6 text-white" />
+                        </div>
+                        <h3 className="font-medium text-gray-800 mb-1">{item.title}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{item.percentage}</p>
+                        <p className="text-2xl font-bold text-gray-900">{item.count}</p>
+                        <p className="text-sm text-gray-600">{item.size}</p>
+                      </div>
                     </div>
-                  </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
 
-                  <div className={`p-4 rounded-lg ${metric.bgColor}`}>
-                    <metric.icon className={`h-7 w-7 ${metric.color}`} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Skills Matrices Section */}
+          <motion.div
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="lg:col-span-2"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-medium text-gray-800">All Skills Matrices</h2>
+              <Button variant="ghost" 
+                onClick={() => router.push("/skills-mapping")}
+              className="text-gray-700 hover:text-gray-900 hover:bg-white/50">
+                View All
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {skillsMatrices.map((matrix, index) => (
+                <motion.div
+                  key={matrix.id}
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, delay: 0.1 * index }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Card
+                    className="bg-white/70 backdrop-blur-md border-white/60 hover:bg-white/80 transition-all duration-300 cursor-pointer shadow-lg"
+                    onClick={() => handleMatrixClick(matrix.id, matrix.name)}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center">
+                            <Folder className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-gray-800">{matrix.name}</h3>
+                            <p className="text-sm text-gray-600">{matrix.files} Skills</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-500 hover:text-gray-700 hover:bg-white/30"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">{matrix.department}</span>
+                        <span className="font-medium text-gray-800">{matrix.size}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Skills Growth Chart */}
+          <motion.div
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="lg:col-span-1"
+          >
+            <Card className="bg-white/70 backdrop-blur-md border-white/60 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg font-medium text-gray-800">Skills Growth</CardTitle>
+                <p className="text-sm text-gray-600">Monthly skills development progress</p>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={skillsGrowthData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis
+                        dataKey="month"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: "#64748b", fontSize: 12 }}
+                      />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgba(255, 255, 255, 0.9)",
+                          border: "none",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                        }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="skills"
+                        stroke="#3b82f6"
+                        strokeWidth={3}
+                        dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                        name="Skills Matrices"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="assessments"
+                        stroke="#8b5cf6"
+                        strokeWidth={3}
+                        dot={{ fill: "#8b5cf6", strokeWidth: 2, r: 4 }}
+                        name="Assessments"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                      <span className="text-gray-600">Skills Matrices</span>
+                    </div>
+                    <span className="font-medium text-gray-800">94</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                      <span className="text-gray-600">Assessments</span>
+                    </div>
+                    <span className="font-medium text-gray-800">78</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-
-        {/* Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {[
-            {
-              title: "Employees",
-              description: "Manage employee profiles and skill assessments",
-              href: "/employees",
-              icon: Users,
-              color: "from-blue-600 to-blue-700",
-            },
-            {
-              title: "Skills Mapping",
-              description:
-                "View and analyze skills distribution across departments",
-              href: "/skills-mapping",
-              icon: BarChart3,
-              color: "from-orange-600 to-orange-700",
-            },
-            {
-              title: "Skills Matrix Maker",
-              description: "Create and customize new skills matrices",
-              href: "/skills_matrix_maker",
-              icon: Target,
-              color: "from-blue-700 to-orange-600",
-            },
-          ].map((nav, index) => (
-            <Link key={nav.title} href={nav.href}>
-              <Card
-                className={`bg-gradient-to-br ${
-                  nav.color
-                } border-0 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl group ${
-                  animateCards
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-4 opacity-0"
-                }`}
-                style={{ transitionDelay: `${(index + 4) * 100}ms` }}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <nav.icon className="h-8 w-8 text-white" />
-                    <ChevronRight className="h-5 w-5 text-white/70 group-hover:text-white group-hover:translate-x-1 transition-all" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2">
-                    {nav.title}
-                  </h3>
-                  <p className="text-white/80 text-sm">{nav.description}</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-
-        {/* Department Overview & Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Department Overview */}
-          <Card className="bg-white/70 border-slate-200/50 backdrop-blur-sm shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-slate-800 flex items-center space-x-2">
-                <Building2 className="h-5 w-5 text-blue-600" />
-                <span>Department Overview</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {dashboardData.departments.map((dept, index) => (
-                  <div
-                    key={dept.name}
-                    className={`flex items-center justify-between p-3 rounded-lg bg-slate-50/80 transition-all duration-300 hover:bg-blue-50/80 ${
-                      animateCards
-                        ? "translate-x-0 opacity-100"
-                        : "translate-x-4 opacity-0"
-                    }`}
-                    style={{ transitionDelay: `${(index + 7) * 100}ms` }}
-                  >
-                    <div>
-                      <p className="font-medium text-slate-800">{dept.name}</p>
-                      <p className="text-sm text-slate-600">
-                        {dept.employees} employees
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <Badge
-                        variant="outline"
-                        className="border-blue-500/30 text-blue-700 bg-blue-50"
-                      >
-                        {dept.skillsMatrices} matrices
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card className="bg-white/70 border-slate-200/50 backdrop-blur-sm shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-slate-800 flex items-center space-x-2">
-                <Award className="h-5 w-5 text-orange-600" />
-                <span>Recent Activity</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {dashboardData.recentActivity.map((activity, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-start space-x-3 p-3 rounded-lg bg-slate-50/80 transition-all duration-300 hover:bg-orange-50/80 ${
-                      animateCards
-                        ? "translate-x-0 opacity-100"
-                        : "translate-x-4 opacity-0"
-                    }`}
-                    style={{ transitionDelay: `${(index + 11) * 100}ms` }}
-                  >
-                    <div className="w-2 h-2 bg-orange-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <div className="flex-1">
-                      <p className="text-slate-800 text-sm font-medium">
-                        {activity.action}
-                      </p>
-                      <p className="text-slate-600 text-xs">
-                        {activity.department} • {activity.time}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          </motion.div>
         </div>
       </div>
     </div>
-  );
+  )
 }

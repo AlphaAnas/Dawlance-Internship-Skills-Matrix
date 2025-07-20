@@ -2,25 +2,66 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import { X, User, Award, TrendingUp, Calendar, Building2, Star, Target, Zap, Activity, Briefcase } from "lucide-react"
 import { useTheme } from "./ThemeProvider"
 import Button from "./Button"
 import Chip from "./Chip"
 import SkillIndicator from "./SkillIndicator"
-import type { Employee } from "../types"
+import type { workHistory } from "../types"
+import {mockworkHistorys} from "../data/mockData"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts"
 
-interface EmployeeInspectionModalProps {
-  employee: Employee | null
+interface workHistory{
+        displayId: number,
+        name: string,
+        gender: string,
+        departmentId: number,
+        skills: string
+
+
+}
+
+
+interface workHistoryInspectionModalProps {
+  employee : any
+  workHistory: workHistory | null
   isOpen: boolean
   onClose: () => void
 }
 
-export default function EmployeeInspectionModal({ employee, isOpen, onClose }: EmployeeInspectionModalProps) {
+export default function workHistoryInspectionModal({ employee, workHistory, isOpen, onClose }: workHistoryInspectionModalProps) {
   const router = useRouter()
   const { isDark } = useTheme()
+  const [loading, setLoading] = useState(false)
 
-  if (!employee) return null
+  // Log the received work history data
+  console.log("Modal received workHistory:", workHistory)
+
+  // Early return after all hooks to follow Rules of Hooks
+  if (!workHistory || !workHistory.data || !workHistory.data[0]) return null
+
+  // Parse the skills from the work history data
+  const employeeData = workHistory.data[0]
+  let parsedSkills = {}
+  
+  try {
+    if (typeof employeeData.skills === 'string') {
+      const skillsArray = JSON.parse(employeeData.skills)
+      // Convert array of skill objects to key-value pairs
+      parsedSkills = skillsArray.reduce((acc: any, skill: any) => {
+        acc[skill.skillName] = skill.skillLevel
+        return acc
+      }, {})
+    } else if (typeof employeeData.skills === 'object' && employeeData.skills !== null) {
+      parsedSkills = employeeData.skills
+    }
+  } catch (error) {
+    console.error("Error parsing skills:", error)
+    parsedSkills = {}
+  }
+
+  console.log("Parsed skills:", parsedSkills)
 
   const getSkillColor = (level: string) => {
     switch (level) {
@@ -60,7 +101,7 @@ export default function EmployeeInspectionModal({ employee, isOpen, onClose }: E
   }
 
   // Enhanced bar chart data with better colors and animations
-  const skillData = Object.entries(employee.skills)
+  const skillData = Object.entries(parsedSkills)
     .map(([skill, level]) => ({
       skill: skill.length > 15 ? skill.substring(0, 15) + "..." : skill,
       fullSkill: skill,
@@ -118,10 +159,10 @@ export default function EmployeeInspectionModal({ employee, isOpen, onClose }: E
     return null
   }
 
-  const totalSkills = Object.keys(employee.skills).length
-  const totalScore = calculateScore(employee.skills)
-  const averageLevel = calculateAverageSkillLevel(employee.skills)
-  const skillDistribution = getSkillDistribution(employee.skills)
+  const totalSkills = Object.keys(parsedSkills).length
+  const totalScore = calculateScore(parsedSkills)
+  const averageLevel = calculateAverageSkillLevel(parsedSkills)
+  const skillDistribution = getSkillDistribution(parsedSkills)
 
   return (
     <AnimatePresence>
@@ -162,9 +203,9 @@ export default function EmployeeInspectionModal({ employee, isOpen, onClose }: E
                   >
                     <div className="w-20 h-20 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-2xl">
                       <span className="text-white font-bold text-2xl">
-                        {employee.name
+                        {employeeData.name
                           .split(" ")
-                          .map((n) => n[0])
+                          .map((n: string) => n[0])
                           .join("")}
                       </span>
                     </div>
@@ -179,7 +220,7 @@ export default function EmployeeInspectionModal({ employee, isOpen, onClose }: E
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2 }}
                     >
-                      {employee.name}
+                      {employeeData.name}
                     </motion.h2>
                     <motion.p
                       className={`text-2xl ${isDark ? "text-gray-300" : "text-gray-600"} font-medium mt-1`}
@@ -211,7 +252,7 @@ export default function EmployeeInspectionModal({ employee, isOpen, onClose }: E
             {/* Enhanced Content */}
             <div className="p-8 overflow-y-auto max-h-[calc(95vh-140px)] custom-scrollbar">
               <div className="space-y-10">
-                {/* Enhanced Employee Info */}
+                {/* Enhanced workHistory Info */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -408,7 +449,7 @@ export default function EmployeeInspectionModal({ employee, isOpen, onClose }: E
                           ticks={[1, 2, 3, 4]}
                           tick={{ fill: isDark ? "#d1d5db" : "#374151" }}
                           tickFormatter={(value) => {
-                            const labels = { 1: "Advanced", 2: "High", 3: "Medium", 4: "Low" }
+                            const labels = { 1: "Low", 2: "Medium", 3: "High", 4: "Advanced" }
                             return labels[value as keyof typeof labels] || value
                           }}
                         />
@@ -467,7 +508,7 @@ export default function EmployeeInspectionModal({ employee, isOpen, onClose }: E
                     </h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Object.entries(employee.skills).map(([skill, level], index) => (
+                    {Object.entries(parsedSkills).map(([skill, level], index) => (
                       <motion.div
                         key={skill}
                         initial={{ opacity: 0, y: 20, scale: 0.9 }}
@@ -483,7 +524,7 @@ export default function EmployeeInspectionModal({ employee, isOpen, onClose }: E
                       >
                         <div className="flex items-center gap-4">
                           <div className="flex-shrink-0">
-                            <SkillIndicator level={level} size={64} showTooltip={true} />
+                            <SkillIndicator level={level as string} size={64} showTooltip={true} />
                           </div>
                           <div className="flex-1 min-w-0 flex flex-col justify-center">
                             <h4
@@ -492,7 +533,7 @@ export default function EmployeeInspectionModal({ employee, isOpen, onClose }: E
                               {skill}
                             </h4>
                             <div className="mt-2">
-                              <Chip label={level} className={`${getSkillColor(level)} text-base px-3 py-1`} />
+                              <Chip label={level as string} className={`${getSkillColor(level as string)} text-base px-3 py-1`} />
                             </div>
                           </div>
                         </div>
