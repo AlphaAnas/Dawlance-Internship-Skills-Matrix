@@ -251,15 +251,21 @@ export default function EnhancedSkillsMapping() {
 
   // Handle URL parameters for auto-selecting matrix and skill
   useEffect(() => {
-    const matrixIdFromUrl = searchParams.get('selectedMatrix');
-    const skillFromUrl = searchParams.get('skill');
-    
+    const matrixIdFromUrl = searchParams.get("selectedMatrix");
+    const skillFromUrl = searchParams.get("skill");
+
+    // Set or clear selectedMatrix based on URL parameter
     if (matrixIdFromUrl) {
       setSelectedMatrix(matrixIdFromUrl);
+    } else {
+      setSelectedMatrix("");
     }
-    
+
+    // Set or clear searchTerm based on URL parameter
     if (skillFromUrl) {
       setSearchTerm(skillFromUrl);
+    } else {
+      setSearchTerm("");
     }
   }, [searchParams]);
 
@@ -287,32 +293,36 @@ export default function EnhancedSkillsMapping() {
   useEffect(() => {
     const fetchData = async () => {
       let departmentsData: any[] = [];
-      
+
       // First fetch departments
       try {
         const deptResponse = await fetch("/api/all/departments");
         const deptData = await deptResponse.json();
-        
+
         if (deptData.success) {
           // Transform department data to match expected format
           departmentsData = deptData.data.map((dept: any) => ({
-            id: dept.id?.toString() || dept.department_id?.toString() || '',
-            name: dept.name || dept.department_name || '',
-            color: dept.color || 'from-blue-500 to-indigo-500'
+            id: dept.id?.toString() || dept.department_id?.toString() || "",
+            name: dept.name || dept.department_name || "",
+            color: dept.color || "from-blue-500 to-indigo-500",
           }));
           console.log("Received Departments:", departmentsData);
           setDepartments(departmentsData);
         } else {
           console.error("API Error:", deptData.error);
           // Fallback to mock departments
-          const { departments: mockDepartments } = await import("../data/skillMatrices");
+          const { departments: mockDepartments } = await import(
+            "../data/skillMatrices"
+          );
           departmentsData = mockDepartments;
           setDepartments(mockDepartments);
         }
       } catch (error) {
         console.error("Departments Fetch Error:", error);
         // Fallback to mock departments
-        const { departments: mockDepartments } = await import("../data/skillMatrices");
+        const { departments: mockDepartments } = await import(
+          "../data/skillMatrices"
+        );
         departmentsData = mockDepartments;
         setDepartments(mockDepartments);
       }
@@ -328,11 +338,12 @@ export default function EnhancedSkillsMapping() {
         if (data.success) {
           const transformedMatrices = data.data.map((item: any) => {
             const matrixData = JSON.parse(item.matrix_data || "{}");
-            
+
             // Find the department name for this matrix using the fetched departments
-            const department = departmentsData.find((d: any) => 
-              d.id === item.department_id?.toString() || 
-              d.id === item.departmentId?.toString()
+            const department = departmentsData.find(
+              (d: any) =>
+                d.id === item.department_id?.toString() ||
+                d.id === item.departmentId?.toString()
             );
 
             return {
@@ -340,13 +351,17 @@ export default function EnhancedSkillsMapping() {
               name: item.matrix_name || "",
               description: item.description || "",
               departmentId: item.department_id?.toString() || "",
-              department: department?.name || item.department || "Unknown Department",
+              department:
+                department?.name || item.department || "Unknown Department",
               skills: matrixData.skills || [],
               employees: matrixData.employees || [],
               createdAt: item.created_at || "",
               createdBy: item.created_by || "",
               lastModified: item.updated_at || item.created_at || "",
-              color: department?.color || item.color || "from-blue-500 to-indigo-500",
+              color:
+                department?.color ||
+                item.color ||
+                "from-blue-500 to-indigo-500",
             };
           });
 
@@ -372,67 +387,75 @@ export default function EnhancedSkillsMapping() {
   }, []); // FIXED: Empty dependency array - only fetch once on mount
 
   // Function to fetch a specific matrix by ID
-  const fetchMatrixById = useCallback(async (matrixId: string) => {
-    try {
-      setApiLoading(true);
-      const response = await fetch(`/api/all/skillsMatrix?id=${matrixId}`);
-      const data = await response.json();
+  const fetchMatrixById = useCallback(
+    async (matrixId: string) => {
+      try {
+        setApiLoading(true);
+        const response = await fetch(`/api/all/skillsMatrix?id=${matrixId}`);
+        const data = await response.json();
 
-      if (data.success && data.data.length > 0) {
-        const item = data.data[0];
-        const matrixData = JSON.parse(item.matrix_data || "{}");
-        
-        // Find the department for this matrix
-        const department = departments.find((d: any) => 
-          d.id === item.department_id?.toString() || 
-          d.id === item.departmentId?.toString()
-        );
+        if (data.success && data.data.length > 0) {
+          const item = data.data[0];
+          const matrixData = JSON.parse(item.matrix_data || "{}");
 
-        const transformedMatrix: SkillsMatrix = {
-          id: item.id?.toString() || "",
-          name: item.matrix_name || "",
-          description: item.description || "",
-          departmentId: item.department_id?.toString() || "",
-          department: department?.name || item.department || "Unknown Department",
-          skills: matrixData.skills || [],
-          employees: matrixData.employees || [],
-          createdAt: item.created_at || "",
-          createdBy: item.created_by || "",
-          lastModified: item.updated_at || item.created_at || "",
-          color: department?.color || item.color || "from-blue-500 to-indigo-500",
-        };
+          // Find the department for this matrix
+          const department = departments.find(
+            (d: any) =>
+              d.id === item.department_id?.toString() ||
+              d.id === item.departmentId?.toString()
+          );
 
-        // Add or update this matrix in the matrices array
-        setMatrices(prevMatrices => {
-          const existingIndex = prevMatrices.findIndex(m => m.id === matrixId);
-          if (existingIndex >= 0) {
-            const updated = [...prevMatrices];
-            updated[existingIndex] = transformedMatrix;
-            return updated;
-          } else {
-            return [...prevMatrices, transformedMatrix];
-          }
-        });
+          const transformedMatrix: SkillsMatrix = {
+            id: item.id?.toString() || "",
+            name: item.matrix_name || "",
+            description: item.description || "",
+            departmentId: item.department_id?.toString() || "",
+            department:
+              department?.name || item.department || "Unknown Department",
+            skills: matrixData.skills || [],
+            employees: matrixData.employees || [],
+            createdAt: item.created_at || "",
+            createdBy: item.created_by || "",
+            lastModified: item.updated_at || item.created_at || "",
+            color:
+              department?.color || item.color || "from-blue-500 to-indigo-500",
+          };
 
-        return transformedMatrix;
+          // Add or update this matrix in the matrices array
+          setMatrices((prevMatrices) => {
+            const existingIndex = prevMatrices.findIndex(
+              (m) => m.id === matrixId
+            );
+            if (existingIndex >= 0) {
+              const updated = [...prevMatrices];
+              updated[existingIndex] = transformedMatrix;
+              return updated;
+            } else {
+              return [...prevMatrices, transformedMatrix];
+            }
+          });
+
+          return transformedMatrix;
+        }
+        return null;
+      } catch (error) {
+        console.error("Error fetching matrix by ID:", error);
+        return null;
+      } finally {
+        setApiLoading(false);
       }
-      return null;
-    } catch (error) {
-      console.error("Error fetching matrix by ID:", error);
-      return null;
-    } finally {
-      setApiLoading(false);
-    }
-  }, [departments]);
+    },
+    [departments]
+  );
 
   // Handle URL parameters and fetch specific matrix if needed
   useEffect(() => {
-    const matrixIdFromUrl = searchParams.get('selectedMatrix');
-    
+    const matrixIdFromUrl = searchParams.get("selectedMatrix");
+
     if (matrixIdFromUrl && departments.length > 0) {
       // Check if we already have this matrix
-      const existingMatrix = matrices.find(m => m.id === matrixIdFromUrl);
-      
+      const existingMatrix = matrices.find((m) => m.id === matrixIdFromUrl);
+
       if (!existingMatrix) {
         // Fetch the specific matrix
         fetchMatrixById(matrixIdFromUrl);
@@ -506,6 +529,12 @@ export default function EnhancedSkillsMapping() {
     setIsEditMode(false);
     setSaved(false);
   }, []);
+
+  const handleReset = () => {
+    router.push("/skills-mapping"); // navigate to base path without query
+  };
+
+  const skill = searchParams.get("skill");
 
   // Skill level management
   const getSkillLevel = useCallback(
@@ -802,7 +831,18 @@ export default function EnhancedSkillsMapping() {
                 <Filter className="h-6 w-6 mr-3" />
                 {showFilters ? "Hide Filters" : "Show Filters"}
               </Button>
-              {selectedMatrix && (
+              {skill && (
+                <Button
+                  onClick={handleReset}
+                  size="lg"
+                  variant="destructive"
+                  className="h-16 px-10 text-xl"
+                >
+                  <Eye className="h-6 w-6 mr-3" />
+                  Back to All Matrices
+                </Button>
+              )}
+              {selectedMatrix && !skill && (
                 <Button
                   onClick={clearMatrixSelection}
                   size="lg"
@@ -857,12 +897,14 @@ export default function EnhancedSkillsMapping() {
               />
             </div>
           )}
-          
+
           {/* Skills Matrices Grid - ALWAYS VISIBLE */}
           <div className="space-y-8">
             <div className="text-center">
               <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                {selectedMatrix ? "Selected Matrix" : "Available Skills Matrices"}
+                {selectedMatrix
+                  ? "Selected Matrix"
+                  : "Available Skills Matrices"}
               </h2>
               <p className="text-xl text-gray-600">
                 {filteredMatrices.length} matrices found
@@ -1010,8 +1052,8 @@ export default function EnhancedSkillsMapping() {
                               View Mode
                             </p>
                             <p className="text-lg text-gray-600 mt-2">
-                              Skills are displayed as pie chart indicators. Click
-                              "Edit Mode" to make changes.
+                              Skills are displayed as pie chart indicators.
+                              Click "Edit Mode" to make changes.
                             </p>
                           </div>
                         </>
@@ -1180,7 +1222,10 @@ export default function EnhancedSkillsMapping() {
                                         >
                                           {Object.entries(skillLevelColors).map(
                                             ([level]) => (
-                                              <SelectItem key={level} value={level}>
+                                              <SelectItem
+                                                key={level}
+                                                value={level}
+                                              >
                                                 <div className="flex items-center gap-3">
                                                   <PieChartSkillIndicator
                                                     level={level}
