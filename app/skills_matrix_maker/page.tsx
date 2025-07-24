@@ -1,13 +1,14 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Users, 
   Plus, 
@@ -29,15 +30,14 @@ import {
   Clock,
   Database,
   UserPlus,
-  Building2,
   AlertCircle,
+  Building2,
   Maximize,
   Minimize
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useEmployees } from '../../hooks/useEmployees';
-import { useSkillMatrices } from '../../hooks/useSkillMatrices';
 import { useDepartments } from '../../hooks/useDepartments';
+import { useSkillMatrices } from '../../hooks/useSkillMatrices';
 import DatabaseLoading from '../components/DatabaseLoading';
 import DatabaseError from '../components/DatabaseError';
 
@@ -236,6 +236,11 @@ const PieChartSkillIndicator = ({ level, size = 80 }) => {
 const SaveSuccessPopup = ({ isVisible, onClose, matrixName }) => {
   if (!isVisible) return null;
 
+  const handleViewMapping = () => {
+    window.open('/skills-mapping', '_blank');
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-in fade-in-0 zoom-in-95">
@@ -247,9 +252,22 @@ const SaveSuccessPopup = ({ isVisible, onClose, matrixName }) => {
           <p className="text-gray-600 mb-6">
             "{matrixName}" has been saved and is now available in your matrices library.
           </p>
-          <Button onClick={onClose} className="w-full bg-green-600 hover:bg-green-700">
-            Continue
-          </Button>
+          <div className="space-y-3">
+            <Button 
+              onClick={handleViewMapping} 
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              View in Skills Mapping
+            </Button>
+            <Button 
+              onClick={onClose} 
+              variant="outline" 
+              className="w-full"
+            >
+              Continue Editing
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -351,6 +369,8 @@ const NoEmployeesState = ({ departmentName, onAddEmployee }) => {
 
 const SkillsMatrixManager = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const matrixId = searchParams.get('matrixId');
   const [currentStep, setCurrentStep] = useState(1);
   const [matrixName, setMatrixName] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
@@ -367,7 +387,7 @@ const SkillsMatrixManager = () => {
   const [editingSkill, setEditingSkill] = useState<number | null>(null);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedMatrix, setSelectedMatrix] = useState(null);
+  const [selectedMatrix, setSelectedMatrix] = useState<any>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   
   // Database hooks
@@ -385,9 +405,13 @@ const SkillsMatrixManager = () => {
     if (dbDepartments && dbDepartments.length > 0) {
       setDepartments(dbDepartments.map(dept => ({
         id: dept._id,
+        _id: dept._id, // Keep the MongoDB ObjectId for saving
         name: dept.name,
         area: dept.area || 'Production'
       })));
+    } else {
+      // Fallback to initial departments if database is empty
+      setDepartments(initialDepartments);
     }
   }, [dbDepartments]);
 
@@ -396,13 +420,25 @@ const SkillsMatrixManager = () => {
       setAllEmployees(dbEmployees.map(emp => ({
         id: emp.id || emp.employeeId,
         name: emp.name,
-        department: emp.department,
-        area: 'Production', // You might want to map this from department
+        department: emp.department, // Keep the department name as is
+        departmentId: departments.find(d => d.name === emp.department)?._id || emp.department, // Map to department ID
+        area: 'Production',
         joinDate: emp.hireDate,
         experience: `${emp.yearsExperience} years`
       })));
+    } else {
+      // Fallback to initial employees if database is empty
+      // Map the initial employees' department IDs to department names for consistency
+      const mappedInitialEmployees = initialEmployees.map(emp => {
+        const dept = initialDepartments.find(d => d.id === emp.department);
+        return {
+          ...emp,
+          department: dept ? dept.name : emp.department // Convert ID to name for consistency
+        };
+      });
+      setAllEmployees(mappedInitialEmployees);
     }
-  }, [dbEmployees]);
+  }, [dbEmployees, departments]);
 
   const steps = [
     { id: 1, title: 'Matrix Setup', desc: 'Name your matrix and select department' },
@@ -411,10 +447,28 @@ const SkillsMatrixManager = () => {
     { id: 4, title: 'Preview & Save', desc: 'Review and save your matrix' }
   ];
 
-  const filteredEmployees = allEmployees.filter(emp => 
-    emp.department === selectedDepartment &&
-    emp.name.toLowerCase().includes(employeeFilter.toLowerCase())
-  );
+  const filteredEmployees = allEmployees.filter(emp => {
+    if (!selectedDepartment) return false;
+    
+    // Get the selected department object
+    const selectedDept = departments.find(d => d.id === selectedDepartment);
+    if (!selectedDept) return false;
+    
+    // Match by department name (this should work for both database and fallback employees now)
+    const isMatch = emp.department === selectedDept.name;
+    
+    // Debug logging to help troubleshoot
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Filtering employee:', {
+        employeeName: emp.name,
+        employeeDepartment: emp.department,
+        selectedDepartmentName: selectedDept.name,
+        isMatch
+      });
+    }
+    
+    return isMatch && emp.name.toLowerCase().includes(employeeFilter.toLowerCase());
+  });
 
   const availableEmployees = filteredEmployees.filter(emp => 
     !selectedEmployees.find(selected => selected.id === emp.id)
@@ -437,6 +491,20 @@ const SkillsMatrixManager = () => {
       setSkillLevels(prev => ({ ...prev, ...newSkillLevels }));
     }
   }, [selectedEmployees, skills]);
+
+  // Load specific matrix if matrixId is provided in URL
+  useEffect(() => {
+    const loadSpecificMatrix = async () => {
+      if (matrixId && matrices.length > 0) {
+        const matrix = matrices.find(m => m._id === matrixId);
+        if (matrix) {
+          loadMatrix(matrix);
+        }
+      }
+    };
+    
+    loadSpecificMatrix();
+  }, [matrixId, matrices]);
 
   // Fullscreen functionality
   const toggleFullscreen = () => {
@@ -567,23 +635,35 @@ const SkillsMatrixManager = () => {
 
   const handleSave = async () => {
     try {
+      // Find the department ObjectId from the departments array
+      const selectedDept = departments.find(d => d.id === selectedDepartment);
+      if (!selectedDept) {
+        console.error('Selected department not found');
+        // You might want to show an error message to the user
+        return;
+      }
+
       const matrixData = {
         name: matrixName,
-        department: selectedDepartment,
+        departmentId: selectedDept._id || selectedDept.id, // Use MongoDB ObjectId
+        description: `Skills matrix for ${selectedDept.name} department`,
         employees: selectedEmployees,
         skills: skills,
-        skillLevels: skillLevels,
-        employeeCount: selectedEmployees.length,
-        skillCount: skills.length
+        skillLevels: skillLevels
       };
       
-      await saveMatrix(matrixData);
-      setSaved(true);
-      setShowSuccessPopup(true);
-      setTimeout(() => setSaved(false), 2000);
-      
-      // Show success message
-      console.log('Skills matrix saved successfully');
+      const success = await saveMatrix(matrixData);
+      if (success) {
+        setSaved(true);
+        setShowSuccessPopup(true);
+        setTimeout(() => setSaved(false), 2000);
+        
+        // Show success message
+        console.log('Skills matrix saved successfully');
+      } else {
+        console.error('Failed to save skills matrix');
+        // You might want to show an error message to the user
+      }
     } catch (error) {
       console.error('Error saving skills matrix:', error);
       // You might want to show an error message to the user
@@ -592,13 +672,14 @@ const SkillsMatrixManager = () => {
 
   const loadMatrix = (matrix: any) => {
     setMatrixName(matrix.name);
-    setSelectedDepartment(matrix.department);
-    setSelectedEmployees(matrix.employees);
-    setSkills(matrix.skills);
-    setSkillLevels(matrix.skillLevels);
+    setSelectedDepartment(matrix.departmentId);
+    setSelectedEmployees(matrix.matrixData?.employees || []);
+    setSkills(matrix.matrixData?.skills || []);
+    setSkillLevels(matrix.matrixData?.skillLevels || {});
     setSelectedMatrix(matrix);
     setShowFinalTable(true);
     setSidebarOpen(false);
+    setIsEditMode(false);
   };
 
   const canProceedToNext = () => {
@@ -633,7 +714,10 @@ const SkillsMatrixManager = () => {
 
   // Error state
   if (employeesError || departmentsError || matricesError) {
-    return <DatabaseError error={employeesError || departmentsError || matricesError} />;
+    return <DatabaseError 
+      error={employeesError || departmentsError || matricesError || ""} 
+      onRetry={() => window.location.reload()}
+    />;
   }
 
   if (showFinalTable) {
@@ -1424,15 +1508,55 @@ const SkillsMatrixManager = () => {
                   </Card>
                 </div>
 
-                <div className="text-center">
-                  <Button
-                    onClick={() => setShowFinalTable(true)}
-                    size="lg"
-                    className="bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600 text-white px-8 py-4 text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-                  >
-                    <FileText className="h-6 w-6 mr-2" />
-                    Create Skills Matrix Table
-                  </Button>
+                <div className="text-center space-y-4">
+                  {/* Save Button */}
+                  <div className="flex justify-center gap-4">
+                    <Button
+                      onClick={handleSave}
+                      size="lg"
+                      className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-4 text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                    >
+                      {saved ? (
+                        <>
+                          <CheckCircle className="h-6 w-6 mr-2" />
+                          Saved Successfully!
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-6 w-6 mr-2" />
+                          Save Skills Matrix
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {/* Preview Button */}
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={() => setShowFinalTable(true)}
+                      size="lg"
+                      variant="outline"
+                      className="px-8 py-4 text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                    >
+                      <FileText className="h-6 w-6 mr-2" />
+                      Preview Skills Matrix Table
+                    </Button>
+                  </div>
+                  
+                  {saved && (
+                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-green-800 font-medium">
+                        ✅ Matrix saved successfully! You can now view it in the 
+                        <Button 
+                          variant="link" 
+                          className="p-0 ml-1 text-green-600 hover:text-green-800"
+                          onClick={() => window.open('/skills-mapping', '_blank')}
+                        >
+                          Skills Mapping page
+                        </Button>
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1471,4 +1595,11 @@ const SkillsMatrixManager = () => {
   );
 };
 
-export default SkillsMatrixManager;
+// Wrapper component with Suspense for useSearchParams
+export default function SkillsMatrixPage() {
+  return (
+    <Suspense fallback={<DatabaseLoading />}>
+      <SkillsMatrixManager />
+    </Suspense>
+  );
+}

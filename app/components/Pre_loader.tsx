@@ -40,12 +40,12 @@ useEffect(() => {
                 key={i}
                 className="absolute w-1 h-1 bg-orange-400 rounded-full opacity-30"
                 initial={{
-                  x: Math.random() * window.innerWidth,
-                  y: Math.random() * window.innerHeight,
+                  x: typeof window !== 'undefined' ? Math.random() * window.innerWidth : Math.random() * 1000,
+                  y: typeof window !== 'undefined' ? Math.random() * window.innerHeight : Math.random() * 1000,
                 }}
                 animate={{
-                  x: Math.random() * window.innerWidth,
-                  y: Math.random() * window.innerHeight,
+                  x: typeof window !== 'undefined' ? Math.random() * window.innerWidth : Math.random() * 1000,
+                  y: typeof window !== 'undefined' ? Math.random() * window.innerHeight : Math.random() * 1000,
                 }}
                 transition={{
                   duration: Math.random() * 4 + 2, // Adjusted to 4+2 for ~5s cycle

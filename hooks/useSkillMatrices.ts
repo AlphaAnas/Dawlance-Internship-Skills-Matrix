@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 
 interface SkillMatrix {
-  id: string;
+  _id: string;
   name: string;
   description: string;
-  department: string;
-  departmentId: string;
+  department?: string; // Department name from populated field
+  departmentId: string; // MongoDB ObjectId
   matrixData: {
     employees: any[];
     skills: string[];
@@ -19,6 +19,8 @@ interface SkillMatrix {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  employeeCount?: number; // Legacy field for backward compatibility
+  skillCount?: number; // Legacy field for backward compatibility
 }
 
 interface UseSkillMatricesReturn {
