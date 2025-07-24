@@ -1,10 +1,8 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
-import { Bot, X, Send, MessageCircle, Clock, Users, Award, Building2, Wifi, WifiOff, Zap, AlertCircle } from "lucide-react"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useRef, useEffect, useMemo } from "react"
+import { Bot, Send, Users, Award, Clock, Building2, Wifi, WifiOff, Zap, Sparkles, TrendingUp, BarChart3, Star, Trophy, UserCheck, Briefcase } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -35,6 +33,8 @@ interface Message {
   isUser: boolean
   timestamp: Date
   isTyping?: boolean
+  data?: any // For structured data
+  type?: 'text' | 'employee-list' | 'skill-distribution' | 'diversity-report' | 'analysis'
 }
 
 interface PrewrittenPrompt {
@@ -43,7 +43,7 @@ interface PrewrittenPrompt {
   icon: React.ReactNode
   description: string
   category: string
-  color: string
+  gradient: string
 }
 
 // ============================================================================
@@ -60,6 +60,7 @@ export default function AIChatbot({ data }: AIChatbotProps) {
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isOnline, setIsOnline] = useState(true)
+  const [showPrompts, setShowPrompts] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // ============================================================================
@@ -70,34 +71,50 @@ export default function AIChatbot({ data }: AIChatbotProps) {
     {
       id: "top-sheet-molding",
       text: "Give me top 10 employees of Sheet Molding department",
-      icon: <Users className="h-4 w-4" />,
+      icon: <Users className="h-5 w-5" />,
       description: "Top Sheet Molding Performers",
-      category: "Department",
-      color: "bg-blue-500",
+      category: "Department Analysis",
+      gradient: "from-blue-500 to-cyan-500",
     },
     {
       id: "skill-distribution",
       text: "What is the skill level distribution across all departments?",
-      icon: <Award className="h-4 w-4" />,
+      icon: <Award className="h-5 w-5" />,
       description: "Skill Level Breakdown",
-      category: "Skills",
-      color: "bg-purple-500",
+      category: "Skills Analysis",
+      gradient: "from-purple-500 to-pink-500",
     },
     {
       id: "gender-diversity",
-      text: "Show me gender diversity statistics by department",
-      icon: <Users className="h-4 w-4" />,
+      text: "Show me gender diversity statistics by department with female employee names and skills",
+      icon: <TrendingUp className="h-5 w-5" />,
       description: "Gender Diversity Report",
-      category: "Diversity",
-      color: "bg-green-500",
+      category: "Diversity Metrics",
+      gradient: "from-green-500 to-emerald-500",
     },
     {
       id: "experience-analysis",
-      text: "Which employees have the most experience in high-skill positions?",
-      icon: <Clock className="h-4 w-4" />,
+      text: "Who are the most experienced employees in the organization and why were they selected?",
+      icon: <Clock className="h-5 w-5" />,
       description: "Experience Analysis",
-      category: "Experience",
-      color: "bg-orange-500",
+      category: "Experience Insights",
+      gradient: "from-orange-500 to-red-500",
+    },
+    {
+      id: "performance-trends",
+      text: "Analyze performance trends across departments",
+      icon: <BarChart3 className="h-5 w-5" />,
+      description: "Performance Trends",
+      category: "Performance Analysis",
+      gradient: "from-indigo-500 to-purple-500",
+    },
+    {
+      id: "training-needs",
+      text: "Identify employees who need skill development training",
+      icon: <Sparkles className="h-5 w-5" />,
+      description: "Training Recommendations",
+      category: "Development Plans",
+      gradient: "from-teal-500 to-blue-500",
     },
   ]
 
@@ -137,13 +154,19 @@ export default function AIChatbot({ data }: AIChatbotProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  // Hide prompts when user starts chatting
+  useEffect(() => {
+    if (messages.length > 0) {
+      setShowPrompts(false)
+    }
+  }, [messages])
+
   // ============================================================================
   // STATUS HELPERS
   // ============================================================================
 
   const getConnectionStatus = () => {
     if (!isOnline) return { status: "offline", color: "red", icon: WifiOff, text: "Offline" }
-    // Always show as enhanced since API key is handled server-side
     return { status: "online", color: "green", icon: Wifi, text: "AI Enhanced" }
   }
 
@@ -156,18 +179,596 @@ export default function AIChatbot({ data }: AIChatbotProps) {
   }
 
   // ============================================================================
+  // UI RENDERING COMPONENTS
+  // ============================================================================
+
+  const renderEmployeeList = (data: any) => {
+    const getSkillIcon = (skillLevel: string) => {
+      switch (skillLevel?.toLowerCase()) {
+        case 'advanced':
+        case 'expert':
+          return <Trophy className="h-4 w-4" />
+        case 'high':
+          return <Star className="h-4 w-4" />
+        case 'medium':
+          return <UserCheck className="h-4 w-4" />
+        default:
+          return <Briefcase className="h-4 w-4" />
+      }
+    }
+
+    const getSkillColor = (skillLevel: string) => {
+      switch (skillLevel?.toLowerCase()) {
+        case 'advanced':
+        case 'expert':
+          return 'from-amber-400 to-orange-500'
+        case 'high':
+          return 'from-blue-400 to-blue-600'
+        case 'medium':
+          return 'from-green-400 to-green-600'
+        default:
+          return 'from-gray-400 to-gray-600'
+      }
+    }
+
+    const sortedEmployees = useMemo(() => {
+      return data.employees?.sort((a: any, b: any) => (a.rank || 0) - (b.rank || 0)) || []
+    }, [data.employees])
+
+    return (
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-blue-50 via-purple-50 to-indigo-50 p-6 rounded-xl border border-blue-200 shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-lg">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">{data.title}</h3>
+            </div>
+            <p className="text-gray-600 leading-relaxed">{data.summary}</p>
+            <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
+              <span className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                {sortedEmployees.length} employees
+              </span>
+              <span className="flex items-center gap-1">
+                <Trophy className="h-4 w-4" />
+                Top performers
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Employee Grid */}
+        <div className="grid gap-4">
+          {sortedEmployees.map((emp: any, index: number) => (
+            <div 
+              key={index} 
+              className="group bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
+            >
+              {/* Employee Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  {/* Rank Badge */}
+                  <div className="relative">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg shadow-lg">
+                      #{emp.rank || index + 1}
+                    </div>
+                    {(emp.rank || index + 1) <= 3 && (
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
+                        <Trophy className="h-3 w-3 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Employee Info */}
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                      {emp.name}
+                    </h4>
+                    <p className="text-gray-600 font-medium">{emp.title || emp.department}</p>
+                    {emp.department && emp.title && (
+                      <p className="text-sm text-gray-500">{emp.department}</p>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Skill Level Badge */}
+                <div className="flex flex-col items-end gap-2">
+                  <Badge 
+                    className={`bg-gradient-to-r ${getSkillColor(emp.skillLevel)} text-white border-0 shadow-md flex items-center gap-1 px-3 py-1`}
+                  >
+                    {getSkillIcon(emp.skillLevel)}
+                    {emp.skillLevel}
+                  </Badge>
+                </div>
+              </div>
+              
+              {/* Employee Details Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                {emp.experience && (
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{emp.experience}</div>
+                    <div className="text-xs text-gray-500 font-medium">Years Experience</div>
+                  </div>
+                )}
+                {emp.gender && (
+                  <div className="text-center">
+                    <div className="text-sm font-bold text-gray-700">{emp.gender}</div>
+                    <div className="text-xs text-gray-500 font-medium">Gender</div>
+                  </div>
+                )}
+                {emp.department && (
+                  <div className="text-center">
+                    <div className="text-sm font-bold text-gray-700 truncate">{emp.department}</div>
+                    <div className="text-xs text-gray-500 font-medium">Department</div>
+                  </div>
+                )}
+                <div className="text-center">
+                  <div className="text-sm font-bold text-purple-600">Rank #{emp.rank || index + 1}</div>
+                  <div className="text-xs text-gray-500 font-medium">Position</div>
+                </div>
+              </div>
+
+              {/* Skills Section */}
+              {emp.skills && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Award className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-semibold text-blue-800">Key Skills</span>
+                  </div>
+                  <div className="text-sm text-blue-700 font-medium">
+                    {Array.isArray(emp.skills) ? emp.skills.join(' • ') : emp.skills}
+                  </div>
+                </div>
+              )}
+
+              {/* Reason Section */}
+              {emp.reason && (
+                <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <UserCheck className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-semibold text-green-800">Selection Criteria</span>
+                  </div>
+                  <div className="text-sm text-green-700 leading-relaxed">{emp.reason}</div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Summary Footer */}
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-lg border border-gray-200">
+          <div className="text-center">
+            <span className="text-lg font-bold text-gray-800">{sortedEmployees.length}</span>
+            <span className="text-gray-600 ml-2">Top Performing Employees Listed</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderDiversityReport = (data: any) => {
+    const totalEmployees = useMemo(() => {
+      return data.departments?.reduce((sum: number, dept: any) => sum + (dept.total || 0), 0) || 0
+    }, [data.departments])
+
+    const femaleCount = useMemo(() => {
+      return data.departments?.reduce((sum: number, dept: any) => sum + (dept.femaleCount || 0), 0) || 0
+    }, [data.departments])
+
+    const overallFemalePercentage = totalEmployees > 0 ? Math.round((femaleCount / totalEmployees) * 100) : 0
+
+    return (
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-pink-50 via-green-50 to-emerald-50 p-6 rounded-xl border border-pink-200 shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 to-emerald-500/5"></div>
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-gradient-to-r from-pink-500 to-emerald-600 p-2 rounded-lg">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">{data.title}</h3>
+            </div>
+            <p className="text-gray-600 leading-relaxed">{data.summary}</p>
+            <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
+              <span className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                {totalEmployees} total employees
+              </span>
+              <span className="flex items-center gap-1">
+                <Building className="h-4 w-4" />
+                {data.departments?.length || 0} departments
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Overall Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300">
+            <div className="mb-4">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-r from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                {femaleCount}
+              </div>
+            </div>
+            <h4 className="text-lg font-bold text-gray-800 mb-1">Female Employees</h4>
+            <div className="text-3xl font-bold text-pink-600 mb-2">{overallFemalePercentage}%</div>
+            <div className="text-sm text-gray-500">of workforce</div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300">
+            <div className="mb-4">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-r from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                {totalEmployees - femaleCount}
+              </div>
+            </div>
+            <h4 className="text-lg font-bold text-gray-800 mb-1">Male Employees</h4>
+            <div className="text-3xl font-bold text-blue-600 mb-2">{100 - overallFemalePercentage}%</div>
+            <div className="text-sm text-gray-500">of workforce</div>
+          </div>
+        </div>
+
+        {/* Department Breakdown */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-2 rounded-lg">
+              <Building className="h-5 w-5 text-white" />
+            </div>
+            <h4 className="text-lg font-bold text-gray-800">Department Breakdown</h4>
+          </div>
+          
+          <div className="grid gap-6">
+            {data.departments?.map((dept: any, index: number) => (
+              <div key={index} className="border border-gray-200 rounded-lg p-5 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center justify-between mb-4">
+                  <h5 className="text-lg font-semibold text-gray-800">{dept.department}</h5>
+                  <div className="flex gap-2">
+                    <Badge className="bg-gradient-to-r from-pink-500 to-pink-600 text-white">
+                      {dept.femaleCount} females
+                    </Badge>
+                    <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                      {dept.total} total
+                    </Badge>
+                  </div>
+                </div>
+                
+                {/* Visual Progress Bar */}
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>Female: {dept.femalePercentage}%</span>
+                    <span>Male: {(100 - parseFloat(dept.femalePercentage)).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex rounded-lg overflow-hidden h-4 bg-gray-200 shadow-inner">
+                    <div 
+                      className="bg-gradient-to-r from-pink-400 to-pink-600 transition-all duration-500 flex items-center justify-center"
+                      style={{ width: `${dept.femalePercentage}%` }}
+                    >
+                      {parseFloat(dept.femalePercentage) > 15 && (
+                        <span className="text-xs text-white font-medium">{dept.femaleCount}</span>
+                      )}
+                    </div>
+                    <div 
+                      className="bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-500 flex items-center justify-center"
+                      style={{ width: `${100 - parseFloat(dept.femalePercentage)}%` }}
+                    >
+                      {(100 - parseFloat(dept.femalePercentage)) > 15 && (
+                        <span className="text-xs text-white font-medium">{dept.total - dept.femaleCount}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Female Employees Details */}
+                {dept.females && dept.females.length > 0 && (
+                  <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <UserCheck className="h-4 w-4 text-pink-600" />
+                      <h6 className="text-sm font-semibold text-pink-800">Female Employees</h6>
+                    </div>
+                    <div className="grid gap-3">
+                      {dept.females.map((emp: any, empIndex: number) => (
+                        <div key={empIndex} className="bg-white border border-pink-200 rounded-lg p-3 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <span className="font-semibold text-gray-800">{emp.name}</span>
+                              {emp.title && <span className="text-sm text-gray-600 ml-2">• {emp.title}</span>}
+                            </div>
+                            <Badge 
+                              className={`text-xs ${
+                                emp.skillLevel === 'Advanced' || emp.skillLevel === 'Expert' 
+                                  ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' 
+                                  : emp.skillLevel === 'High'
+                                  ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white'
+                                  : 'bg-gradient-to-r from-green-400 to-green-600 text-white'
+                              }`}
+                            >
+                              {emp.skillLevel}
+                            </Badge>
+                          </div>
+                          {emp.skills && (
+                            <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                              <span className="font-medium text-gray-700">Skills:</span> {Array.isArray(emp.skills) ? emp.skills.join(' • ') : emp.skills}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Summary Insights */}
+        <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-2 rounded-lg">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
+            <h4 className="text-lg font-bold text-gray-800">Diversity Summary</h4>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+              <div className="text-2xl font-bold text-emerald-600 mb-1">
+                {overallFemalePercentage}%
+              </div>
+              <div className="text-sm text-gray-600">Female Representation</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+              <div className="text-2xl font-bold text-blue-600 mb-1">
+                {data.departments?.length || 0}
+              </div>
+              <div className="text-sm text-gray-600">Departments Analyzed</div>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm text-center">
+              <div className="text-2xl font-bold text-purple-600 mb-1">
+                {totalEmployees}
+              </div>
+              <div className="text-sm text-gray-600">Total Employees</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderAnalysisReport = (data: any) => {
+    const analysisEmployees = useMemo(() => {
+      return data.employees || []
+    }, [data.employees])
+
+    const averageExperience = useMemo(() => {
+      if (!analysisEmployees.length) return 0
+      const totalExp = analysisEmployees.reduce((sum: number, emp: any) => {
+        const exp = parseInt(emp.experience?.toString().replace(/[^\d]/g, '') || '0')
+        return sum + exp
+      }, 0)
+      return Math.round(totalExp / analysisEmployees.length)
+    }, [analysisEmployees])
+
+    const skillLevelDistribution = useMemo(() => {
+      const distribution: any = {}
+      analysisEmployees.forEach((emp: any) => {
+        const level = emp.skillLevel || 'Unknown'
+        distribution[level] = (distribution[level] || 0) + 1
+      })
+      return distribution
+    }, [analysisEmployees])
+
+    const getExperienceIcon = (experience: string) => {
+      const years = parseInt(experience?.toString().replace(/[^\d]/g, '') || '0')
+      if (years >= 10) return <Star className="h-4 w-4" />
+      if (years >= 5) return <Award className="h-4 w-4" />
+      return <Briefcase className="h-4 w-4" />
+    }
+
+    const getExperienceColor = (experience: string) => {
+      const years = parseInt(experience?.toString().replace(/[^\d]/g, '') || '0')
+      if (years >= 10) return 'from-amber-400 to-orange-500'
+      if (years >= 5) return 'from-blue-400 to-blue-600'
+      return 'from-green-400 to-green-600'
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-indigo-50 via-blue-50 to-purple-50 p-6 rounded-xl border border-indigo-200 shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5"></div>
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-2 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">{data.title}</h3>
+            </div>
+            <p className="text-gray-600 leading-relaxed">{data.summary}</p>
+            <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
+              <span className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                {analysisEmployees.length} employees analyzed
+              </span>
+              <span className="flex items-center gap-1">
+                <Briefcase className="h-4 w-4" />
+                {averageExperience} years avg experience
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Analysis Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300">
+            <div className="mb-4">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-indigo-400 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                {analysisEmployees.length}
+              </div>
+            </div>
+            <h4 className="text-lg font-bold text-gray-800 mb-1">Total Analyzed</h4>
+            <div className="text-sm text-gray-500">Employee Records</div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300">
+            <div className="mb-4">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                {averageExperience}
+              </div>
+            </div>
+            <h4 className="text-lg font-bold text-gray-800 mb-1">Avg Experience</h4>
+            <div className="text-sm text-gray-500">Years</div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-lg transition-all duration-300">
+            <div className="mb-4">
+              <div className="w-16 h-16 mx-auto bg-gradient-to-r from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                {Object.keys(skillLevelDistribution).length}
+              </div>
+            </div>
+            <h4 className="text-lg font-bold text-gray-800 mb-1">Skill Levels</h4>
+            <div className="text-sm text-gray-500">Categories</div>
+          </div>
+        </div>
+
+        {/* Employee Analysis Cards */}
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-2 rounded-lg">
+              <Users className="h-5 w-5 text-white" />
+            </div>
+            <h4 className="text-lg font-bold text-gray-800">Detailed Analysis</h4>
+          </div>
+          
+          <div className="grid gap-5">
+            {analysisEmployees.map((emp: any, index: number) => (
+              <div key={index} className="group border border-gray-200 rounded-lg p-5 hover:shadow-lg hover:border-blue-300 transition-all duration-300">
+                {/* Employee Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg shadow-lg">
+                        {emp.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-r from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                        <UserCheck className="h-3 w-3 text-white" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-gray-800 group-hover:text-indigo-600 transition-colors">
+                        {emp.name}
+                      </h4>
+                      <p className="text-gray-600 font-medium">{emp.department}</p>
+                    </div>
+                  </div>
+                  
+                  <Badge 
+                    className={`bg-gradient-to-r ${
+                      emp.skillLevel === 'Advanced' || emp.skillLevel === 'Expert' 
+                        ? 'from-amber-400 to-orange-500' 
+                        : emp.skillLevel === 'High'
+                        ? 'from-blue-400 to-blue-600'
+                        : 'from-green-400 to-green-600'
+                    } text-white border-0 shadow-md`}
+                  >
+                    {emp.skillLevel}
+                  </Badge>
+                </div>
+
+                {/* Employee Details Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {emp.experience && (
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className={`p-2 rounded-lg bg-gradient-to-r ${getExperienceColor(emp.experience)} text-white`}>
+                        {getExperienceIcon(emp.experience)}
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Experience</div>
+                        <div className="font-semibold text-gray-800">{emp.experience}</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {emp.department && (
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="p-2 rounded-lg bg-gradient-to-r from-purple-400 to-purple-600 text-white">
+                        <Building className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-500">Department</div>
+                        <div className="font-semibold text-gray-800">{emp.department}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Skills Section */}
+                {emp.skills && (
+                  <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Award className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold text-blue-800">Skills & Expertise</span>
+                    </div>
+                    <div className="text-sm text-blue-700 font-medium">
+                      {Array.isArray(emp.skills) ? emp.skills.join(' • ') : emp.skills}
+                    </div>
+                  </div>
+                )}
+
+                {/* Analysis Reason */}
+                {emp.reason && (
+                  <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-semibold text-green-800">Analysis Insight</span>
+                    </div>
+                    <div className="text-sm text-green-700 leading-relaxed">{emp.reason}</div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Summary Insights */}
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-2 rounded-lg">
+              <Award className="h-5 w-5 text-white" />
+            </div>
+            <h4 className="text-lg font-bold text-gray-800">Skill Level Distribution</h4>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Object.entries(skillLevelDistribution).map(([level, count]: [string, any]) => (
+              <div key={level} className="bg-white p-4 rounded-lg shadow-sm text-center">
+                <div className="text-2xl font-bold text-purple-600 mb-1">{count}</div>
+                <div className="text-sm text-gray-600">{level}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ============================================================================
   // DATA PROCESSING & ANALYSIS
   // ============================================================================
 
-  const processEmployeeQuery = (prompt: string): string => {
+  const processEmployeeQuery = (prompt: string): { message: Message } => {
     const normalizeSkillLevel = (skillLevel: string | undefined) => {
       if (!skillLevel) return ""
       if (skillLevel === "Expert" || skillLevel === "Advanced") return "Advanced"
       return skillLevel
     }
 
-    // Sheet Molding department analysis
-    if (prompt.toLowerCase().includes("sheet molding") || prompt.toLowerCase().includes("sheet metal")) {
+    // Sheet Molding department analysis - Top employees
+    if (prompt.toLowerCase().includes("sheet molding") || prompt.toLowerCase().includes("sheet metal") || prompt.toLowerCase().includes("top 10") || prompt.toLowerCase().includes("top employees")) {
       const sheetMoldingEmployees = data.filter(
         (emp) =>
           emp.department?.toLowerCase().includes("sheet") ||
@@ -176,13 +777,17 @@ export default function AIChatbot({ data }: AIChatbotProps) {
       )
 
       if (sheetMoldingEmployees.length === 0) {
-        return (
-          "❌ **No Sheet Molding employees found.**\n\n📋 **Available departments:**\n" +
-          [...new Set(data.map((emp) => emp.department))].map((dept) => `• ${dept}`).join("\n")
-        )
+        return {
+          message: {
+            id: Date.now().toString(),
+            text: "No Sheet Molding employees found in the current dataset.",
+            isUser: false,
+            timestamp: new Date(),
+            type: 'text'
+          }
+        }
       }
 
-      // Sort by skill level and experience
       const sortedEmployees = sheetMoldingEmployees
         .sort((a, b) => {
           const skillOrder = { Advanced: 4, Expert: 4, High: 3, Medium: 2, Low: 1 }
@@ -194,18 +799,131 @@ export default function AIChatbot({ data }: AIChatbotProps) {
         })
         .slice(0, 10)
 
-      let response = `🏆 **TOP ${sortedEmployees.length} SHEET MOLDING EMPLOYEES**\n\n`
+      return {
+        message: {
+          id: Date.now().toString(),
+          text: `Found ${sortedEmployees.length} top performers in Sheet Molding department`,
+          isUser: false,
+          timestamp: new Date(),
+          type: 'employee-list',
+          data: {
+            title: `Top ${sortedEmployees.length} Sheet Molding Employees`,
+            employees: sortedEmployees.map((emp, index) => ({
+              rank: index + 1,
+              name: emp.name,
+              skillLevel: normalizeSkillLevel(emp.skillLevel),
+              experience: emp.yearsExperience || 0,
+              title: emp.title || "N/A",
+              gender: emp.gender,
+              department: emp.department,
+              skills: emp.skillLevel // You can expand this with actual skills array if available
+            })),
+            summary: `Analysis of ${sheetMoldingEmployees.length} employees in Sheet Molding department, ranked by skill level and experience.`
+          }
+        }
+      }
+    }
 
-      sortedEmployees.forEach((emp, index) => {
-        const normalizedSkill = normalizeSkillLevel(emp.skillLevel)
-        response += `**${index + 1}. ${emp.name}**\n`
-        response += `   🎯 **Skill Level:** ${normalizedSkill}\n`
-        response += `   ⏱️ **Experience:** ${emp.yearsExperience || "N/A"} years\n`
-        response += `   💼 **Title:** ${emp.title || "N/A"}\n`
-        response += `   👤 **Gender:** ${emp.gender}\n\n`
-      })
+    // Gender diversity analysis
+    if (prompt.toLowerCase().includes("gender diversity") || prompt.toLowerCase().includes("gender statistics")) {
+      const departments = [...new Set(data.map((emp) => emp.department))]
+      const diversityData = departments.map(dept => {
+        const deptEmployees = data.filter((emp) => emp.department === dept)
+        const femaleEmployees = deptEmployees.filter((emp) => emp.gender === "Female")
+        const maleCount = deptEmployees.filter((emp) => emp.gender === "Male").length
+        const total = deptEmployees.length
 
-      return response
+        return {
+          department: dept,
+          total,
+          femaleCount: femaleEmployees.length,
+          maleCount,
+          femalePercentage: total > 0 ? ((femaleEmployees.length / total) * 100).toFixed(1) : "0",
+          malePercentage: total > 0 ? ((maleCount / total) * 100).toFixed(1) : "0",
+          females: femaleEmployees.map(emp => ({
+            name: emp.name,
+            skillLevel: normalizeSkillLevel(emp.skillLevel),
+            title: emp.title,
+            skills: emp.skillLevel // You can expand this with actual skills array
+          }))
+        }
+      }).filter(dept => dept.total > 0)
+
+      return {
+        message: {
+          id: Date.now().toString(),
+          text: `Gender diversity analysis across ${departments.length} departments`,
+          isUser: false,
+          timestamp: new Date(),
+          type: 'diversity-report',
+          data: {
+            title: "Gender Diversity by Department",
+            departments: diversityData,
+            summary: `Comprehensive gender diversity analysis showing female employees and their skills across all departments.`
+          }
+        }
+      }
+    }
+
+    // Most experienced employees analysis
+    if (prompt.toLowerCase().includes("most experience") || prompt.toLowerCase().includes("experienced employee")) {
+      // Extract department from prompt if mentioned
+      const mentionedDept = data.find(emp => 
+        prompt.toLowerCase().includes(emp.department?.toLowerCase() || "")
+      )?.department
+
+      let targetEmployees = data
+      let deptText = "the organization"
+      
+      if (mentionedDept) {
+        targetEmployees = data.filter(emp => emp.department === mentionedDept)
+        deptText = mentionedDept
+      }
+
+      const experiencedEmployees = targetEmployees
+        .filter(emp => emp.yearsExperience && emp.yearsExperience > 0)
+        .sort((a, b) => {
+          // Sort by experience first, then by skill level
+          const expDiff = (b.yearsExperience || 0) - (a.yearsExperience || 0)
+          if (expDiff !== 0) return expDiff
+          
+          const skillOrder = { Advanced: 4, Expert: 4, High: 3, Medium: 2, Low: 1 }
+          const aSkill = skillOrder[a.skillLevel as keyof typeof skillOrder] || 0
+          const bSkill = skillOrder[b.skillLevel as keyof typeof skillOrder] || 0
+          return bSkill - aSkill
+        })
+        .slice(0, 5) // Top 5 most experienced
+
+      return {
+        message: {
+          id: Date.now().toString(),
+          text: `Most experienced employees in ${deptText}`,
+          isUser: false,
+          timestamp: new Date(),
+          type: 'analysis',
+          data: {
+            title: `Most Experienced Employees in ${deptText}`,
+            employees: experiencedEmployees.map(emp => {
+              let reason = `Selected for ${emp.yearsExperience} years of experience`
+              if (emp.skillLevel === 'Advanced' || emp.skillLevel === 'Expert') {
+                reason += ` and advanced skill level (${emp.skillLevel})`
+              }
+              reason += `. Demonstrates long-term commitment and expertise.`
+
+              return {
+                name: emp.name,
+                skillLevel: normalizeSkillLevel(emp.skillLevel),
+                experience: emp.yearsExperience,
+                department: emp.department,
+                title: emp.title,
+                skills: emp.skillLevel, // You can expand this
+                reason
+              }
+            }),
+            summary: `Analysis of the most experienced employees in ${deptText}, selected based on years of experience and skill level.`
+          }
+        }
+      }
     }
 
     // Skill distribution analysis
@@ -219,69 +937,65 @@ export default function AIChatbot({ data }: AIChatbotProps) {
         {} as Record<string, number>,
       )
 
-      let response = "📊 **SKILL LEVEL DISTRIBUTION**\n\n"
       const total = data.length
-
-      Object.entries(skillCounts)
+      const skillData = Object.entries(skillCounts)
         .sort(([, a], [, b]) => b - a)
-        .forEach(([skill, count]) => {
-          const percentage = ((count / total) * 100).toFixed(1)
-          const bar = "█".repeat(Math.round((count / total) * 20))
-          response += `**${skill}:** ${count} employees (${percentage}%)\n${bar}\n\n`
-        })
+        .map(([skill, count]) => ({
+          skill,
+          count,
+          percentage: ((count / total) * 100).toFixed(1)
+        }))
 
-      response += `📈 **Total Employees:** ${total}`
-      return response
-    }
-
-    // Gender diversity analysis
-    if (prompt.toLowerCase().includes("gender diversity") || prompt.toLowerCase().includes("gender statistics")) {
-      const departments = [...new Set(data.map((emp) => emp.department))]
-      let response = "👥 **GENDER DIVERSITY BY DEPARTMENT**\n\n"
-
-      departments.forEach((dept) => {
-        const deptEmployees = data.filter((emp) => emp.department === dept)
-        const maleCount = deptEmployees.filter((emp) => emp.gender === "Male").length
-        const femaleCount = deptEmployees.filter((emp) => emp.gender === "Female").length
-        const total = deptEmployees.length
-
-        if (total > 0) {
-          const femalePercentage = ((femaleCount / total) * 100).toFixed(1)
-          const malePercentage = ((maleCount / total) * 100).toFixed(1)
-
-          response += `**${dept}** (${total} employees)\n`
-          response += `   👨 **Male:** ${maleCount} (${malePercentage}%)\n`
-          response += `   👩 **Female:** ${femaleCount} (${femalePercentage}%)\n\n`
+      return {
+        message: {
+          id: Date.now().toString(),
+          text: `Skill level distribution across ${total} employees`,
+          isUser: false,
+          timestamp: new Date(),
+          type: 'analysis',
+          data: {
+            title: "Skill Level Distribution",
+            skills: skillData,
+            total,
+            summary: `Analysis of skill levels across all ${total} employees in the organization.`
+          }
         }
-      })
-
-      return response
+      }
     }
 
     // Default comprehensive response
-    return `🤖 **AI EMPLOYEE ASSISTANT READY!**
-
-🔍 **What I can analyze:**
-• 👥 **Department Performance** - Top performers by department
-• 🎯 **Skill Distributions** - Skill level breakdowns and analysis  
-• 📊 **Diversity Metrics** - Gender diversity across departments
-• ⏱️ **Experience Analysis** - Experience vs skill correlations
-• 🏢 **Department Comparisons** - Performance between departments
-• 📈 **Training Insights** - Identify skill development needs
-
-📋 **Current Dataset:**
-• **Total Employees:** ${data.length}
-• **Departments:** ${[...new Set(data.map((emp) => emp.department))].length}
-• **Skill Levels:** ${[...new Set(data.map((emp) => emp.skillLevel))].join(", ")}
-
-💡 **Quick Start:** Click any suggested question below, or ask me anything about your employee data!`
+    return {
+      message: {
+        id: Date.now().toString(),
+        text: `AI Employee Assistant Ready! I can analyze ${data.length} employees across ${[...new Set(data.map((emp) => emp.department))].length} departments.`,
+        isUser: false,
+        timestamp: new Date(),
+        type: 'analysis',
+        data: {
+          title: "Available Analysis Types",
+          capabilities: [
+            { icon: "👥", title: "Top Employees", description: "Get top performers by department with their skills" },
+            { icon: "👩‍💼", title: "Gender Diversity", description: "Female employees by department with names and skills" },
+            { icon: "⏱️", title: "Experience Analysis", description: "Most experienced employees with selection reasoning" },
+            { icon: "🎯", title: "Skill Distributions", description: "Skill level breakdowns and analysis" },
+            { icon: "🏢", title: "Department Comparisons", description: "Performance between departments" },
+            { icon: "📈", title: "Training Insights", description: "Identify skill development needs" }
+          ],
+          stats: {
+            totalEmployees: data.length,
+            departments: [...new Set(data.map((emp) => emp.department))].length,
+            skillLevels: [...new Set(data.map((emp) => emp.skillLevel))].join(", ")
+          }
+        }
+      }
+    }
   }
 
   // ============================================================================
-  // AI SERVICE INTEGRATION - SERVER-SIDE API
+  // AI SERVICE INTEGRATION (Same as before)
   // ============================================================================
 
-  const callAIService = async (prompt: string): Promise<string> => {
+  const callAIService = async (prompt: string): Promise<Message> => {
     const contextData = {
       totalEmployees: data.length,
       departments: [...new Set(data.map((emp) => emp.department))],
@@ -296,11 +1010,10 @@ export default function AIChatbot({ data }: AIChatbotProps) {
     }
 
     const maxRetries = 3
-    const baseDelay = 1000 // 1 second
+    const baseDelay = 1000
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        // Call our API route instead of directly calling Gemini
         const response = await fetch('/api/chat', {
           method: "POST",
           headers: {
@@ -311,23 +1024,76 @@ export default function AIChatbot({ data }: AIChatbotProps) {
               {
                 parts: [
                   {
-                    text: `You are an advanced AI assistant analyzing employee data for a manufacturing company.
+                    text: `You are a backend AI for a staffing and HR dashboard used in a manufacturing factory. Your job is to respond to HR-related queries from management and output strictly JSON-formatted data, which will be consumed and rendered by a React UI.
 
 **Context Data:**
 ${JSON.stringify(contextData, null, 2)}
 
 **User Query:** ${prompt}
 
-**Instructions:**
-- Provide detailed, actionable insights based on the employee data
-- Use markdown formatting with **bold text** and bullet points for clarity
-- Include specific numbers, percentages, and concrete recommendations
-- If analyzing trends, suggest actionable next steps
-- Be comprehensive but concise
-- Focus on business value and practical insights
-- Use emojis for better readability
+Based on the user query, use the correct JSON structure from the following:
 
-**Response Format:** Provide structured analysis with clear sections and actionable recommendations.`,
+🔹 1. Top 10 Employees
+If the user asks for top 10 employees (e.g., best performers or highly skilled employees), return:
+
+{
+  "topEmployees": [
+    {
+      "name": "John Doe",
+      "skills": ["Welding", "Lathe Operation"]
+    },
+    {
+      "name": "Ayesha Khan", 
+      "skills": ["Assembly", "Quality Check"]
+    }
+  ]
+}
+
+🔹 2. Gender Diversity by Department
+If the user asks about gender distribution (e.g., number of female employees in each department), return:
+
+{
+  "genderDiversity": [
+    {
+      "department": "Sheet Metal",
+      "femaleCount": 3,
+      "females": [
+        { "name": "Fatima", "skills": ["Cutting", "Stamping"] },
+        { "name": "Sara", "skills": ["Lathe"] },
+        { "name": "Arooj", "skills": ["Packing"] }
+      ]
+    },
+    {
+      "department": "Assembly", 
+      "femaleCount": 2,
+      "females": [
+        { "name": "Nadia", "skills": ["Assembly"] },
+        { "name": "Zoya", "skills": ["Inspection", "Packing"] }
+      ]
+    }
+  ]
+}
+
+🔹 3. Most Experienced Employee in a Department
+If the user asks who is the most experienced employee in a given department, return:
+
+{
+  "mostExperiencedEmployee": {
+    "department": "Paint Shop",
+    "employee": {
+      "name": "Irfan Malik",
+      "yearsExperience": 12,
+      "skills": ["Spray Painting", "Color Mixing"],
+      "reasonSelected": "Has 12 years of experience and skills that overlap with multiple critical tasks in the department."
+    }
+  }
+}
+
+📌 Output Rules:
+- Do not include extra commentary or explanation outside the JSON.
+- Return empty arrays or appropriate fields if data is missing.
+- Always ensure JSON is well-structured and parsable.
+- Respond ONLY with valid JSON. No additional text, explanations, or markdown formatting.`,
                   },
                 ],
               },
@@ -335,9 +1101,7 @@ ${JSON.stringify(contextData, null, 2)}
           }),
         })
 
-        // Handle different HTTP status codes appropriately
         if (response.status === 429) {
-          // Rate limit exceeded - wait and retry
           const retryDelay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000
           console.log(`Rate limited. Retrying in ${retryDelay}ms (attempt ${attempt + 1}/${maxRetries})`)
           await new Promise(resolve => setTimeout(resolve, retryDelay))
@@ -346,19 +1110,16 @@ ${JSON.stringify(contextData, null, 2)}
 
         const result = await response.json()
 
-        // Check if API returned an error or fallback flag
         if (result.error || result.fallback) {
           throw new Error(result.message || result.error || 'API call failed')
         }
 
-        // Validate response structure
         if (!result.candidates || result.candidates.length === 0) {
           throw new Error("No response candidates returned from AI service")
         }
 
         const candidate = result.candidates[0]
         
-        // Check for safety blocks or finish reasons
         if (candidate.finishReason === "SAFETY") {
           throw new Error("Response blocked due to safety filters")
         }
@@ -373,17 +1134,109 @@ ${JSON.stringify(contextData, null, 2)}
           throw new Error("Empty response received from AI service")
         }
 
-        return responseText
+        // Try to parse JSON response
+        try {
+          const jsonResponse = JSON.parse(responseText.trim())
+          
+          // Handle new simplified JSON structures
+          if (jsonResponse.topEmployees) {
+            return {
+              id: Date.now().toString(),
+              text: `Found ${jsonResponse.topEmployees.length} top performing employees`,
+              isUser: false,
+              timestamp: new Date(),
+              type: 'employee-list',
+              data: {
+                title: `Top ${jsonResponse.topEmployees.length} Performing Employees`,
+                summary: `Analysis of top performing employees based on skills and experience`,
+                employees: jsonResponse.topEmployees.map((emp: any, index: number) => ({
+                  rank: index + 1,
+                  name: emp.name,
+                  skills: Array.isArray(emp.skills) ? emp.skills.join(', ') : emp.skills,
+                  skillLevel: 'High', // Default since not provided in new format
+                  department: emp.department || 'Various',
+                  experience: emp.yearsExperience || 'N/A'
+                }))
+              }
+            }
+          }
+
+          if (jsonResponse.genderDiversity) {
+            return {
+              id: Date.now().toString(),
+              text: `Gender diversity analysis across ${jsonResponse.genderDiversity.length} departments`,
+              isUser: false,
+              timestamp: new Date(),
+              type: 'diversity-report',
+              data: {
+                title: "Gender Diversity by Department",
+                summary: "Comprehensive gender diversity analysis showing female employees and their skills across departments",
+                departments: jsonResponse.genderDiversity.map((dept: any) => ({
+                  department: dept.department,
+                  total: dept.femaleCount + (dept.maleCount || 0), // Estimate if male count not provided
+                  femaleCount: dept.femaleCount,
+                  femalePercentage: dept.total ? ((dept.femaleCount / dept.total) * 100).toFixed(1) : "0",
+                  females: dept.females.map((emp: any) => ({
+                    name: emp.name,
+                    skills: Array.isArray(emp.skills) ? emp.skills.join(', ') : emp.skills,
+                    skillLevel: 'Medium', // Default since not provided
+                    title: emp.title || 'Employee'
+                  }))
+                }))
+              }
+            }
+          }
+
+          if (jsonResponse.mostExperiencedEmployee) {
+            const emp = jsonResponse.mostExperiencedEmployee.employee
+            return {
+              id: Date.now().toString(),
+              text: `Most experienced employee in ${jsonResponse.mostExperiencedEmployee.department}`,
+              isUser: false,
+              timestamp: new Date(),
+              type: 'analysis',
+              data: {
+                title: `Most Experienced Employee in ${jsonResponse.mostExperiencedEmployee.department}`,
+                summary: `Analysis of the most experienced employee in the ${jsonResponse.mostExperiencedEmployee.department} department`,
+                employees: [{
+                  name: emp.name,
+                  experience: emp.yearsExperience,
+                  department: jsonResponse.mostExperiencedEmployee.department,
+                  skills: Array.isArray(emp.skills) ? emp.skills.join(', ') : emp.skills,
+                  skillLevel: 'Advanced', // Default for most experienced
+                  reason: emp.reasonSelected
+                }]
+              }
+            }
+          }
+
+          // Fallback for legacy format
+          return {
+            id: Date.now().toString(),
+            text: jsonResponse.summary || "AI Analysis Complete",
+            isUser: false,
+            timestamp: new Date(),
+            type: jsonResponse.type || 'analysis',
+            data: jsonResponse
+          }
+        } catch (parseError) {
+          // If JSON parsing fails, return as text
+          return {
+            id: Date.now().toString(),
+            text: responseText,
+            isUser: false,
+            timestamp: new Date(),
+            type: 'text'
+          }
+        }
 
       } catch (error) {
         console.error(`Attempt ${attempt + 1} failed:`, error)
         
-        // If it's the last attempt, throw the error
         if (attempt === maxRetries - 1) {
           throw error
         }
         
-        // Wait before retrying (exponential backoff)
         const retryDelay = baseDelay * Math.pow(2, attempt)
         await new Promise(resolve => setTimeout(resolve, retryDelay))
       }
@@ -399,62 +1252,53 @@ ${JSON.stringify(contextData, null, 2)}
   const handleSendMessage = async (message: string) => {
     if (!message.trim()) return
 
-    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       text: message,
       isUser: true,
       timestamp: new Date(),
+      type: 'text'
     }
     addMessage(userMessage)
     setInputValue("")
     setIsLoading(true)
 
-    // Add typing indicator
     const typingMessage: Message = {
       id: (Date.now() + 1).toString(),
-      text: "🤖 AI is analyzing your request...",
+      text: "AI is analyzing your request...",
       isUser: false,
       timestamp: new Date(),
       isTyping: true,
+      type: 'text'
     }
     addMessage(typingMessage)
 
     try {
-      let response: string
+      let aiMessage: Message
       const connectionStatus = getConnectionStatus()
 
       if (connectionStatus.status === "online") {
-        // Use API route
-        response = await callAIService(message)
+        aiMessage = await callAIService(message)
       } else {
-        // Use local data analysis
-        response = processEmployeeQuery(message)
+        const result = processEmployeeQuery(message)
+        aiMessage = result.message
         if (connectionStatus.status === "offline") {
-          response = "🔄 **Working Offline** - Using local data analysis\n\n" + response
+          aiMessage.text = "Working Offline - Using local data analysis: " + aiMessage.text
         }
       }
 
-      // Remove typing indicator and add actual response
       setMessages((prev) => prev.filter((msg) => !msg.isTyping))
-      
-      const aiMessage: Message = {
-        id: (Date.now() + 2).toString(),
-        text: response,
-        isUser: false,
-        timestamp: new Date(),
-      }
       addMessage(aiMessage)
 
     } catch (error) {
       console.error("AI Service Error:", error)
       setMessages((prev) => prev.filter((msg) => !msg.isTyping))
 
+      const result = processEmployeeQuery(message)
       const errorMessage: Message = {
+        ...result.message,
         id: (Date.now() + 3).toString(),
-        text: "⚠️ **AI Service Unavailable** - Using local analysis instead\n\n" + processEmployeeQuery(message),
-        isUser: false,
-        timestamp: new Date(),
+        text: "AI Service Unavailable - Using local analysis: " + result.message.text,
       }
       addMessage(errorMessage)
     }
@@ -473,12 +1317,7 @@ ${JSON.stringify(contextData, null, 2)}
   const openChat = () => {
     setIsOpen(true)
     if (messages.length === 0) {
-      addMessage({
-        id: "welcome",
-        text: "👋 **Welcome to AI Employee Assistant!**\n\nI'm here to help you analyze your workforce data and provide actionable insights with AI enhancement.\n\n🚀 **Get Started:**\n• Click any suggested question below\n• Or type your own question in the input field\n\n💡 I can provide detailed analysis, trends, and strategic recommendations!",
-        isUser: false,
-        timestamp: new Date(),
-      })
+      // Don't add welcome message since we have the prompts screen
     }
   }
 
@@ -517,190 +1356,234 @@ ${JSON.stringify(contextData, null, 2)}
           {/* Tooltip */}
           <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
             <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
-              {connectionStatus.text}
+              AI Skills Assistant - {connectionStatus.text}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Chat Modal */}
+      {/* Full-Screen Chat Interface */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-5xl h-[85vh] overflow-hidden bg-white shadow-2xl border-0 flex flex-col">
-            {/* Header */}
-            <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white flex-shrink-0 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <Bot className="h-8 w-8" />
-                    <div
-                      className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                        connectionStatus.color === "green" 
-                          ? "bg-green-400" 
-                          : connectionStatus.color === "yellow" 
-                          ? "bg-yellow-400" 
-                          : "bg-red-400"
-                      }`}
-                    >
-                      <StatusIcon className="h-2 w-2 text-white m-0.5" />
-                    </div>
+        <div className="fixed inset-0 bg-white z-50 flex flex-col">
+          {/* Header */}
+          <div className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4">
+            <div className="flex items-center justify-between max-w-6xl mx-auto">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-xl">
+                    <Bot className="h-6 w-6 text-white" />
                   </div>
-                  <div>
-                    <CardTitle className="text-xl font-bold">AI Employee Assistant</CardTitle>
-                    <CardDescription className="text-blue-100 font-medium flex items-center gap-2">
-                      <span className={`inline-flex items-center gap-1 ${
-                        connectionStatus.color === "green" ? "text-green-200" : 
-                        connectionStatus.color === "yellow" ? "text-yellow-200" : "text-red-200"
-                      }`}>
-                        <StatusIcon className="h-3 w-3" />
-                        {connectionStatus.text}
-                      </span>
-                      • {data.length} employees ready for analysis
-                    </CardDescription>
+                  <div
+                    className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
+                      connectionStatus.color === "green" 
+                        ? "bg-green-400" 
+                        : connectionStatus.color === "yellow" 
+                        ? "bg-yellow-400" 
+                        : "bg-red-400"
+                    }`}
+                  >
+                    <StatusIcon className="h-2 w-2 text-white m-0.5" />
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsOpen(false)}
-                  className="text-white hover:bg-white/20 h-8 w-8"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-
-            {/* Chat Content */}
-            <div className="flex-1 flex overflow-hidden">
-              {/* Main Chat Area */}
-              <div className="flex-1 flex flex-col">
-                {/* Status Banner */}
-                {connectionStatus.status === "offline" && (
-                  <div className="p-3 bg-red-50 border-b border-red-200">
-                    <div className="flex items-center gap-2 text-sm text-red-800">
-                      <StatusIcon className="h-4 w-4" />
-                      <span className="font-medium">
-                        Working Offline - Using local data analysis only
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Messages Area */}
-                <div className="flex-1 min-h-0">
-                  <ScrollArea className="h-full p-4">
-                    <div className="space-y-4 max-w-4xl mx-auto">
-                      {messages.map((message) => (
-                        <div key={message.id} className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}>
-                          <div
-                            className={`max-w-[80%] p-3 rounded-2xl ${
-                              message.isUser
-                                ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-md"
-                                : message.isTyping
-                                  ? "bg-gray-100 text-gray-600 animate-pulse border border-gray-200"
-                                  : "bg-gray-50 text-gray-800 border border-gray-200 shadow-sm"
-                            }`}
-                          >
-                            <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.text}</div>
-                            <div className={`text-xs mt-2 ${message.isUser ? "text-blue-100" : "text-gray-500"}`}>
-                              {message.timestamp.toLocaleTimeString()}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  </ScrollArea>
-                </div>
-
-                {/* Input Area */}
-                <div className="p-4 border-t bg-gray-50">
-                  <div className="flex gap-3 max-w-4xl mx-auto">
-                    <Input
-                      placeholder="Ask me about employees, departments, skills, diversity..."
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage(inputValue)}
-                      disabled={isLoading}
-                      className="flex-1 h-11 text-sm border-gray-300 focus:border-blue-500"
-                    />
-                    <Button
-                      onClick={() => handleSendMessage(inputValue)}
-                      disabled={isLoading || !inputValue.trim()}
-                      className="h-11 px-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">Skills Matrix AI Assistant</h1>
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span className={`flex items-center gap-1 ${
+                      connectionStatus.color === "green" ? "text-green-600" : 
+                      connectionStatus.color === "yellow" ? "text-yellow-600" : "text-red-600"
+                    }`}>
+                      <StatusIcon className="h-3 w-3" />
+                      {connectionStatus.text}
+                    </span>
+                    <span>•</span>
+                    <span>{data.length} employees</span>
+                    <span>•</span>
+                    <span>{[...new Set(data.map((emp) => emp.department))].length} departments</span>
                   </div>
                 </div>
               </div>
+              
+              {/* Close Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsOpen(false)}
+                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 h-10 w-10 rounded-full"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </Button>
+            </div>
+          </div>
 
-              {/* Quick Actions Sidebar */}
-              <div className="w-80 border-l bg-gray-50 flex flex-col">
-                <div className="p-4 border-b bg-white">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Zap className="h-4 w-4 text-blue-500" />
-                    <h3 className="font-bold text-gray-800 text-sm">Quick Questions</h3>
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Welcome Screen with Prompts */}
+            {showPrompts && messages.length === 0 && (
+              <div className="flex-1 flex flex-col items-center justify-center p-6">
+                <div className="max-w-4xl w-full space-y-8">
+                  {/* Welcome Message */}
+                  <div className="text-center space-y-4">
+                    <div className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                      <h2 className="text-4xl font-bold">How can I help you today?</h2>
+                    </div>
+                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                      I'm your AI assistant for analyzing employee data and providing strategic insights. 
+                      Choose a quick question below or ask me anything about your workforce.
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-600">
-                    Click any question to get instant insights powered by Gemini 2.0.
-                  </p>
-                </div>
 
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-3">
+                  {/* Prewritten Prompts Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     {prewrittenPrompts.map((prompt) => (
                       <Button
                         key={prompt.id}
                         variant="outline"
-                        className="w-full p-3 h-auto text-left justify-start hover:bg-blue-50 hover:border-blue-300 border-gray-200 transition-all duration-200 group"
+                        className="h-auto min-h-[160px] max-h-[180px] p-4 text-left justify-start hover:shadow-lg transition-all duration-300 border-gray-200 hover:border-gray-300 group relative overflow-hidden"
                         onClick={() => handlePromptClick(prompt.text)}
                         disabled={isLoading}
                       >
-                        <div className="flex items-start gap-3 w-full">
-                          <div
-                            className={`${prompt.color} text-white p-2 rounded-md group-hover:scale-110 transition-transform flex-shrink-0`}
-                          >
+                        <div className="flex flex-col items-start gap-3 w-full h-full">
+                          <div className={`bg-gradient-to-r ${prompt.gradient} text-white p-2.5 rounded-lg group-hover:scale-105 transition-transform flex-shrink-0`}>
                             {prompt.icon}
                           </div>
-                          <div className="flex-1 text-left min-w-0">
-                            <div className="font-medium text-gray-800 text-xs mb-1">{prompt.description}</div>
-                            <div className="text-xs text-gray-600 leading-relaxed mb-2 line-clamp-2">{prompt.text}</div>
-                            <Badge variant="secondary" className="text-xs">
-                              {prompt.category}
-                            </Badge>
+                          <div className="space-y-2 flex-1 w-full">
+                            <h3 className="font-semibold text-gray-800 text-sm leading-tight overflow-hidden" 
+                                style={{
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  textOverflow: 'ellipsis'
+                                }}>
+                              {prompt.description}
+                            </h3>
+                            <p className="text-xs text-gray-600 leading-relaxed overflow-hidden break-words"
+                               style={{
+                                 display: '-webkit-box',
+                                 WebkitLineClamp: 3,
+                                 WebkitBoxOrient: 'vertical',
+                                 textOverflow: 'ellipsis'
+                               }}>
+                              {prompt.text}
+                            </p>
+                            <div className="pt-1">
+                              <Badge variant="secondary" className="text-[10px] px-2 py-1 truncate max-w-full">
+                                {prompt.category}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       </Button>
                     ))}
                   </div>
-                </ScrollArea>
-
-                {/* Info Panel */}
-                <div className="p-4 border-t bg-white">
-                  <div className="space-y-3">
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="text-xs text-blue-800 font-medium mb-1">🚀 AI Enhanced</div>
-                      <div className="text-xs text-blue-700">
-                        Advanced AI analysis with strategic insights and recommendations!
-                      </div>
-                    </div>
-                    
-                    <div className="text-xs text-gray-600 space-y-1">
-                      <div className="flex justify-between">
-                        <span>Total Employees:</span>
-                        <span className="font-medium">{data.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Departments:</span>
-                        <span className="font-medium">{[...new Set(data.map((emp) => emp.department))].length}</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
+            )}
+
+            {/* Chat Messages */}
+            {messages.length > 0 && (
+              <div className="flex-1 min-h-0">
+                <ScrollArea className="h-full">
+                  <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+                    {messages.map((message) => (
+                      <div key={message.id} className={`flex ${message.isUser ? "justify-end" : "justify-start"}`}>
+                        <div className={`flex gap-4 max-w-[85%] ${message.isUser ? "flex-row-reverse" : "flex-row"}`}>
+                          {/* Avatar */}
+                          <div className="flex-shrink-0">
+                            {message.isUser ? (
+                              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <span className="text-white text-sm font-medium">You</span>
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                <Bot className="h-4 w-4 text-gray-600" />
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Message Content */}
+                          <div className={`flex flex-col ${message.isUser ? "items-end" : "items-start"}`}>
+                            <div
+                              className={`${
+                                message.isUser
+                                  ? "p-4 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+                                  : message.isTyping
+                                    ? "p-4 rounded-2xl bg-gray-100 text-gray-600 animate-pulse"
+                                    : message.type === 'employee-list' || message.type === 'diversity-report' || message.type === 'analysis'
+                                    ? "w-full"
+                                    : "p-4 rounded-2xl bg-gray-50 text-gray-800 border border-gray-200"
+                              }`}
+                            >
+                              {/* Render different message types */}
+                              {!message.isUser && message.type === 'employee-list' && message.data ? (
+                                renderEmployeeList(message.data)
+                              ) : !message.isUser && message.type === 'diversity-report' && message.data ? (
+                                renderDiversityReport(message.data)
+                              ) : !message.isUser && message.type === 'analysis' && message.data ? (
+                                renderAnalysisReport(message.data)
+                              ) : (
+                                <div 
+                                  className={`whitespace-pre-wrap leading-relaxed ${
+                                    message.isUser 
+                                      ? "text-sm" 
+                                      : "text-sm prose prose-sm max-w-none prose-headings:font-bold prose-headings:text-gray-800 prose-strong:font-semibold prose-strong:text-gray-900"
+                                  }`}
+                                  style={{
+                                    fontFamily: message.isUser ? 'inherit' : 'ui-sans-serif, system-ui, -apple-system, sans-serif',
+                                    lineHeight: '1.6'
+                                  }}
+                                >
+                                  {message.text}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 px-1">
+                              {message.timestamp.toLocaleTimeString()}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+
+            {/* Input Area - Fixed at bottom */}
+            <div className="flex-shrink-0 border-t border-gray-200 bg-white px-6 py-4">
+              <div className="max-w-4xl mx-auto">
+                <div className="flex gap-3 items-end">
+                  <div className="flex-1 relative">
+                    <Input
+                      placeholder="Ask me about employees, departments, skills, diversity, performance..."
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage(inputValue)}
+                      disabled={isLoading}
+                      className="h-12 text-sm border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 pr-12 resize-none"
+                    />
+                  </div>
+                  <Button
+                    onClick={() => handleSendMessage(inputValue)}
+                    disabled={isLoading || !inputValue.trim()}
+                    className="h-12 px-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {/* Status indicator */}
+                {!isOnline && (
+                  <div className="flex items-center gap-2 text-sm text-red-600 mt-2">
+                    <WifiOff className="h-4 w-4" />
+                    <span>Working offline - using local data analysis</span>
+                  </div>
+                )}
+              </div>
             </div>
-          </Card>
+          </div>
         </div>
       )}
     </>
