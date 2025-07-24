@@ -24,6 +24,103 @@ import mongoose from 'mongoose';
 export async function GET(req: NextRequest) {
   try {
     await dbConnect();
+
+    const { searchParams } = new URL(req.url);
+    const employeeId = searchParams.get('id');
+
+    // If specific employee ID is requested, fetch that employee
+    if (employeeId) {
+      const employee = await Employee.aggregate([
+        { 
+          $match: { 
+            _id: new mongoose.Types.ObjectId(employeeId),
+            is_deleted: false 
+          } 
+        },
+        {
+          $lookup: {
+            from: 'departments',
+            localField: 'departmentId',
+            foreignField: '_id',
+            as: 'department'
+          }
+        },
+        {
+          $lookup: {
+            from: 'employeeskills',
+            localField: '_id',
+            foreignField: 'employeeId',
+            as: 'employeeSkills',
+            pipeline: [
+              { $match: { is_deleted: false } }
+            ]
+          }
+        },
+        {
+          $lookup: {
+            from: 'skills',
+            localField: 'employeeSkills.skillId',
+            foreignField: '_id',
+            as: 'skills'
+          }
+        },
+        {
+          $addFields: {
+            department: { $arrayElemAt: ['$department', 0] },
+            skillCount: { $size: '$employeeSkills' }
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            employeeId: 1,
+            name: 1,
+            gender: 1,
+            title: 1,
+            yearsExperience: 1,
+            departmentId: 1,
+            department: '$department.name',
+            skillLevel: 1,
+            skillCount: 1,
+            employeeSkills: 1,
+            skills: 1
+          }
+        }
+      ]);
+
+      if (employee.length === 0) {
+        return NextResponse.json({
+          success: false,
+          message: 'Employee not found'
+        }, { status: 404 });
+      }
+
+      // Map skills to { [skillName]: level } format
+      const skillsMap = (employee: any) => {
+        if (!employee.employeeSkills || !employee.skills) return {};
+        
+        const map: Record<string, string> = {};
+        
+        employee.employeeSkills.forEach((es: any) => {
+          const skill = employee.skills.find((sk: any) => sk._id.toString() === es.skillId.toString());
+          if (skill && skill.name && es.level) {
+            map[skill.name] = es.level;
+          }
+        });
+        return map;
+      };
+
+      const employeeWithSkills = {
+        ...employee[0],
+        skills: skillsMap(employee[0]),
+        totalSkills: Object.keys(skillsMap(employee[0])).length
+      };
+
+      return NextResponse.json({
+        success: true,
+        data: [employeeWithSkills]
+      });
+    }
     
     // Get employees with their department information
     const employees = await Employee.aggregate([
@@ -181,12 +278,14 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Create new employee
+    // Create new employee with required fields
     const newEmployee = await Employee.create({
       name,
-      displayId,
+      employeeId: displayId, // Use displayId as employeeId
+      displayId, // Keep displayId for compatibility
       gender,
       departmentId: deptId,
+      title: 'Worker', // Default title
       is_deleted: false,
     });
 

@@ -28,7 +28,7 @@ interface UseSkillMatricesReturn {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  saveMatrix: (matrixData: any) => Promise<boolean>;
+  saveMatrix: (matrixData: any) => Promise<{ success: boolean; data?: any; error?: string }>;
   updateMatrix: (id: string, matrixData: any) => Promise<boolean>;
   deleteMatrix: (id: string) => Promise<boolean>;
   getMatrixById: (id: string) => Promise<SkillMatrix | null>;
@@ -64,7 +64,7 @@ export const useSkillMatrices = (departmentId?: string): UseSkillMatricesReturn 
     }
   };
 
-  const saveMatrix = async (matrixData: any): Promise<boolean> => {
+  const saveMatrix = async (matrixData: any): Promise<any> => {
     try {
       const response = await fetch('/api/skill-matrices', {
         method: 'POST',
@@ -78,15 +78,24 @@ export const useSkillMatrices = (departmentId?: string): UseSkillMatricesReturn 
       
       if (result.success) {
         await fetchMatrices(); // Refresh the list
-        return true;
+        return {
+          success: true,
+          data: result.data
+        };
       } else {
         setError(result.message || 'Failed to save skill matrix');
-        return false;
+        return {
+          success: false,
+          error: result.message
+        };
       }
     } catch (err) {
       setError('Network error occurred while saving');
       console.error('Error saving skill matrix:', err);
-      return false;
+      return {
+        success: false,
+        error: 'Network error occurred while saving'
+      };
     }
   };
 

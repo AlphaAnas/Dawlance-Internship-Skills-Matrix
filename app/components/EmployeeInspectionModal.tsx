@@ -39,34 +39,41 @@ export default function workHistoryInspectionModal({ employee, workHistory, isOp
   // Log the received work history data
   console.log("Modal received workHistory:", workHistory)
 
-
-  const navigateToSkillsMatrix = async (skill: string) => {
-    try {
-      setLoading(true)
-      
-      // Close the modal first
-      onClose()
-      
-      // Navigate to skills-mapping page with employee ID and skill name
-      // The skills-mapping page can use these parameters to highlight the relevant data
-      router.push(`/skills-mapping?employeeId=${employeeData.displayId}&skill=${encodeURIComponent(skill)}&departmentId=${employeeData.departmentId || ''}`)
-      
-    } catch (error) {
-      console.error("Error navigating to skills matrix:", error)
-      // Fallback navigation
-      onClose()
-      router.push(`/skills-mapping?skill=${encodeURIComponent(skill)}`)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // Early return after all hooks to follow Rules of Hooks
   if (!workHistory || !workHistory.data || !workHistory.data[0]) return null
 
   // Parse the skills from the work history data
   const employeeData = workHistory.data[0]
   let parsedSkills = {}
+
+  const navigateToSkillsMatrix = async (skill: string) => {
+    try {
+      setLoading(true)
+      
+      // Instead of navigating, show detailed skill information in a more user-friendly way
+      const skillLevel = parsedSkills[skill as keyof typeof parsedSkills]
+      const skillInfo = `
+Employee: ${employeeData.name}
+Skill: ${skill}
+Level: ${skillLevel}
+Department: ${employeeData.departmentId}
+
+This skill assessment can be used for:
+• Performance reviews
+• Training recommendations  
+• Task assignments
+• Skills gap analysis
+      `.trim()
+      
+      alert(skillInfo)
+      
+    } catch (error) {
+      console.error("Error displaying skill information:", error)
+      alert(`Error displaying information for skill "${skill}". Please try again.`)
+    } finally {
+      setLoading(false)
+    }
+  }
   
   try {
     if (typeof employeeData.skills === 'string') {
@@ -553,39 +560,70 @@ export default function workHistoryInspectionModal({ employee, workHistory, isOp
                        Skills ({totalSkills} total)
                     </h3>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Object.entries(parsedSkills).map(([skill, level], index) => (
-                      <motion.div
-                        key={skill}
-                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ delay: 0.6 + index * 0.05, type: "spring", stiffness: 300 }}
-                        whileHover={{ scale: 1.03, y: -2 }}
-                        onClick={() => navigateToSkillsMatrix(skill)}
-                        className={`cursor-pointer p-6 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
-                          isDark
-                            ? "bg-gray-700/40 border-gray-600/50 hover:bg-gray-700/60 hover:border-gray-500"
-                            : "bg-white/60 border-gray-200/50 hover:bg-white/80 hover:border-gray-300"
-                        } shadow-lg hover:shadow-xl ${loading ? 'opacity-50 pointer-events-none' : ''}`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="flex-shrink-0">
-                            <SkillIndicator level={getDisplayLabel(level as string)} size={64} showTooltip={true} />
-                          </div>
-                          <div className="flex-1 min-w-0 flex flex-col justify-center">
-                            <h4
-                              className={`font-bold text-xl ${isDark ? "text-white" : "text-gray-900"} leading-tight`}
-                            >
-                              {skill}
-                            </h4>
-                            <div className="mt-2">
-                              <Chip label={getDisplayLabel(level as string)} className={`${getSkillColor(level as string)} text-base px-3 py-1`} />
+                  
+                  {totalSkills === 0 ? (
+                    // Display message when no skills are recorded
+                    <div className={`text-center py-12 px-6 rounded-xl border-2 border-dashed ${
+                      isDark ? "border-gray-600 bg-gray-700/20" : "border-gray-300 bg-gray-50/50"
+                    }`}>
+                      <div className="flex flex-col items-center gap-4">
+                        <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                          isDark ? "bg-gray-700" : "bg-gray-100"
+                        }`}>
+                          <Briefcase className={`h-8 w-8 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                        </div>
+                        <div>
+                          <h4 className={`text-xl font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                            No Skills Recorded
+                          </h4>
+                          <p className={`text-base ${isDark ? "text-gray-400" : "text-gray-500"} max-w-md mx-auto leading-relaxed`}>
+                            This employee doesn't have any skills recorded in their profile yet. 
+                            Skills can be added through the skills management system or during performance reviews.
+                          </p>
+                        </div>
+                        <div className={`mt-4 px-4 py-2 rounded-lg ${
+                          isDark ? "bg-blue-900/20 text-blue-400" : "bg-blue-50 text-blue-600"
+                        } text-sm font-medium`}>
+                          💡 Tip: Regular skill assessments help with career development and task assignments
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // Display skills grid when skills exist
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {Object.entries(parsedSkills).map(([skill, level], index) => (
+                        <motion.div
+                          key={skill}
+                          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ delay: 0.6 + index * 0.05, type: "spring", stiffness: 300 }}
+                          whileHover={{ scale: 1.03, y: -2 }}
+                          onClick={() => navigateToSkillsMatrix(skill)}
+                          className={`cursor-pointer p-6 rounded-xl border backdrop-blur-sm transition-all duration-300 ${
+                            isDark
+                              ? "bg-gray-700/40 border-gray-600/50 hover:bg-gray-700/60 hover:border-gray-500"
+                              : "bg-white/60 border-gray-200/50 hover:bg-white/80 hover:border-gray-300"
+                          } shadow-lg hover:shadow-xl ${loading ? 'opacity-50 pointer-events-none' : ''}`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="flex-shrink-0">
+                              <SkillIndicator level={getDisplayLabel(level as string)} size={64} showTooltip={true} />
+                            </div>
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                              <h4
+                                className={`font-bold text-xl ${isDark ? "text-white" : "text-gray-900"} leading-tight`}
+                              >
+                                {skill}
+                              </h4>
+                              <div className="mt-2">
+                                <Chip label={getDisplayLabel(level as string)} className={`${getSkillColor(level as string)} text-base px-3 py-1`} />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               </div>
             </div>

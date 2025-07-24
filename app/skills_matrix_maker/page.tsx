@@ -233,7 +233,12 @@ const PieChartSkillIndicator = ({ level, size = 80 }) => {
   );
 };
 
-const SaveSuccessPopup = ({ isVisible, onClose, matrixName }) => {
+const SaveSuccessPopup = ({ isVisible, onClose, matrixName, saveResult }: {
+  isVisible: boolean;
+  onClose: () => void;
+  matrixName: string;
+  saveResult?: any;
+}) => {
   if (!isVisible) return null;
 
   const handleViewMapping = () => {
@@ -241,17 +246,38 @@ const SaveSuccessPopup = ({ isVisible, onClose, matrixName }) => {
     onClose();
   };
 
+  const handleViewEmployees = () => {
+    window.open('/employees', '_blank');
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-in fade-in-0 zoom-in-95">
+      <div className="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl animate-in fade-in-0 zoom-in-95">
         <div className="text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-2">Matrix Saved Successfully!</h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-4">
             "{matrixName}" has been saved and is now available in your matrices library.
           </p>
+          
+          {saveResult && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-left">
+              <h4 className="font-semibold text-blue-900 mb-2">What was created:</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>✓ Skills Matrix: "{matrixName}"</li>
+                {saveResult.skillsCreated > 0 && (
+                  <li>✓ New Skills: {saveResult.skillsCreated} skills added to database</li>
+                )}
+                {saveResult.employeesProcessed > 0 && (
+                  <li>✓ Employee Skills: Updated skills for {saveResult.employeesProcessed} employees</li>
+                )}
+              </ul>
+            </div>
+          )}
+          
           <div className="space-y-3">
             <Button 
               onClick={handleViewMapping} 
@@ -260,6 +286,18 @@ const SaveSuccessPopup = ({ isVisible, onClose, matrixName }) => {
               <FileText className="h-4 w-4 mr-2" />
               View in Skills Mapping
             </Button>
+            
+            {saveResult && saveResult.employeesProcessed > 0 && (
+              <Button 
+                onClick={handleViewEmployees} 
+                variant="outline"
+                className="w-full border-green-500 text-green-600 hover:bg-green-50"
+              >
+                <User className="h-4 w-4 mr-2" />
+                View Updated Employees
+              </Button>
+            )}
+            
             <Button 
               onClick={onClose} 
               variant="outline" 
@@ -382,6 +420,7 @@ const SkillsMatrixManager = () => {
   const [skillLevels, setSkillLevels] = useState<{[key: string]: string}>({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveResult, setSaveResult] = useState<any>(null);
   const [showFinalTable, setShowFinalTable] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<string | null>(null);
   const [editingSkill, setEditingSkill] = useState<number | null>(null);
@@ -652,16 +691,25 @@ const SkillsMatrixManager = () => {
         skillLevels: skillLevels
       };
       
-      const success = await saveMatrix(matrixData);
-      if (success) {
+      const result = await saveMatrix(matrixData);
+      if (result.success) {
         setSaved(true);
+        
+        // Set save result with details about what was created
+        if (result.data) {
+          setSaveResult({
+            skillsCreated: result.data.skillsCreated || 0,
+            employeesProcessed: result.data.employeesProcessed || 0
+          });
+        }
+        
         setShowSuccessPopup(true);
         setTimeout(() => setSaved(false), 2000);
         
         // Show success message
         console.log('Skills matrix saved successfully');
       } else {
-        console.error('Failed to save skills matrix');
+        console.error('Failed to save skills matrix:', result.error);
         // You might want to show an error message to the user
       }
     } catch (error) {
@@ -1084,13 +1132,12 @@ const SkillsMatrixManager = () => {
           </div>
         </div>
 
-        <SaveSuccessPopup 
-          isVisible={showSuccessPopup} 
+        <SaveSuccessPopup
+          isVisible={showSuccessPopup}
           onClose={() => setShowSuccessPopup(false)}
           matrixName={matrixName}
-        />
-
-        {/* Fullscreen hint */}
+          saveResult={saveResult}
+        />        {/* Fullscreen hint */}
         {isFullscreen && (
           <div className="fixed bottom-4 right-4 bg-black/80 text-white px-4 py-2 rounded-lg text-sm z-50">
             Press <kbd className="bg-white/20 px-2 py-1 rounded">Esc</kbd> to exit fullscreen

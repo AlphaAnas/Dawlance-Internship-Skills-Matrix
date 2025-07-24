@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import Table from "../components/Table";
-import { mockDepartments } from "../data/mockData";
 import type { Department, Employee } from "../types";
 import EmployeeInspectionModal from "../components/EmployeeInspectionModal";
 
@@ -96,7 +95,7 @@ export default function EmployeesPage() {
             // The API now returns skills directly as an object {skillName: level}
             skills: emp.skills || {},
             totalSkills: Object.keys(emp.skills || {}).length,
-            departmentName: getDepartmentNameFromList(
+            department: getDepartmentNameFromList(
               emp.departmentId || emp.current_department_id,
               deptData.data
             ),
@@ -121,6 +120,36 @@ export default function EmployeesPage() {
 
     fetchData();
   }, []);
+
+  // Function to refresh employee data
+  const refreshEmployeeData = async () => {
+    try {
+      const empRes = await fetch("/api/employees");
+      const empData = await empRes.json();
+
+      if (empData.success) {
+        const employees = empData.data.map((emp: any) => ({
+          ...emp,
+          skills: emp.skills || {},
+          totalSkills: Object.keys(emp.skills || {}).length,
+          department: getDepartmentNameFromList(
+            emp.departmentId || emp.current_department_id,
+            departments
+          ),
+        }));
+        
+        setEmployees(employees);
+
+        // Update department metrics
+        const metrics = calculateDepartmentMetricsFromData(employees, departments);
+        setDepartmentMetrics(metrics);
+        
+        console.log("Employee data refreshed");
+      }
+    } catch (err) {
+      console.error("Error refreshing employee data:", err);
+    }
+  };
 
   const getDepartmentNameFromList = (
     departmentId: string | number,
@@ -252,6 +281,7 @@ export default function EmployeesPage() {
     }
   };
 
+
   const columns = [
     { key: "employeeId", label: "Employee ID" },
     { key: "name", label: "Name" },
@@ -263,30 +293,69 @@ export default function EmployeesPage() {
   const handleEmployeeInspection = async (employee: any) => {
     console.log("Opening inspection for employee:", employee);
     
-    // Create the work history format that the modal expects
-    const workHistoryData = {
-      success: true,
-      data: [{
-        displayId: employee.employeeId || employee._id,
-        name: employee.name,
-        gender: employee.gender,
-        departmentId: employee.departmentId,
-        skills: employee.skills || {}, // Pass skills directly as object
-      }]
-    };
-    
-    setEmployeeWorkHistory(workHistoryData);
-    setSelectedEmployeeForInspection(employee);
+    try {
+      // Try to fetch the latest employee data from the API
+      const response = await fetch(`/api/employees?id=${employee._id || employee.id}`);
+      const apiData = await response.json();
+      
+      let employeeData;
+      if (apiData.success && apiData.data && apiData.data.length > 0) {
+        // Use fresh data from API
+        employeeData = apiData.data[0];
+      } else {
+        // Fall back to the employee data we have
+        employeeData = employee;
+      }
+
+      // Create the work history format that the modal expects
+      const workHistoryData = {
+        success: true,
+        data: [{
+          displayId: employeeData.displayId || employeeData.employeeId || employeeData._id,
+          name: employeeData.name,
+          gender: employeeData.gender,
+          departmentId: employeeData.departmentId || employeeData.current_department_id,
+          skills: employeeData.skills || {}, // Pass skills directly as object
+        }]
+      };
+      
+      setEmployeeWorkHistory(workHistoryData);
+      setSelectedEmployeeForInspection(employee);
+    } catch (error) {
+      console.error("Error fetching employee data:", error);
+      
+      // Fall back to original behavior if API call fails
+      const workHistoryData = {
+        success: true,
+        data: [{
+          displayId: employee.displayId || employee.employeeId || employee._id,
+          name: employee.name,
+          gender: employee.gender,
+          departmentId: employee.departmentId || employee.current_department_id,
+          skills: employee.skills || {}, // Pass skills directly as object
+        }]
+      };
+      
+      setEmployeeWorkHistory(workHistoryData);
+      setSelectedEmployeeForInspection(employee);
+    }
   };
 
   // Add a new employee
   const handleNewEmployee = async (data: EmployeeFormData) => {
+    const skillsObj: Record<string, string> = {};
+    if (Array.isArray(data.skills)) {
+      data.skills.forEach(skill => {
+        skillsObj[skill.name] = skill.level;
+      });
+    }
+
     const newEmployee = {
       name: data.name?.trim() || "",
       displayId: data.displayId?.trim() || "",
       gender: data.gender || "MALE",
       departmentId: data.departmentId || "",
-      skills: Array.isArray(data.skills) ? data.skills : [],
+      skills: data.skills || [],
     };
 
     console.log("Sending newEmployee:", newEmployee);
@@ -306,25 +375,27 @@ export default function EmployeesPage() {
         return;
       }
 
-      const resText = await response.text();
-      let savedEmployee;
-      try {
-        savedEmployee = JSON.parse(resText);
-        console.log("Employee added:", savedEmployee);
-      } catch (jsonErr) {
-        console.error("Response not valid JSON:", resText);
-        setFormError("Server returned invalid response.");
-        return;
-      }
+      const savedEmployee = await response.json();
+      console.log("Employee added:", savedEmployee);
 
+      // Create updated employee object for the UI
       const updatedEmployee: Employee = {
-        ...savedEmployee,
-        skills: savedEmployee.skills || {},
-        totalSkills: Object.keys(savedEmployee.skills || {}).length,
-        departmentName: getDepartmentName(savedEmployee.departmentId || ""),
+        _id: savedEmployee._id,
+        name: savedEmployee.name,
+        displayId: savedEmployee.displayId,
+        gender: savedEmployee.gender,
+        departmentId: savedEmployee.departmentId,
+        skills: skillsObj, // Use the skills object we created
+        totalSkills: Object.keys(skillsObj).length,
+        department: getDepartmentName(savedEmployee.departmentId || ""),
       };
+      
+      // Add to employees list
       setEmployees((prev) => [...prev, updatedEmployee]);
       setFormError(null);
+
+      // Refresh employee data to get the latest information
+      await refreshEmployeeData();
 
       // Update department metrics
       setDepartmentMetrics((prev) =>
@@ -351,6 +422,18 @@ export default function EmployeesPage() {
           return metric;
         })
       );
+
+      // Reset form and close modal
+      setIsModalOpen(false);
+      setFormData({
+        name: "",
+        displayId: "",
+        gender: "MALE",
+        departmentId: "",
+        skills: [],
+      });
+      setSkillInput({ name: "", level: "" });
+      
     } catch (error) {
       console.error("Error adding employee:", error);
       setFormError("Error adding employee. Please try again.");
@@ -393,7 +476,13 @@ export default function EmployeesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => metric.topPerformer && handleEmployeeInspection(metric.topPerformer)}
+                          onClick={() => {
+                            if (metric.topPerformer) {
+                              refreshEmployeeData().then(() => {
+                                handleEmployeeInspection(metric.topPerformer);
+                              });
+                            }
+                          }}
                           disabled={isLoadingWorkHistory || !metric.topPerformer}
                           className="ml-4 bg-green-500"
                         >
@@ -512,7 +601,11 @@ export default function EmployeesPage() {
                                 </p>
                               </div>
                               <Button
-                                onClick={() => handleEmployeeInspection(searchedEmployee)}
+                                onClick={() => {
+                                  refreshEmployeeData().then(() => {
+                                    handleEmployeeInspection(searchedEmployee);
+                                  });
+                                }}
                                 disabled={isLoadingWorkHistory}
                                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
                               >
@@ -581,7 +674,11 @@ export default function EmployeesPage() {
                   data={employees}
                   isLoading={isLoading}
                   emptyMessage="No employees found"
-                  onInspect={(employee) => handleEmployeeInspection(employee)}
+                  onInspect={(employee) => {
+                    refreshEmployeeData().then(() => {
+                      handleEmployeeInspection(employee);
+                    });
+                  }}
                 />
               </CardContent>
             </Card>
@@ -612,9 +709,10 @@ export default function EmployeesPage() {
             </DialogDescription>
           </DialogHeader>
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              handleNewEmployee(formData);
+              await handleNewEmployee(formData);
+              // Only reset form and close modal if there's no error
               if (!formError) {
                 setIsModalOpen(false);
                 setFormData({
@@ -625,6 +723,7 @@ export default function EmployeesPage() {
                   skills: [],
                 });
                 setSkillInput({ name: "", level: "" });
+                setFormError(null);
               }
             }}
             className="space-y-6"
@@ -701,8 +800,8 @@ export default function EmployeesPage() {
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockDepartments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept._id || dept.id} value={dept._id?.toString() || dept.id?.toString() || ""}>
                         {dept.name}
                       </SelectItem>
                     ))}
@@ -792,6 +891,7 @@ export default function EmployeesPage() {
                     skills: [],
                   });
                   setSkillInput({ name: "", level: "" });
+                  setFormError(null); // Reset error when canceling
                 }}
                 className="flex-1"
               >

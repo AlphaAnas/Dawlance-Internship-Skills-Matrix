@@ -56,3 +56,80 @@ export async function GET(req: NextRequest) {
     }, { status: 500 });
   }
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    await dbConnect();
+    
+    const body = await req.json();
+    const { name, category, isMachineRelated, isCritical, departmentId, description } = body;
+
+    // Validate required fields
+    if (!name || !category) {
+      return NextResponse.json({
+        success: false,
+        message: 'Missing required fields: name and category are required'
+      }, { status: 400 });
+    }
+
+    // Check if skill already exists
+    const existingSkill = await Skill.findOne({ name: name.trim(), is_deleted: false });
+    if (existingSkill) {
+      return NextResponse.json({
+        success: false,
+        message: 'Skill with this name already exists'
+      }, { status: 409 });
+    }
+
+    // Verify department exists if departmentId is provided
+    if (departmentId) {
+      const department = await Department.findById(departmentId);
+      if (!department) {
+        return NextResponse.json({
+          success: false,
+          message: 'Department not found'
+        }, { status: 404 });
+      }
+    }
+
+    // Create new skill
+    const newSkill = new Skill({
+      name: name.trim(),
+      description: description || '',
+      category: category.toUpperCase(),
+      isMachineRelated: isMachineRelated || false,
+      isCritical: isCritical || false,
+      departmentId: departmentId || null
+    });
+
+    const savedSkill = await newSkill.save();
+
+    // Populate department information for response
+    await savedSkill.populate('departmentId', 'name');
+
+    return NextResponse.json({
+      success: true,
+      message: 'Skill created successfully',
+      data: {
+        _id: savedSkill._id,
+        name: savedSkill.name,
+        description: savedSkill.description,
+        category: savedSkill.category,
+        isMachineRelated: savedSkill.isMachineRelated,
+        isCritical: savedSkill.isCritical,
+        department: savedSkill.departmentId?.name || null,
+        departmentId: savedSkill.departmentId,
+        createdAt: savedSkill.createdAt
+      }
+    });
+
+  } catch (error) {
+    console.error('Error creating skill:', error);
+    
+    return NextResponse.json({
+      success: false,
+      message: 'Failed to create skill',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
+  }
+}

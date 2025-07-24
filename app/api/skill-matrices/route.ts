@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import { SkillMatrix, Department, Employee } from '@/lib/models';
+import { SkillMatrix, Department, Employee, Skill, EmployeeSkill } from '@/lib/models';
 
 export async function GET(req: NextRequest) {
   try {
@@ -91,13 +91,134 @@ export async function POST(req: NextRequest) {
       }, { status: 404 });
     }
 
+    // Process skills - create new ones if they don't exist
+    const processedSkills = [];
+    const skillMap = new Map(); // To store skill name -> skill object mapping
+
+    for (const skillName of skills) {
+      try {
+        // Check if skill already exists
+        let existingSkill = await Skill.findOne({ 
+          name: skillName.trim(), 
+          is_deleted: false 
+        });
+
+        if (!existingSkill) {
+          // Create new skill
+          console.log(`Creating new skill: ${skillName}`);
+          const newSkill = new Skill({
+            name: skillName.trim(),
+            description: `Skill for ${skillName}`,
+            category: 'TECHNICAL', // Default category for new skills
+            isMachineRelated: true, // Default for manufacturing context
+            isCritical: false,
+            departmentId: departmentId
+          });
+
+          existingSkill = await newSkill.save();
+          console.log(`Successfully created skill: ${skillName} with ID: ${existingSkill._id}`);
+        }
+
+        processedSkills.push(existingSkill);
+        skillMap.set(skillName, existingSkill);
+      } catch (skillError) {
+        console.error(`Error processing skill ${skillName}:`, skillError);
+        // Continue with other skills even if one fails
+      }
+    }
+
+    // Process employees and their skill levels
+    const processedEmployees = [];
+    
+    for (const employeeData of employees) {
+      try {
+        // Find or create employee
+        let employee = await Employee.findOne({ 
+          name: employeeData.name.trim(), 
+          is_deleted: false 
+        });
+
+        if (!employee) {
+          // Create new employee if doesn't exist
+          console.log(`Creating new employee: ${employeeData.name}`);
+          const newEmployee = new Employee({
+            name: employeeData.name.trim(),
+            employeeId: employeeData.id || `EMP-${Date.now()}`, // Generate ID if not provided
+            departmentId: departmentId,
+            gender: employeeData.gender || 'Male', // Default
+            title: employeeData.title || 'Operator', // Default
+            email: employeeData.email || '',
+            yearsExperience: employeeData.experience ? parseInt(employeeData.experience) : 0
+          });
+
+          employee = await newEmployee.save();
+          console.log(`Successfully created employee: ${employeeData.name} with ID: ${employee._id}`);
+        }
+
+        processedEmployees.push(employee);
+
+        // Update employee skills based on skillLevels
+        for (const skillName of skills) {
+          const skill = skillMap.get(skillName);
+          if (!skill) continue;
+
+          const levelKey = `${employeeData.name}-${skillName}`;
+          const skillLevel = skillLevels[levelKey];
+
+          if (skillLevel && skillLevel !== 'Beginner') { // Only create records for non-beginner levels
+            try {
+              // Check if employee skill record already exists
+              const existingEmployeeSkill = await EmployeeSkill.findOne({
+                employeeId: employee._id,
+                skillId: skill._id,
+                is_deleted: false
+              });
+
+              if (existingEmployeeSkill) {
+                // Update existing record
+                existingEmployeeSkill.level = skillLevel;
+                existingEmployeeSkill.lastAssessedDate = new Date();
+                await existingEmployeeSkill.save();
+                console.log(`Updated skill level for ${employeeData.name} - ${skillName}: ${skillLevel}`);
+              } else {
+                // Create new employee skill record
+                const newEmployeeSkill = new EmployeeSkill({
+                  employeeId: employee._id,
+                  skillId: skill._id,
+                  level: skillLevel,
+                  acquiredDate: new Date(),
+                  lastAssessedDate: new Date()
+                });
+
+                await newEmployeeSkill.save();
+                console.log(`Created new skill record for ${employeeData.name} - ${skillName}: ${skillLevel}`);
+              }
+            } catch (employeeSkillError) {
+              console.error(`Error updating employee skill for ${employeeData.name} - ${skillName}:`, employeeSkillError);
+              // Continue with other skills
+            }
+          }
+        }
+      } catch (employeeError) {
+        console.error(`Error processing employee ${employeeData.name}:`, employeeError);
+        // Continue with other employees
+      }
+    }
+
     // Prepare matrix data structure
     const matrixData = {
-      employees,
-      skills,
+      employees: processedEmployees.map(emp => ({
+        _id: emp._id,
+        name: emp.name,
+        employeeId: emp.employeeId,
+        departmentId: emp.departmentId,
+        title: emp.title,
+        gender: emp.gender
+      })),
+      skills: processedSkills.map(skill => skill.name),
       skillLevels,
-      employeeCount: employees.length,
-      skillCount: skills.length,
+      employeeCount: processedEmployees.length,
+      skillCount: processedSkills.length,
       createdAt: new Date().toISOString()
     };
 
@@ -116,6 +237,9 @@ export async function POST(req: NextRequest) {
     // Populate department information for response
     await savedMatrix.populate('departmentId', 'name');
 
+    console.log(`Successfully saved skills matrix: ${name}`);
+    console.log(`Created ${processedSkills.length} skills and processed ${processedEmployees.length} employees`);
+
     return NextResponse.json({
       success: true,
       message: 'Skill matrix saved successfully',
@@ -125,7 +249,9 @@ export async function POST(req: NextRequest) {
         department: savedMatrix.departmentId.name,
         employeeCount: matrixData.employeeCount,
         skillCount: matrixData.skillCount,
-        createdAt: savedMatrix.createdAt
+        createdAt: savedMatrix.createdAt,
+        skillsCreated: processedSkills.length,
+        employeesProcessed: processedEmployees.length
       }
     });
 
