@@ -16,6 +16,7 @@ import AIChatbot from "../components/ai-chatbot"
 import FullscreenChart from "../components/FullscreenChart"
 import DatabaseLoading from "../components/DatabaseLoading"
 import DatabaseError from "../components/DatabaseError"
+import UserHeader from "../components/UserHeader"
 import { useEmployees } from "@/hooks/useEmployees"
 
 export default function FridgeManufacturingDashboard() {
@@ -76,7 +77,9 @@ export default function FridgeManufacturingDashboard() {
   const totalEmployees = employees.length
 
   return (
-    <div className="container mx-auto py-2 space-y-5">
+    <div className="min-h-screen bg-gradient-to-br from-slate-500 via-purple-300 to-slate-500">
+
+      <div className="container mx-auto py-2 space-y-5">
       {/* Header */}
       <div className="flex flex-col space-y-2">
 
@@ -339,6 +342,7 @@ export default function FridgeManufacturingDashboard() {
 
       {/* AI Chatbot */}
       <AIChatbot data={filteredData} />
+      </div>
     </div>
   )
 }

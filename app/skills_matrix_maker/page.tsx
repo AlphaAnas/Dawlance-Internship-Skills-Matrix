@@ -42,142 +42,7 @@ import { useSkills } from '../../hooks/useSkills';
 import { useMachines } from '../../hooks/useMachines';
 import DatabaseLoading from '../components/DatabaseLoading';
 import DatabaseError from '../components/DatabaseError';
-
-// Enhanced departments with Pakistani factory context
-const initialDepartments = [
-  { id: 'plastic-extrusion', name: 'Plastic Extrusion', area: 'Production' },
-  { id: 'assembly', name: 'Assembly', area: 'Production' },
-  { id: 'quality', name: 'Quality Control', area: 'QC' },
-  { id: 'maintenance', name: 'Maintenance', area: 'Support' },
-  { id: 'injection-molding', name: 'Injection Molding', area: 'Production' },
-  { id: 'packaging', name: 'Packaging & Dispatch', area: 'Logistics' },
-  { id: 'warehouse', name: 'Warehouse', area: 'Logistics' }
-];
-
-// Enhanced Pakistani employees with realistic names and varied skill levels
-const initialEmployees = [
-  // Plastic Extrusion Department
-  { id: 'T1208382', name: 'Muhammad Owais Khan', department: 'plastic-extrusion', area: 'Production', joinDate: '2022-03-15', experience: '2 years' },
-  { id: 'T1207850', name: 'Sarwar Ahmed', department: 'plastic-extrusion', area: 'Production', joinDate: '2021-08-20', experience: '3 years' },
-  { id: 'T1208438', name: 'Muhammad Asadullah', department: 'plastic-extrusion', area: 'Production', joinDate: '2023-01-10', experience: '1 year' },
-  { id: 'T1208060', name: 'Munawar Ali Shah', department: 'plastic-extrusion', area: 'Production', joinDate: '2020-11-05', experience: '4 years' },
-  { id: 'T1207956', name: 'Muhammad Mannan', department: 'plastic-extrusion', area: 'Production', joinDate: '2022-07-12', experience: '2 years' },
-  
-  // Assembly Department
-  { id: 'T1209001', name: 'Ahmed Hassan Malik', department: 'assembly', area: 'Production', joinDate: '2021-05-18', experience: '3 years' },
-  { id: 'T1209002', name: 'Fatima Bibi', department: 'assembly', area: 'Production', joinDate: '2022-09-22', experience: '2 years' },
-  { id: 'T1209003', name: 'Hassan Ali Khan', department: 'assembly', area: 'Production', joinDate: '2023-02-14', experience: '1 year' },
-  { id: 'T1209004', name: 'Ayesha Malik', department: 'assembly', area: 'Production', joinDate: '2021-12-08', experience: '2 years' },
-  
-  // Quality Control Department
-  { id: 'T1210001', name: 'Imran Sheikh', department: 'quality', area: 'QC', joinDate: '2020-04-25', experience: '4 years' },
-  { id: 'T1210002', name: 'Saba Ahmed', department: 'quality', area: 'QC', joinDate: '2021-10-30', experience: '3 years' },
-  { id: 'T1210003', name: 'Tariq Mahmood', department: 'quality', area: 'QC', joinDate: '2022-06-15', experience: '2 years' },
-  
-  // Maintenance Department
-  { id: 'T1211001', name: 'Rashid Hussain', department: 'maintenance', area: 'Support', joinDate: '2019-08-12', experience: '5 years' },
-  { id: 'T1211002', name: 'Zain Abbas', department: 'maintenance', area: 'Support', joinDate: '2021-03-28', experience: '3 years' },
-  
-  // Injection Molding Department
-  { id: 'T1212001', name: 'Bilal Ahmad', department: 'injection-molding', area: 'Production', joinDate: '2022-01-20', experience: '2 years' },
-  { id: 'T1212002', name: 'Nadia Sultana', department: 'injection-molding', area: 'Production', joinDate: '2021-11-10', experience: '3 years' },
-  
-  // Packaging Department
-  { id: 'T1213001', name: 'Kashif Raza', department: 'packaging', area: 'Logistics', joinDate: '2023-04-05', experience: '1 year' },
-  { id: 'T1213002', name: 'Rubina Khatoon', department: 'packaging', area: 'Logistics', joinDate: '2022-08-18', experience: '2 years' },
-  
-  // Warehouse Department
-  { id: 'T1214001', name: 'Shahzad Iqbal', department: 'warehouse', area: 'Logistics', joinDate: '2020-12-03', experience: '4 years' },
-  { id: 'T1214002', name: 'Amna Riaz', department: 'warehouse', area: 'Logistics', joinDate: '2022-05-25', experience: '2 years' }
-];
-
-// Enhanced skills with realistic Pakistani factory context
-const predefinedSkills = {
-  'plastic-extrusion': [
-    'Material Mixing + Material Loading',
-    'Machine SOP / Operation',
-    'Quality of Sheet Extrusion',
-    'Packing & Labeling',
-    'Quality of Gasket Extrusion',
-    'Quality of Trim Extrusion',
-    '5S Implementation',
-    'Rework & Waste Management',
-    'Fire & Safety Training',
-    'Machine Maintenance'
-  ],
-  'assembly': [
-    'Component Assembly',
-    'Welding Operations',
-    'Quality Inspection',
-    'Torque Specifications',
-    'Blueprint Reading',
-    'Hand Tools Operation',
-    'Power Tools Operation',
-    'Safety Protocols',
-    'Packaging & Shipping',
-    'Inventory Management'
-  ],
-  'quality': [
-    'Visual Inspection',
-    'Dimensional Checking',
-    'CMM Operation',
-    'Gauge Calibration',
-    'Statistical Process Control',
-    'Non-Destructive Testing',
-    'Documentation & Reporting',
-    'Root Cause Analysis',
-    'Customer Complaint Handling',
-    'ISO Standards Knowledge'
-  ],
-  'maintenance': [
-    'Preventive Maintenance',
-    'Electrical Systems',
-    'Mechanical Systems',
-    'Hydraulic Systems',
-    'Pneumatic Systems',
-    'PLC Programming',
-    'Troubleshooting',
-    'Welding & Fabrication',
-    'Lubrication Systems',
-    'Safety Lockout/Tagout'
-  ],
-  'injection-molding': [
-    'Injection Molding Setup',
-    'Mold Changing',
-    'Temperature Control',
-    'Pressure Settings',
-    'Cycle Time Optimization',
-    'Material Handling',
-    'Quality Control',
-    'Machine Troubleshooting',
-    'Safety Procedures',
-    'Production Planning'
-  ],
-  'packaging': [
-    'Product Packaging',
-    'Label Application',
-    'Quality Checking',
-    'Carton Assembly',
-    'Shrink Wrapping',
-    'Palletizing',
-    'Inventory Tracking',
-    'Dispatch Coordination',
-    'Documentation',
-    'Safety Protocols'
-  ],
-  'warehouse': [
-    'Inventory Management',
-    'Forklift Operation',
-    'Stock Receiving',
-    'Order Picking',
-    'Storage Organization',
-    'Documentation',
-    'Safety Procedures',
-    'Equipment Maintenance',
-    'Quality Control',
-    'Dispatch Coordination'
-  ]
-};
+import useUserPermissions from '../../hooks/useUserPermissions';
 
 const skillLevelColors = {
   'Beginner': { bg: '#ef4444', text: '#ffffff' },
@@ -187,11 +52,11 @@ const skillLevelColors = {
 };
 
 // Generate realistic skill levels based on employee experience
-const generateSkillLevels = (employee, skills) => {
-  const levels = {};
+const generateSkillLevels = (employee: any, skills: string[]) => {
+  const levels: {[key: string]: string} = {};
   const experienceYears = parseInt(employee.experience) || 1;
   
-  skills.forEach(skill => {
+  skills.forEach((skill: string) => {
     // Base skill level on experience with some randomization
     let level;
     if (experienceYears >= 4) {
@@ -207,14 +72,14 @@ const generateSkillLevels = (employee, skills) => {
   return levels;
 };
 
-const PieChartSkillIndicator = ({ level, size = 80 }) => {
-  const colors = skillLevelColors[level] || { bg: '#e5e7eb', text: '#6b7280' };
+const PieChartSkillIndicator = ({ level, size = 80 }: { level: string; size?: number }) => {
+  const colors = skillLevelColors[level as keyof typeof skillLevelColors] || { bg: '#e5e7eb', text: '#6b7280' };
   const percentage = {
     'Beginner': 25,
     'Intermediate': 50,
     'Advanced': 75,
     'Expert': 100
-  }[level] || 0;
+  }[level as keyof typeof skillLevelColors] || 0;
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -315,7 +180,11 @@ const SaveSuccessPopup = ({ isVisible, onClose, matrixName, saveResult }: {
 };
 
 // New Department Creation Dialog
-const CreateDepartmentDialog = ({ isOpen, onClose, onCreateDepartment }) => {
+const CreateDepartmentDialog = ({ isOpen, onClose, onCreateDepartment }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onCreateDepartment: (department: any) => void;
+}) => {
   const [departmentName, setDepartmentName] = useState('');
   const [departmentArea, setDepartmentArea] = useState('');
 
@@ -389,7 +258,10 @@ const CreateDepartmentDialog = ({ isOpen, onClose, onCreateDepartment }) => {
 };
 
 // Empty State Component for No Employees
-const NoEmployeesState = ({ departmentName, onAddEmployee }) => {
+const NoEmployeesState = ({ departmentName, onAddEmployee }: {
+  departmentName: string;
+  onAddEmployee: () => void;
+}) => {
   return (
     <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
       <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -408,6 +280,7 @@ const NoEmployeesState = ({ departmentName, onAddEmployee }) => {
 };
 
 const SkillsMatrixManager = () => {
+  const { permissions, userRole } = useUserPermissions();
   const router = useRouter();
   const searchParams = useSearchParams();
   const matrixId = searchParams.get('matrixId');
@@ -453,8 +326,8 @@ const SkillsMatrixManager = () => {
         area: dept.area || 'Production'
       })));
     } else {
-      // Fallback to initial departments if database is empty
-      setDepartments(initialDepartments);
+      // Start with empty departments array - all data comes from database
+      setDepartments([]);
     }
   }, [dbDepartments]);
 
@@ -465,21 +338,15 @@ const SkillsMatrixManager = () => {
         name: emp.name,
         department: emp.department, // Keep the department name as is
         departmentId: departments.find(d => d.name === emp.department)?._id || emp.department, // Map to department ID
-        area: 'Production',
+        area: 'Production', // Default area since Employee type doesn't have area property
         joinDate: emp.hireDate,
-        experience: `${emp.yearsExperience} years`
+        experience: `${emp.yearsExperience} years`,
+        gender: emp.gender,
+        yearsExperience: emp.yearsExperience
       })));
     } else {
-      // Fallback to initial employees if database is empty
-      // Map the initial employees' department IDs to department names for consistency
-      const mappedInitialEmployees = initialEmployees.map(emp => {
-        const dept = initialDepartments.find(d => d.id === emp.department);
-        return {
-          ...emp,
-          department: dept ? dept.name : emp.department // Convert ID to name for consistency
-        };
-      });
-      setAllEmployees(mappedInitialEmployees);
+      // Start with empty employees array - all data comes from database
+      setAllEmployees([]);
     }
   }, [dbEmployees, departments]);
 
@@ -581,8 +448,7 @@ const SkillsMatrixManager = () => {
   // Department management functions
   const handleCreateDepartment = (newDepartment: any) => {
     setDepartments(prev => [...prev, newDepartment]);
-    // Initialize empty skills array for new department
-    (predefinedSkills as any)[newDepartment.id] = [];
+    // Note: Skills for new departments will be fetched from database
   };
 
   // Employee management functions
@@ -642,7 +508,7 @@ const SkillsMatrixManager = () => {
     setEditingSkill(skills.length);
   };
 
-  const deleteSkillColumn = (skillIndex) => {
+  const deleteSkillColumn = (skillIndex: number) => {
     const skillToRemove = skills[skillIndex];
     setSkills(skills.filter((_, index) => index !== skillIndex));
     const updatedSkillLevels = { ...skillLevels };
@@ -652,7 +518,7 @@ const SkillsMatrixManager = () => {
     setSkillLevels(updatedSkillLevels);
   };
 
-  const updateSkillName = (skillIndex, newName) => {
+  const updateSkillName = (skillIndex: number, newName: string) => {
     const oldSkill = skills[skillIndex];
     const updatedSkills = [...skills];
     updatedSkills[skillIndex] = newName;
@@ -670,11 +536,11 @@ const SkillsMatrixManager = () => {
     setSkillLevels(updatedSkillLevels);
   };
 
-  const removeSkill = (skillToRemove) => {
+  const removeSkill = (skillToRemove: string) => {
     setSkills(skills.filter(skill => skill !== skillToRemove));
   };
 
-  const handleSkillChange = (employeeName, skill, level) => {
+  const handleSkillChange = (employeeName: string, skill: string, level: string) => {
     setSkillLevels(prev => ({
       ...prev,
       [`${employeeName}-${skill}`]: level
@@ -784,6 +650,8 @@ const SkillsMatrixManager = () => {
   if (showFinalTable) {
     return (
       <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50'} flex transition-all duration-300`}>
+        {!isFullscreen }
+        <div className={`flex ${!isFullscreen ? 'pt-20' : ''} w-full`}>
         {/* Sidebar */}
         <div className={`${(sidebarOpen && !isFullscreen) ? 'w-80' : 'w-0'} transition-all duration-300 bg-white shadow-lg overflow-hidden`}>
           <div className="p-6">
@@ -932,24 +800,26 @@ const SkillsMatrixManager = () => {
                         </>
                       )}
                     </Button>
-                    <Button
-                      onClick={() => setIsEditMode(!isEditMode)}
-                      size={isFullscreen ? "default" : "lg"}
-                      variant={isEditMode ? "destructive" : "secondary"}
-                      className={`${isFullscreen ? 'h-12 px-6 text-lg' : 'h-16 px-10 text-xl'} transition-all duration-300`}
-                    >
-                      {isEditMode ? (
-                        <>
-                          <Eye className={`${isFullscreen ? 'h-5 w-5' : 'h-6 w-6'} mr-3`} />
-                          View Mode
-                        </>
-                      ) : (
-                        <>
-                          <Edit3 className={`${isFullscreen ? 'h-5 w-5' : 'h-6 w-6'} mr-3`} />
-                          Edit Mode
-                        </>
-                      )}
-                    </Button>
+                    {permissions.canCreateSkillsMatrix && (
+                      <Button
+                        onClick={() => setIsEditMode(!isEditMode)}
+                        size={isFullscreen ? "default" : "lg"}
+                        variant={isEditMode ? "destructive" : "secondary"}
+                        className={`${isFullscreen ? 'h-12 px-6 text-lg' : 'h-16 px-10 text-xl'} transition-all duration-300`}
+                      >
+                        {isEditMode ? (
+                          <>
+                            <Eye className={`${isFullscreen ? 'h-5 w-5' : 'h-6 w-6'} mr-3`} />
+                            View Mode
+                          </>
+                        ) : (
+                          <>
+                            <Edit3 className={`${isFullscreen ? 'h-5 w-5' : 'h-6 w-6'} mr-3`} />
+                            Edit Mode
+                          </>
+                        )}
+                      </Button>
+                    )}
                     {isEditMode && (
                       <Button
                         onClick={handleSave}
@@ -1061,7 +931,7 @@ const SkillsMatrixManager = () => {
                                     <span className={`text-white font-bold ${isFullscreen ? 'text-base' : 'text-lg'} transition-all duration-300`}>
                                       {emp.name
                                         .split(" ")
-                                        .map((n) => n[0])
+                                        .map((n: string) => n[0])
                                         .join("")
                                         .slice(0, 2)}
                                     </span>
@@ -1156,13 +1026,16 @@ const SkillsMatrixManager = () => {
             Press <kbd className="bg-white/20 px-2 py-1 rounded">Esc</kbd> to exit fullscreen
           </div>
         )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50">
+
+      <div className="p-6 pt-20">
+        <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-blue-500 bg-clip-text text-transparent mb-2">
             Skills Matrix Builder
@@ -1290,7 +1163,7 @@ const SkillsMatrixManager = () => {
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-blue-500 rounded-lg flex items-center justify-center">
                                 <span className="text-white font-bold text-xs">
-                                  {emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                                  {emp.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
                                 </span>
                               </div>
                               <div>
@@ -1346,7 +1219,7 @@ const SkillsMatrixManager = () => {
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-blue-500 rounded-lg flex items-center justify-center">
                                 <span className="text-white font-bold text-xs">
-                                  {emp.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                                  {emp.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
                                 </span>
                               </div>
                               <div>
@@ -1647,6 +1520,7 @@ const SkillsMatrixManager = () => {
             Next
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
+        </div>
         </div>
       </div>
 

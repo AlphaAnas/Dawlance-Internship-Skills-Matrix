@@ -103,16 +103,34 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-pink-500 to-pink-600 text-white">
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-pink-300 text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Users className="h-6 w-6" />
-                Gender Diversity
+                Gender Inclusion
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold mb-1">0%</div>
-              <p className="text-pink-100 text-sm">0 women workers</p>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">0</div>
+                    <p className="text-pink-100 text-xs">Men</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">0</div>
+                    <p className="text-pink-100 text-xs">Women</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-blue-400 h-2 rounded-l-full" style={{width: '50%'}}></div>
+                  <div className="flex-1 bg-pink-300 h-2 rounded-r-full" style={{width: '50%'}}></div>
+                </div>
+                <div className="flex justify-between text-xs text-pink-100">
+                  <span>0% Men</span>
+                  <span>0% Women</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -130,6 +148,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
   const totalEmployees = data.length
   const AdvancedEmployees = data.filter((e) => normalizeSkillLevel(e.skillLevel) === "Advanced").length
   const femaleEmployees = data.filter((e) => e.gender === "Female").length
+  const maleEmployees = data.filter((e) => e.gender === "Male").length
 
   const avgExperience = data.length > 0 ? data.reduce((sum, e) => sum + (e.yearsExperience || 0), 0) / data.length : 0
 
@@ -279,16 +298,34 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-pink-500 to-pink-600 text-white">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-400 to-pink-600 text-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
               <Users className="h-6 w-6" />
-              Gender Diversity
+             Gender Inclusion
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold mb-1">{totalEmployees > 0 ? Math.round((femaleEmployees / totalEmployees) * 100) : 0}%</div>
-            <p className="text-pink-100 text-sm">{femaleEmployees} women workers</p>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{maleEmployees}</div>
+                  <p className="text-pink-100 text-xs">Men</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold">{femaleEmployees}</div>
+                  <p className="text-pink-100 text-xs">Women</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-blue-400 h-2 rounded-l-full" style={{width: `${totalEmployees > 0 ? (maleEmployees / totalEmployees) * 100 : 50}%`}}></div>
+                <div className="flex-1 bg-pink-300 h-2 rounded-r-full" style={{width: `${totalEmployees > 0 ? (femaleEmployees / totalEmployees) * 100 : 50}%`}}></div>
+              </div>
+              <div className="flex justify-between text-xs text-pink-100">
+                <span>{totalEmployees > 0 ? Math.round((maleEmployees / totalEmployees) * 100) : 0}% Men</span>
+                <span>{totalEmployees > 0 ? Math.round((femaleEmployees / totalEmployees) * 100) : 0}% Women</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

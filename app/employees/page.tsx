@@ -34,7 +34,10 @@ import Table from "../components/Table";
 import type { Department, Employee } from "../types";
 import EmployeeInspectionModal from "../components/EmployeeInspectionModal";
 
+import useUserPermissions from "../../hooks/useUserPermissions";
+
 export default function EmployeesPage() {
+  const { permissions, userRole } = useUserPermissions();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -441,8 +444,10 @@ export default function EmployeesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
-      <div className="w-full space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+
+      <div className="p-6">
+        <div className="w-full space-y-8">
         {/* Department Metrics Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -917,21 +922,24 @@ export default function EmployeesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Floating Action Button */}
-      <motion.div
-        className="fixed bottom-8 right-8 z-50"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          size="lg"
-          className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl border-0"
-          title="Add New Employee"
+      {/* Floating Action Button - Only for Managers and Admins */}
+      {permissions.canAddEmployee && (
+        <motion.div
+          className="fixed bottom-8 right-8 z-50"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
         >
-          <Plus className="h-6 w-6" />
-        </Button>
-      </motion.div>
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            size="lg"
+            className="h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl border-0"
+            title="Add New Employee"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        </motion.div>
+      )}
+      </div>
     </div>
   );
 }

@@ -50,6 +50,7 @@
     "embla-carousel-react": "8.5.1",
     "framer-motion": "latest",
     "input-otp": "1.4.1",
+    "iron-session": "^8.0.4",
     "lucide-react": "^0.454.0",
     "mongodb": "^6.17.0",
     "mongoose": "^8.16.4",

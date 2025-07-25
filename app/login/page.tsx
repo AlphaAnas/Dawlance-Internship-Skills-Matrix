@@ -14,17 +14,40 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [userRole, setUserRole] = useState("user")
   const [isLoading, setIsLoading] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    router.push("/landing") // Redirect to dashboard on successful login
-    // // Simulate API call
-    // await new Promise((resolve) => setTimeout(resolve, 1500))
-    // setIsLoading(false)
-    // console.log("Login attempt:", { email, password })
+    
+    try {
+      // Store user session
+      localStorage.setItem('userSession', JSON.stringify({
+        email,
+        role: userRole,
+        loginTime: new Date().toISOString()
+      }))
+      
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      
+      // All users go to the same dashboard
+      router.push("/landing")
+    } catch (error) {
+      console.error("Login error:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async (resetEmail: string) => {
+    // Simulate password reset
+    console.log("Password reset requested for:", resetEmail)
+    alert("Password reset link sent to your email!")
+    setShowForgotPassword(false)
   }
 
   const floatingShapes = [
@@ -212,6 +235,58 @@ export default function LoginPage() {
                     </div>
                   </motion.div>
 
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.6, delay: 1.2 }}
+                    className="space-y-3"
+                  >
+                    <Label className="text-white/90 text-sm font-medium">
+                      Login as
+                    </Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { value: 'user', label: 'User', icon: '👤' },
+                        { value: 'manager', label: 'Manager', icon: '👔' },
+                        { value: 'admin', label: 'Admin', icon: '⚡' }
+                      ].map((role) => (
+                        <label key={role.value} className="cursor-pointer">
+                          <input
+                            type="radio"
+                            name="userRole"
+                            value={role.value}
+                            checked={userRole === role.value}
+                            onChange={(e) => setUserRole(e.target.value)}
+                            className="sr-only"
+                          />
+                          <div className={`p-3 rounded-lg border text-center transition-all duration-200 ${
+                            userRole === role.value
+                              ? 'bg-white/20 border-white/50 text-white'
+                              : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
+                          }`}>
+                            <div className="text-lg mb-1">{role.icon}</div>
+                            <div className="text-xs font-medium">{role.label}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.6, delay: 1.3 }}
+                    className="flex justify-between items-center"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-white/70 hover:text-white text-sm transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
+                  </motion.div>
+
             
 
                   <motion.div
@@ -243,6 +318,59 @@ export default function LoginPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-gradient-to-br from-purple-900/90 to-indigo-900/90 backdrop-blur-xl rounded-2xl p-6 w-full max-w-md border border-white/20 shadow-2xl"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-white">Reset Password</h3>
+              <button
+                onClick={() => setShowForgotPassword(false)}
+                className="text-white/70 hover:text-white text-xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+              <div>
+                <Label className="text-white/90 text-sm">Email Address</Label>
+                <div className="relative mt-1">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/60 w-5 h-5" />
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="pl-12 bg-white/10 border border-white/30 text-white placeholder:text-white/60 focus:border-white/50 focus:ring-white/20 h-12 rounded-xl"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(false)}
+                  className="flex-1 py-2 px-4 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 px-4 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium transition-all duration-200 shadow-lg"
+                >
+                  Send Reset Link
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }

@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, Sun, Moon, LogOut, Users, Map, BarChart3 } from "lucide-react"
 import { useTheme } from "./ThemeProvider"
 import Button from "./Button"
+import useUserPermissions from "../../hooks/useUserPermissions"
 
 interface LayoutProps {
   children: React.ReactNode
@@ -19,6 +20,7 @@ export default function Layout({ children }: LayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { isDark, toggleTheme } = useTheme()
+  const { userSession, logout } = useUserPermissions()
 
   const navigation = [
     { name: "Employees", href: "/employees", icon: Users },
@@ -27,7 +29,7 @@ export default function Layout({ children }: LayoutProps) {
   ]
 
   const handleLogout = () => {
-    router.push("/login")
+    logout()
   }
 
   const hideNavbar = pathname === "/login"
@@ -101,8 +103,25 @@ export default function Layout({ children }: LayoutProps) {
                 })}
               </div>
 
-              {/* Right: Theme + Logout */}
+              {/* Right: User Info + Theme + Logout */}
               <div className="hidden sm:flex items-center space-x-3">
+                {userSession && (
+                  <div className="flex items-center space-x-2 mr-2">
+                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${
+                      userSession.role === 'admin' 
+                        ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700' 
+                        : userSession.role === 'manager'
+                        ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700'
+                        : 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700'
+                    }`}>
+                      <span className="capitalize">{userSession.role}</span>
+                    </div>
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                      {userSession.email}
+                    </span>
+                  </div>
+                )}
+                
                 <button
                   onClick={toggleTheme}
                   className={`p-2 rounded-xl transition-all hover:scale-110 hover:rotate-180 ${
@@ -179,6 +198,23 @@ export default function Layout({ children }: LayoutProps) {
                   })}
 
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-4 pb-3 mx-2">
+                    {userSession && (
+                      <div className="flex items-center px-3 mb-3">
+                        <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${
+                          userSession.role === 'admin' 
+                            ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700' 
+                            : userSession.role === 'manager'
+                            ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700'
+                            : 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700'
+                        }`}>
+                          <span className="capitalize">{userSession.role}</span>
+                        </div>
+                        <span className={`text-sm ml-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                          {userSession.email}
+                        </span>
+                      </div>
+                    )}
+                    
                     <div className="flex items-center px-3 space-x-3">
                       <button
                         onClick={toggleTheme}
