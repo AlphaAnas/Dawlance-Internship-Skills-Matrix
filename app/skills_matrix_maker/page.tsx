@@ -38,6 +38,8 @@ import {
 import { useEmployees } from '../../hooks/useEmployees';
 import { useDepartments } from '../../hooks/useDepartments';
 import { useSkillMatrices } from '../../hooks/useSkillMatrices';
+import { useSkills } from '../../hooks/useSkills';
+import { useMachines } from '../../hooks/useMachines';
 import DatabaseLoading from '../components/DatabaseLoading';
 import DatabaseError from '../components/DatabaseError';
 
@@ -433,6 +435,8 @@ const SkillsMatrixManager = () => {
   const { employees: dbEmployees, loading: employeesLoading, error: employeesError } = useEmployees();
   const { departments: dbDepartments, loading: departmentsLoading, error: departmentsError } = useDepartments();
   const { matrices, loading: matricesLoading, error: matricesError, saveMatrix, deleteMatrix } = useSkillMatrices();
+  const { skills: dbSkills, loading: skillsLoading, error: skillsError, getSkillsByDepartment } = useSkills();
+  const { machines: dbMachines, loading: machinesLoading, error: machinesError, getMachinesByDepartment } = useMachines();
   
   // New state for department and employee management
   const [departments, setDepartments] = useState<any[]>([]);
@@ -513,10 +517,19 @@ const SkillsMatrixManager = () => {
     !selectedEmployees.find(selected => selected.id === emp.id)
   );
 
-  const departmentSkills = (predefinedSkills as any)[selectedDepartment] || [];
-  const filteredSkills = departmentSkills.filter((skill: string) => 
-    skill.toLowerCase().includes(skillFilter.toLowerCase()) &&
-    !skills.includes(skill)
+  // Get department skills and machines from database
+  const departmentSkills = selectedDepartment ? getSkillsByDepartment(selectedDepartment) : [];
+  const departmentMachines = selectedDepartment ? getMachinesByDepartment(selectedDepartment) : [];
+  
+  // Combine skills and machines for the available options
+  const combinedSkillsAndMachines = [
+    ...departmentSkills.map(skill => ({ name: skill.name, type: 'skill', data: skill })),
+    ...departmentMachines.map(machine => ({ name: machine.name, type: 'machine', data: machine }))
+  ];
+  
+  const filteredSkills = combinedSkillsAndMachines.filter((item) => 
+    item.name.toLowerCase().includes(skillFilter.toLowerCase()) &&
+    !skills.includes(item.name)
   );
 
   // Initialize skill levels when employees and skills are selected
@@ -617,9 +630,9 @@ const SkillsMatrixManager = () => {
     }
   };
 
-  const addPredefinedSkill = (skill) => {
-    if (!skills.includes(skill)) {
-      setSkills([...skills, skill]);
+  const addPredefinedSkill = (skillItem: any) => {
+    if (!skills.includes(skillItem.name)) {
+      setSkills([...skills, skillItem.name]);
     }
   };
 
@@ -756,14 +769,14 @@ const SkillsMatrixManager = () => {
   };
 
   // Loading state
-  if (employeesLoading || departmentsLoading || matricesLoading) {
+  if (employeesLoading || departmentsLoading || matricesLoading || skillsLoading || machinesLoading) {
     return <DatabaseLoading />;
   }
 
   // Error state
-  if (employeesError || departmentsError || matricesError) {
+  if (employeesError || departmentsError || matricesError || skillsError || machinesError) {
     return <DatabaseError 
-      error={employeesError || departmentsError || matricesError || ""} 
+      error={employeesError || departmentsError || matricesError || skillsError || machinesError || ""} 
       onRetry={() => window.location.reload()}
     />;
   }
@@ -1392,18 +1405,23 @@ const SkillsMatrixManager = () => {
                       </div>
                     </div>
                     <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {filteredSkills.map((skill, index) => (
+                      {filteredSkills.map((skillItem, index) => (
                         <div
                           key={index}
                           className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <Cog className="h-5 w-5 text-gray-600" />
-                            <span className="font-medium text-sm">{skill}</span>
+                            <div>
+                              <span className="font-medium text-sm">{skillItem.name}</span>
+                              <div className="text-xs text-gray-500 capitalize">
+                                {skillItem.type} {skillItem.type === 'machine' && 'type' in skillItem.data && skillItem.data.type && `• ${skillItem.data.type}`}
+                              </div>
+                            </div>
                           </div>
                           <Button
                             size="sm"
-                            onClick={() => addPredefinedSkill(skill)}
+                            onClick={() => addPredefinedSkill(skillItem)}
                             className="bg-green-600 hover:bg-green-700"
                           >
                             <Plus className="h-4 w-4" />

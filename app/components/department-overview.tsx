@@ -42,37 +42,56 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card>
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+      <Card className="col-span-1 lg:col-span-2 xl:col-span-1">
         <CardHeader>
           <CardTitle>Skill Distribution</CardTitle>
           <CardDescription>Overall skill level distribution across all departments</CardDescription>
         </CardHeader>
-        <CardContent className="h-[300px]">
+        <CardContent className="h-[450px] lg:h-[500px] xl:h-[450px]">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart margin={{ top: 30, right: 100, bottom: 40, left: 100 }}>
               <Pie
                 data={skillDistribution}
                 cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={2}
+                cy="42%"
+                innerRadius={80}
+                outerRadius={140}
+                paddingAngle={4}
                 dataKey="value"
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent, value }) => 
+                  value > 0 ? `${name}\n${(percent * 100).toFixed(0)}%` : ''
+                }
+                labelLine={false}
+                fontSize={14}
+                fontWeight="600"
               >
                 {skillDistribution.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Legend />
-              <RechartsTooltip formatter={(value, name) => [`${value} employees`, `${name} Level`]} />
+              <Legend 
+                verticalAlign="bottom" 
+                height={50}
+                iconType="circle"
+                wrapperStyle={{ fontSize: '16px', fontWeight: '500', paddingTop: '20px' }}
+              />
+              <RechartsTooltip 
+                formatter={(value, name) => [`${value} employees`, `${name} Level`]}
+                contentStyle={{
+                  backgroundColor: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  fontSize: '14px'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="col-span-1">
         <CardHeader>
           <CardTitle>Department Skill Saturation</CardTitle>
           <CardDescription>Percentage of employees above medium skill level</CardDescription>
@@ -98,38 +117,56 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       </Card>
 
       {departmentData.map((dept) => (
-        <Card key={dept.name}>
+        <Card key={dept.name} className="col-span-1">
           <CardHeader>
             <CardTitle>{dept.name}</CardTitle>
             <CardDescription>{dept.total} employees</CardDescription>
           </CardHeader>
-          <CardContent className="h-[200px]">
+          <CardContent className="h-[350px] lg:h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 20, right: 60, bottom: 30, left: 60 }}>
                 <Pie
                   data={[
                     { name: "Expert", value: dept.expert, color: "#AF52DE" },
                     { name: "High", value: dept.high, color: "#007AFF" },
                     { name: "Medium", value: dept.medium, color: "#FFCC00" },
                     { name: "Low", value: dept.low, color: "#FF3B30" },
-                  ]}
+                  ].filter(item => item.value > 0)}
                   cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={70}
-                  paddingAngle={2}
+                  cy="40%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={3}
                   dataKey="value"
+                  label={({ name, value }) => 
+                    value > 0 ? `${name}\n${value}` : ''
+                  }
+                  labelLine={false}
+                  fontSize={12}
+                  fontWeight="600"
                 >
                   {skillDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Legend />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={40}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: '13px', fontWeight: '500' }}
+                />
                 <RechartsTooltip
                   formatter={(value, name) => [
-                    `${value} employees (${Math.round((value / dept.total) * 100)}%)`,
+                    `${value} employees (${Math.round((Number(value) / dept.total) * 100)}%)`,
                     `${name} Level`,
                   ]}
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                    fontSize: '13px'
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>

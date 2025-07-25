@@ -43,75 +43,175 @@ export async function seedDatabase() {
 
     console.log('Created departments:', departments.length);
 
-    // 2. Create Skills
+    // 2. Create Skills with comprehensive coverage for each department
     const skills = await Skill.insertMany([
-      // Sheet Metal Skills
-      { name: 'Metal Cutting', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[0]._id },
-      { name: 'Welding', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id },
-      { name: 'Press Brake Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id },
-      { name: 'Blueprint Reading', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id },
+      // Sheet Metal Skills (Department 0)
+      { name: 'Laser Cutting Operation', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Metal Cutting', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'TIG Welding', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'MIG Welding', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Arc Welding', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Press Brake Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Plasma Cutting', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Sheet Metal Shearing', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Roll Forming', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Blueprint Reading', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Metal Fabrication', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Quality Measurement', category: 'TECHNICAL', departmentId: departments[0]._id, femaleEligible: true },
       
-      // Assembly Line Skills
-      { name: 'Component Assembly', category: 'LABOUR', departmentId: departments[1]._id },
-      { name: 'Torque Specifications', category: 'TECHNICAL', isCritical: true, departmentId: departments[1]._id },
-      { name: 'Line Operations', category: 'MACHINE', isMachineRelated: true, departmentId: departments[1]._id },
+      // Assembly Line Skills (Department 1)
+      { name: 'Assembly Line Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Component Assembly', category: 'LABOUR', departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Torque Specifications', category: 'TECHNICAL', isCritical: true, departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Pneumatic Press Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Screw Driver Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Component Feeding', category: 'MACHINE', isMachineRelated: true, departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Line Coordination', category: 'TECHNICAL', departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Assembly Quality Check', category: 'TECHNICAL', departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Production Scheduling', category: 'TECHNICAL', departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Tool Maintenance', category: 'TECHNICAL', departmentId: departments[1]._id, femaleEligible: true },
       
-      // Cooling Systems Skills
-      { name: 'Refrigeration Systems', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id },
-      { name: 'Leak Testing', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id },
-      { name: 'Compressor Installation', category: 'TECHNICAL', departmentId: departments[2]._id },
+      // Cooling Systems Skills (Department 2)
+      { name: 'Compressor Testing', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Refrigeration Systems', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Leak Testing', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Compressor Installation', category: 'TECHNICAL', departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Refrigeration Assembly', category: 'TECHNICAL', departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Pressure Testing', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Brazing', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Refrigerant Handling', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'System Diagnostics', category: 'TECHNICAL', departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Cooling System Design', category: 'TECHNICAL', departmentId: departments[2]._id, femaleEligible: true },
       
-      // Quality Control Skills
-      { name: 'Quality Testing', category: 'TECHNICAL', isCritical: true, departmentId: departments[3]._id },
-      { name: 'Statistical Analysis', category: 'TECHNICAL', departmentId: departments[3]._id },
-      { name: 'Documentation', category: 'TECHNICAL', departmentId: departments[3]._id },
+      // Quality Control Skills (Department 3)
+      { name: 'CMM Operation', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Quality Testing', category: 'TECHNICAL', isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Hardness Testing', category: 'MACHINE', isMachineRelated: true, departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Surface Roughness Testing', category: 'MACHINE', isMachineRelated: true, departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Electrical Testing', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Statistical Analysis', category: 'TECHNICAL', departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Documentation', category: 'TECHNICAL', departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Calibration', category: 'TECHNICAL', isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Dimensional Inspection', category: 'TECHNICAL', departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Non-Destructive Testing', category: 'TECHNICAL', departmentId: departments[3]._id, femaleEligible: true },
       
-      // Painting Skills
-      { name: 'Spray Painting', category: 'MACHINE', isMachineRelated: true, departmentId: departments[4]._id },
-      { name: 'Surface Preparation', category: 'LABOUR', departmentId: departments[4]._id },
-      { name: 'Color Matching', category: 'TECHNICAL', departmentId: departments[4]._id },
+      // Painting Skills (Department 4)
+      { name: 'Spray Booth Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Spray Painting', category: 'MACHINE', isMachineRelated: true, departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Paint Robot Programming', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Powder Coating', category: 'MACHINE', isMachineRelated: true, departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Paint Mixing', category: 'MACHINE', isMachineRelated: true, departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Surface Preparation', category: 'LABOUR', departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Color Matching', category: 'TECHNICAL', departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Curing Process Control', category: 'MACHINE', isMachineRelated: true, departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Paint Quality Control', category: 'TECHNICAL', departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Coating Thickness Measurement', category: 'TECHNICAL', departmentId: departments[4]._id, femaleEligible: true },
       
-      // Packaging Skills
-      { name: 'Package Assembly', category: 'LABOUR', departmentId: departments[5]._id },
-      { name: 'Labeling', category: 'LABOUR', departmentId: departments[5]._id },
-      { name: 'Shipping Documentation', category: 'TECHNICAL', departmentId: departments[5]._id },
+      // Packaging Skills (Department 5)
+      { name: 'Carton Erection', category: 'MACHINE', isMachineRelated: true, departmentId: departments[5]._id, femaleEligible: true },
+      { name: 'Shrink Wrapping', category: 'MACHINE', isMachineRelated: true, departmentId: departments[5]._id, femaleEligible: true },
+      { name: 'Label Application', category: 'MACHINE', isMachineRelated: true, departmentId: departments[5]._id, femaleEligible: true },
+      { name: 'Palletizing', category: 'MACHINE', isMachineRelated: true, departmentId: departments[5]._id, femaleEligible: true },
+      { name: 'Package Assembly', category: 'LABOUR', departmentId: departments[5]._id, femaleEligible: true },
+      { name: 'Labeling', category: 'LABOUR', departmentId: departments[5]._id, femaleEligible: true },
+      { name: 'Shipping Documentation', category: 'TECHNICAL', departmentId: departments[5]._id, femaleEligible: true },
+      { name: 'Inventory Management', category: 'TECHNICAL', departmentId: departments[5]._id, femaleEligible: true },
+      { name: 'Package Design', category: 'TECHNICAL', departmentId: departments[5]._id, femaleEligible: true },
+      { name: 'Material Handling', category: 'LABOUR', departmentId: departments[5]._id, femaleEligible: true },
       
-      // Blow Molding Skills
-      { name: 'Blow Molding Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[6]._id },
-      { name: 'Plastic Welding', category: 'TECHNICAL', departmentId: departments[6]._id },
-      { name: 'Mold Setup', category: 'TECHNICAL', isCritical: true, departmentId: departments[6]._id },
+      // Blow Molding Skills (Department 6)
+      { name: 'Blow Molding Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[6]._id, femaleEligible: true },
+      { name: 'Injection Molding', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[6]._id, femaleEligible: true },
+      { name: 'Plastic Extrusion', category: 'MACHINE', isMachineRelated: true, departmentId: departments[6]._id, femaleEligible: true },
+      { name: 'Thermoforming', category: 'MACHINE', isMachineRelated: true, departmentId: departments[6]._id, femaleEligible: true },
+      { name: 'Plastic Welding', category: 'TECHNICAL', departmentId: departments[6]._id, femaleEligible: true },
+      { name: 'Mold Setup', category: 'TECHNICAL', isCritical: true, departmentId: departments[6]._id, femaleEligible: true },
+      { name: 'Material Selection', category: 'TECHNICAL', departmentId: departments[6]._id, femaleEligible: true },
+      { name: 'Process Optimization', category: 'TECHNICAL', departmentId: departments[6]._id, femaleEligible: true },
+      { name: 'Plastic Testing', category: 'TECHNICAL', departmentId: departments[6]._id, femaleEligible: true },
+      { name: 'Cycle Time Management', category: 'TECHNICAL', departmentId: departments[6]._id, femaleEligible: true },
       
-      // General Skills
-      { name: 'Safety Protocols', category: 'SAFETY', isCritical: true },
-      { name: 'Team Leadership', category: 'TECHNICAL' },
-      { name: 'Problem Solving', category: 'TECHNICAL' },
-      { name: 'Equipment Maintenance', category: 'TECHNICAL' }
+      // Maintenance Skills (Department 7)
+      { name: 'CNC Repair', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: true },
+      { name: 'Welding Repair', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: true },
+      { name: 'Hydraulic Systems', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: true },
+      { name: 'Electrical Repair', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: false },
+      { name: 'Mechanical Repair', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: true },
+      { name: 'Pneumatic Systems', category: 'TECHNICAL', departmentId: departments[7]._id, femaleEligible: true },
+      { name: 'Preventive Maintenance', category: 'TECHNICAL', departmentId: departments[7]._id, femaleEligible: true },
+      { name: 'Troubleshooting', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: true },
+      { name: 'Equipment Calibration', category: 'TECHNICAL', departmentId: departments[7]._id, femaleEligible: true },
+      { name: 'Spare Parts Management', category: 'TECHNICAL', departmentId: departments[7]._id, femaleEligible: true },
+      
+      // General/Cross-Department Skills
+      { name: 'Safety Protocols', category: 'SAFETY', isCritical: true, femaleEligible: true },
+      { name: 'Team Leadership', category: 'TECHNICAL', femaleEligible: true },
+      { name: 'Problem Solving', category: 'TECHNICAL', femaleEligible: true },
+      { name: 'Equipment Maintenance', category: 'TECHNICAL', femaleEligible: true },
+      { name: '5S Implementation', category: 'TECHNICAL', femaleEligible: true },
+      { name: 'Lean Manufacturing', category: 'TECHNICAL', femaleEligible: true },
+      { name: 'Six Sigma', category: 'TECHNICAL', femaleEligible: true },
+      { name: 'Computer Literacy', category: 'TECHNICAL', femaleEligible: true },
+      { name: 'Communication Skills', category: 'TECHNICAL', femaleEligible: true },
+      { name: 'Time Management', category: 'TECHNICAL', femaleEligible: true }
     ]);
 
     console.log('Created skills:', skills.length);
 
-    // 3. Create Machines
+    // 3. Create Machines with comprehensive coverage for each department
     const machines = await Machine.insertMany([
       // Sheet Metal Machines
-      { name: 'Laser Cutter LX-500', machineId: 'LC-001', departmentId: departments[0]._id, type: 'Laser Cutter', manufacturer: 'TechCut', model: 'LX-500' },
-      { name: 'Press Brake PB-200', machineId: 'PB-001', departmentId: departments[0]._id, type: 'Press Brake', manufacturer: 'MetalForm', model: 'PB-200' },
-      { name: 'Welding Station WS-150', machineId: 'WS-001', departmentId: departments[0]._id, type: 'Welding Station', manufacturer: 'WeldTech', model: 'WS-150' },
+      { name: 'Laser Cutter LX-500', machineId: 'LC-001', departmentId: departments[0]._id, type: 'Laser Cutter', manufacturer: 'TechCut', model: 'LX-500', status: 'ACTIVE', specifications: { maxCutThickness: '20mm', power: '6kW', workArea: '3000x1500mm' } },
+      { name: 'Press Brake PB-200', machineId: 'PB-001', departmentId: departments[0]._id, type: 'Press Brake', manufacturer: 'MetalForm', model: 'PB-200', status: 'ACTIVE', specifications: { bendForce: '200T', maxLength: '3200mm', backGauge: 'CNC' } },
+      { name: 'Welding Station WS-150', machineId: 'WS-001', departmentId: departments[0]._id, type: 'Welding Station', manufacturer: 'WeldTech', model: 'WS-150', status: 'ACTIVE', specifications: { weldingTypes: ['TIG', 'MIG', 'Arc'], amperage: '150A' } },
+      { name: 'Plasma Cutter PC-80', machineId: 'PC-001', departmentId: departments[0]._id, type: 'Plasma Cutter', manufacturer: 'CutPro', model: 'PC-80', status: 'ACTIVE', specifications: { maxCutThickness: '50mm', power: '80A' } },
+      { name: 'Sheet Metal Shear SMS-3000', machineId: 'SMS-001', departmentId: departments[0]._id, type: 'Shear Machine', manufacturer: 'ShearMaster', model: 'SMS-3000', status: 'ACTIVE', specifications: { maxLength: '3000mm', maxThickness: '10mm' } },
+      { name: 'Roll Former RF-120', machineId: 'RF-001', departmentId: departments[0]._id, type: 'Roll Former', manufacturer: 'FormTech', model: 'RF-120', status: 'ACTIVE', specifications: { maxWidth: '1200mm', rollStations: '12' } },
       
       // Assembly Line Machines
-      { name: 'Assembly Line AL-300', machineId: 'AL-001', departmentId: departments[1]._id, type: 'Assembly Line', manufacturer: 'AutoAssembly', model: 'AL-300' },
-      { name: 'Torque Station TS-100', machineId: 'TS-001', departmentId: departments[1]._id, type: 'Torque Station', manufacturer: 'PrecisionTools', model: 'TS-100' },
+      { name: 'Assembly Line AL-300', machineId: 'AL-001', departmentId: departments[1]._id, type: 'Assembly Line', manufacturer: 'AutoAssembly', model: 'AL-300', status: 'ACTIVE', specifications: { length: '50m', speed: 'variable', stations: '15' } },
+      { name: 'Torque Station TS-100', machineId: 'TS-001', departmentId: departments[1]._id, type: 'Torque Station', manufacturer: 'PrecisionTools', model: 'TS-100', status: 'ACTIVE', specifications: { torqueRange: '1-100Nm', accuracy: '±2%' } },
+      { name: 'Pneumatic Press PP-500', machineId: 'PP-001', departmentId: departments[1]._id, type: 'Pneumatic Press', manufacturer: 'PressMatic', model: 'PP-500', status: 'ACTIVE', specifications: { force: '5000N', strokeLength: '150mm' } },
+      { name: 'Screw Driver Station SDS-25', machineId: 'SDS-001', departmentId: departments[1]._id, type: 'Screw Driver', manufacturer: 'FastenTech', model: 'SDS-25', status: 'ACTIVE', specifications: { torqueRange: '0.1-25Nm', speed: '0-2000rpm' } },
+      { name: 'Component Feeder CF-200', machineId: 'CF-001', departmentId: departments[1]._id, type: 'Component Feeder', manufacturer: 'FeedSys', model: 'CF-200', status: 'ACTIVE', specifications: { capacity: '200 parts', feedRate: '60/min' } },
       
       // Cooling Systems Machines
-      { name: 'Compressor Tester CT-400', machineId: 'CT-001', departmentId: departments[2]._id, type: 'Compressor Tester', manufacturer: 'CoolTest', model: 'CT-400' },
-      { name: 'Leak Detector LD-250', machineId: 'LD-001', departmentId: departments[2]._id, type: 'Leak Detector', manufacturer: 'LeakFind', model: 'LD-250' },
+      { name: 'Compressor Tester CT-400', machineId: 'CT-001', departmentId: departments[2]._id, type: 'Compressor Tester', manufacturer: 'CoolTest', model: 'CT-400', status: 'ACTIVE', specifications: { testPressure: '40bar', refrigerants: ['R134a', 'R600a'] } },
+      { name: 'Leak Detector LD-250', machineId: 'LD-001', departmentId: departments[2]._id, type: 'Leak Detector', manufacturer: 'LeakFind', model: 'LD-250', status: 'ACTIVE', specifications: { sensitivity: '1g/year', testMethods: ['Helium', 'Nitrogen'] } },
+      { name: 'Refrigeration Assembly Station RAS-100', machineId: 'RAS-001', departmentId: departments[2]._id, type: 'Assembly Station', manufacturer: 'CoolBuild', model: 'RAS-100', status: 'ACTIVE', specifications: { workPositions: '4', toolsIncluded: 'yes' } },
+      { name: 'Pressure Test Unit PTU-300', machineId: 'PTU-001', departmentId: departments[2]._id, type: 'Pressure Tester', manufacturer: 'TestMaster', model: 'PTU-300', status: 'ACTIVE', specifications: { maxPressure: '30bar', accuracy: '±0.1%' } },
+      { name: 'Brazing Station BS-800', machineId: 'BS-001', departmentId: departments[2]._id, type: 'Brazing Station', manufacturer: 'BrazeTech', model: 'BS-800', status: 'ACTIVE', specifications: { temperature: '800°C', atmosphere: 'controlled' } },
+      
+      // Quality Control Machines
+      { name: 'CMM Measuring Machine CMM-500', machineId: 'CMM-001', departmentId: departments[3]._id, type: 'CMM Machine', manufacturer: 'MeasurePro', model: 'CMM-500', status: 'ACTIVE', specifications: { accuracy: '±2µm', workVolume: '500x500x400mm' } },
+      { name: 'Hardness Tester HT-150', machineId: 'HT-001', departmentId: departments[3]._id, type: 'Hardness Tester', manufacturer: 'HardTest', model: 'HT-150', status: 'ACTIVE', specifications: { methods: ['Rockwell', 'Brinell', 'Vickers'] } },
+      { name: 'Surface Roughness Tester SRT-200', machineId: 'SRT-001', departmentId: departments[3]._id, type: 'Surface Tester', manufacturer: 'SurfaceCheck', model: 'SRT-200', status: 'ACTIVE', specifications: { range: '0.01-800µm', standards: ['ISO', 'ANSI'] } },
+      { name: 'Electrical Tester ET-1000', machineId: 'ET-001', departmentId: departments[3]._id, type: 'Electrical Tester', manufacturer: 'ElectroTest', model: 'ET-1000', status: 'ACTIVE', specifications: { voltage: '0-1000V', insulation: '0-10GΩ' } },
       
       // Painting Machines
-      { name: 'Spray Booth SB-600', machineId: 'SB-001', departmentId: departments[4]._id, type: 'Spray Booth', manufacturer: 'PaintPro', model: 'SB-600' },
-      { name: 'Paint Robot PR-800', machineId: 'PR-001', departmentId: departments[4]._id, type: 'Paint Robot', manufacturer: 'RoboPaint', model: 'PR-800' },
+      { name: 'Spray Booth SB-600', machineId: 'SB-001', departmentId: departments[4]._id, type: 'Spray Booth', manufacturer: 'PaintPro', model: 'SB-600', status: 'ACTIVE', specifications: { dimensions: '6x4x3m', airflow: '20000m³/h', filtration: 'HEPA' } },
+      { name: 'Paint Robot PR-800', machineId: 'PR-001', departmentId: departments[4]._id, type: 'Paint Robot', manufacturer: 'RoboPaint', model: 'PR-800', status: 'ACTIVE', specifications: { reach: '800mm', repeatability: '±0.05mm', axes: '6' } },
+      { name: 'Powder Coating Station PCS-400', machineId: 'PCS-001', departmentId: departments[4]._id, type: 'Powder Coating', manufacturer: 'PowderTech', model: 'PCS-400', status: 'ACTIVE', specifications: { voltage: '100kV', flowRate: '500g/min' } },
+      { name: 'Paint Mixing Station PMS-50', machineId: 'PMS-001', departmentId: departments[4]._id, type: 'Paint Mixer', manufacturer: 'MixMaster', model: 'PMS-50', status: 'ACTIVE', specifications: { capacity: '50L', mixingSpeed: '0-3000rpm' } },
+      { name: 'Curing Oven CO-800', machineId: 'CO-001', departmentId: departments[4]._id, type: 'Curing Oven', manufacturer: 'HeatTech', model: 'CO-800', status: 'ACTIVE', specifications: { maxTemp: '200°C', volume: '8m³', uniformity: '±3°C' } },
+      
+      // Packaging Machines
+      { name: 'Carton Erector CE-120', machineId: 'CE-001', departmentId: departments[5]._id, type: 'Carton Erector', manufacturer: 'PackTech', model: 'CE-120', status: 'ACTIVE', specifications: { speed: '12 cartons/min', cartonSize: '200-600mm' } },
+      { name: 'Shrink Wrapper SW-300', machineId: 'SW-001', departmentId: departments[5]._id, type: 'Shrink Wrapper', manufacturer: 'WrapMaster', model: 'SW-300', status: 'ACTIVE', specifications: { filmWidth: '300mm', speed: '30 products/min' } },
+      { name: 'Label Applicator LA-200', machineId: 'LA-001', departmentId: departments[5]._id, type: 'Label Applicator', manufacturer: 'LabelPro', model: 'LA-200', status: 'ACTIVE', specifications: { speed: '200 labels/min', accuracy: '±0.5mm' } },
+      { name: 'Palletizer PZ-500', machineId: 'PZ-001', departmentId: departments[5]._id, type: 'Palletizer', manufacturer: 'PalletTech', model: 'PZ-500', status: 'ACTIVE', specifications: { capacity: '500kg', height: '2.5m', speed: '8 cycles/min' } },
       
       // Blow Molding Machines
-      { name: 'Blow Molder BM-350', machineId: 'BM-001', departmentId: departments[6]._id, type: 'Blow Molder', manufacturer: 'PlasticForm', model: 'BM-350' },
-      { name: 'Injection Molder IM-450', machineId: 'IM-001', departmentId: departments[6]._id, type: 'Injection Molder', manufacturer: 'MoldMaster', model: 'IM-450' }
+      { name: 'Blow Molder BM-350', machineId: 'BM-001', departmentId: departments[6]._id, type: 'Blow Molder', manufacturer: 'PlasticForm', model: 'BM-350', status: 'ACTIVE', specifications: { clampForce: '350T', maxVolume: '5L', cycleTime: '45s' } },
+      { name: 'Injection Molder IM-450', machineId: 'IM-001', departmentId: departments[6]._id, type: 'Injection Molder', manufacturer: 'MoldMaster', model: 'IM-450', status: 'ACTIVE', specifications: { clampForce: '450T', shotSize: '2000g', cycleTime: '30s' } },
+      { name: 'Plastic Extruder PE-200', machineId: 'PE-001', departmentId: departments[6]._id, type: 'Extruder', manufacturer: 'ExtrudeTech', model: 'PE-200', status: 'ACTIVE', specifications: { screwDiameter: '200mm', output: '500kg/h' } },
+      { name: 'Thermoforming Machine TM-120', machineId: 'TM-001', departmentId: departments[6]._id, type: 'Thermoformer', manufacturer: 'FormPlastic', model: 'TM-120', status: 'ACTIVE', specifications: { formingArea: '1200x800mm', depth: '150mm' } },
+      
+      // Maintenance Department Machines
+      { name: 'CNC Lathe Repair Station CNC-300', machineId: 'CNCS-001', departmentId: departments[7]._id, type: 'Repair Station', manufacturer: 'RepairTech', model: 'CNC-300', status: 'ACTIVE', specifications: { capacity: '300mm dia', tooling: 'complete' } },
+      { name: 'Welding Repair Unit WRU-250', machineId: 'WRU-001', departmentId: departments[7]._id, type: 'Welding Repair', manufacturer: 'FixWeld', model: 'WRU-250', status: 'ACTIVE', specifications: { processes: ['TIG', 'MIG', 'Stick'], amperage: '250A' } },
+      { name: 'Hydraulic Test Bench HTB-1000', machineId: 'HTB-001', departmentId: departments[7]._id, type: 'Test Bench', manufacturer: 'HydroTest', model: 'HTB-1000', status: 'ACTIVE', specifications: { maxPressure: '1000bar', flowRate: '100L/min' } },
+      { name: 'Electrical Repair Station ERS-500', machineId: 'ERS-001', departmentId: departments[7]._id, type: 'Electrical Repair', manufacturer: 'ElectroFix', model: 'ERS-500', status: 'ACTIVE', specifications: { voltage: '0-500V', instruments: 'complete' } }
     ]);
 
     console.log('Created machines:', machines.length);
