@@ -77,15 +77,26 @@ export const useUserPermissions = () => {
   }, []);
 
   const permissions = {
-    // Manager permissions
+    // Manager permissions - can add but not edit/delete skills and employees
     canAddEmployee: userSession?.role === 'manager' || userSession?.role === 'admin',
+    canEditEmployee: userSession?.role === 'admin', // Only admin can edit employees
+    canDeleteEmployee: userSession?.role === 'admin', // Only admin can delete employees
+    
+    canAddSkill: userSession?.role === 'manager' || userSession?.role === 'admin',
+    canEditSkill: userSession?.role === 'admin', // Only admin can edit skills
+    canDeleteSkill: userSession?.role === 'admin', // Only admin can delete skills
+    
+    // Skills matrix permissions
     canCreateSkillsMatrix: userSession?.role === 'manager' || userSession?.role === 'admin',
-    canEditEmployee: userSession?.role === 'manager' || userSession?.role === 'admin',
+    canEditSkillsMatrix: userSession?.role === 'manager' || userSession?.role === 'admin',
+    canDeleteSkillsMatrix: userSession?.role === 'admin',
+    
+    // Skill level editing - managers can edit skill levels in matrix
+    canEditSkillLevels: userSession?.role === 'manager' || userSession?.role === 'admin',
     
     // Admin permissions
     canResetPassword: userSession?.role === 'admin',
     canManageUsers: userSession?.role === 'admin',
-    canDeleteEmployee: userSession?.role === 'admin',
     
     // View permissions (all users can view)
     canViewDashboard: true,

@@ -25,14 +25,23 @@ import {
   RadialBarChart,
   RadialBar,
   ReferenceArea,
+  ComposedChart,
 } from "recharts"
 import { TrendingUp, Users, Award, Factory, Target, BookOpen, AlertTriangle, CheckCircle, Clock, RefreshCw } from "lucide-react"
-import type { Employee } from "@/app/types"
 import FullscreenChart from "./FullscreenChart"
 import { useDepartmentPerformance } from "@/hooks/useDepartmentPerformance"
 
+// Use a flexible interface that can handle different Employee types
+interface FlexibleEmployee {
+  department?: string
+  skillLevel?: string
+  gender?: string
+  name?: string
+  yearsExperience?: number
+}
+
 interface DepartmentOverviewProps {
-  data: Employee[]
+  data: FlexibleEmployee[]
 }
 
 export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
@@ -99,7 +108,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
 
   // Initialize selected departments when data changes
   useEffect(() => {
-    const departments = [...new Set(data.map((employee) => employee.department).filter(Boolean))];
+    const departments = [...new Set(data.map((employee) => employee.department).filter(Boolean))] as string[];
     setSelectedDepartments(departments);
   }, [data]);
 
@@ -204,8 +213,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
   // Calculate meaningful metrics with safe guards for empty data
   const totalEmployees = data.length
   const AdvancedEmployees = data.filter((e) => normalizeSkillLevel(e.skillLevel) === "Advanced").length
-  const femaleEmployees = data.filter((e) => e.gender === "Female").length
-  const maleEmployees = data.filter((e) => e.gender === "Male").length
+  const femaleEmployees = data.filter((e) => 
+    e.gender?.toLowerCase() === "female" || e.gender === "Female" || e.gender === "FEMALE").length
+  const maleEmployees = data.filter((e) => 
+    e.gender?.toLowerCase() === "male" || e.gender === "Male" || e.gender === "MALE").length
 
   const avgExperience = data.length > 0 ? data.reduce((sum, e) => sum + (e.yearsExperience || 0), 0) / data.length : 0
 
@@ -238,13 +249,13 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
   ]
 
   // Department workforce with efficiency metrics
-  const departments = [...new Set(data.map((employee) => employee.department).filter(Boolean))]
+  const departments = [...new Set(data.map((employee) => employee.department).filter(Boolean))] as string[];
   const departmentSizes = departments.map((dept, index) => {
-    const employees = data.filter((e) => e.department === dept)
-    const avgSkillLevel = employees.reduce((sum, e) => {
+    const employees = data.filter((e) => e.department === dept && e.skillLevel)
+    const avgSkillLevel = employees.length > 0 ? employees.reduce((sum, e) => {
       const skillMap = { Advanced: 4, Expert: 4, High: 3, Medium: 2, Low: 1 }
-      return sum + skillMap[e.skillLevel as keyof typeof skillMap]
-    }, 0) / employees.length
+      return sum + (skillMap[e.skillLevel as keyof typeof skillMap] || 1)
+    }, 0) / employees.length : 0
 
     const colors = ["#EF4444", "#F59E0B", "#10B981", "#3B82F6", "#8B5CF6", "#EC4899", "#F97316"]
     return {
@@ -273,60 +284,72 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
   });
 
   // Department Filter Controls Component
-  const DepartmentFilters = () => (
-    <div className="mb-4 p-4 bg-gray-50 rounded-lg border">
-      <h4 className="text-sm font-medium text-gray-700 mb-3">Filter Departments:</h4>
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setSelectedDepartments(departments)}
-          className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
-        >
-          Select All
-        </button>
-        <button
-          onClick={() => setSelectedDepartments([])}
-          className="px-3 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
-        >
-          Clear All
-        </button>
-        {departments.map((dept) => (
+  const DepartmentFilters = () => {
+    const validDepartments = [...new Set(data.map((employee) => employee.department).filter(Boolean))] as string[];
+    
+    return (
+      <div className="mb-4 p-4 bg-gray-50 rounded-lg border">
+        <h4 className="text-sm font-medium text-gray-700 mb-3">Filter Departments:</h4>
+        <div className="flex flex-wrap gap-2">
           <button
-            key={dept}
-            onClick={() => toggleDepartment(dept)}
-            className={`px-3 py-1 text-xs rounded-full transition-colors ${
-              selectedDepartments.includes(dept)
-                ? 'bg-green-100 text-green-800 border border-green-300'
-                : 'bg-gray-100 text-gray-600 border border-gray-300'
-            }`}
+            onClick={() => setSelectedDepartments(validDepartments)}
+            className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
           >
-            <span className="font-medium">{getDepartmentAbbr(dept)}</span> - {dept}
+            Select All
           </button>
-        ))}
+          <button
+            onClick={() => setSelectedDepartments([])}
+            className="px-3 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
+          >
+            Clear All
+          </button>
+          {validDepartments.map((dept) => (
+            <button
+              key={dept}
+              onClick={() => toggleDepartment(dept)}
+              className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                selectedDepartments.includes(dept)
+                  ? 'bg-green-100 text-green-800 border border-green-300'
+                  : 'bg-gray-100 text-gray-600 border border-gray-300'
+              }`}
+            >
+              <span className="font-medium">{getDepartmentAbbr(dept)}</span> - {dept}
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Gender distribution with more insights - updated labels
   const genderSkillData = [
     {
       skillLevel: "Advanced",
-      Men: data.filter((e) => normalizeSkillLevel(e.skillLevel) === "Advanced" && e.gender === "Male").length,
-      Women: data.filter((e) => normalizeSkillLevel(e.skillLevel) === "Advanced" && e.gender === "Female").length,
+      Men: data.filter((e) => normalizeSkillLevel(e.skillLevel) === "Advanced" && 
+        (e.gender?.toLowerCase() === "male" || e.gender === "Male" || e.gender === "MALE")).length,
+      Women: data.filter((e) => normalizeSkillLevel(e.skillLevel) === "Advanced" && 
+        (e.gender?.toLowerCase() === "female" || e.gender === "Female" || e.gender === "FEMALE")).length,
     },
     {
       skillLevel: "High",
-      Men: data.filter((e) => e.skillLevel === "High" && e.gender === "Male").length,
-      Women: data.filter((e) => e.skillLevel === "High" && e.gender === "Female").length,
+      Men: data.filter((e) => e.skillLevel === "High" && 
+        (e.gender?.toLowerCase() === "male" || e.gender === "Male" || e.gender === "MALE")).length,
+      Women: data.filter((e) => e.skillLevel === "High" && 
+        (e.gender?.toLowerCase() === "female" || e.gender === "Female" || e.gender === "FEMALE")).length,
     },
     {
       skillLevel: "Medium",
-      Men: data.filter((e) => e.skillLevel === "Medium" && e.gender === "Male").length,
-      Women: data.filter((e) => e.skillLevel === "Medium" && e.gender === "Female").length,
+      Men: data.filter((e) => e.skillLevel === "Medium" && 
+        (e.gender?.toLowerCase() === "male" || e.gender === "Male" || e.gender === "MALE")).length,
+      Women: data.filter((e) => e.skillLevel === "Medium" && 
+        (e.gender?.toLowerCase() === "female" || e.gender === "Female" || e.gender === "FEMALE")).length,
     },
     {
       skillLevel: "Low",
-      Men: data.filter((e) => e.skillLevel === "Low" && e.gender === "Male").length,
-      Women: data.filter((e) => e.skillLevel === "Low" && e.gender === "Female").length,
+      Men: data.filter((e) => e.skillLevel === "Low" && 
+        (e.gender?.toLowerCase() === "male" || e.gender === "Male" || e.gender === "MALE")).length,
+      Women: data.filter((e) => e.skillLevel === "Low" && 
+        (e.gender?.toLowerCase() === "female" || e.gender === "Female" || e.gender === "FEMALE")).length,
     },
   ]
 
@@ -593,7 +616,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
               description="Size and average skill level"
             >
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={departmentSizes} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                <ComposedChart data={departmentSizes} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={10} />
                   <YAxis yAxisId="left" fontSize={11} />
@@ -611,13 +634,13 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                   />
                   <Bar yAxisId="left" dataKey="size" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
                   <Line yAxisId="right" dataKey="avgSkill" stroke="#F59E0B" strokeWidth={3} />
-                </BarChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </FullscreenChart>
           </CardHeader>
           <CardContent className="h-[450px] pt-6">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={departmentSizes} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+              <ComposedChart data={departmentSizes} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={10} />
                 <YAxis yAxisId="left" fontSize={11} />
@@ -635,7 +658,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                 />
                 <Bar yAxisId="left" dataKey="size" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
                 <Line yAxisId="right" dataKey="avgSkill" stroke="#F59E0B" strokeWidth={3} />
-              </BarChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -683,6 +706,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                       Object.keys(performanceData[0])
                         .filter(key => key !== 'month')
                         .map((dept, index) => {
+                                          
                           const colors = ['#60A5FA', '#4ADE80', '#F87171'];
                           return (
                             <Line
@@ -843,13 +867,14 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             >
               <div className="h-full">
                 {/* Skill Band Labels */}
-                <div className="grid grid-cols-4 text-center text-sm text-[#1E293B] pb-2">
-                  <div className="bg-red-100 py-1 rounded">Low</div>
-                  <div className="bg-yellow-100 py-1 rounded">Medium</div>
-                  <div className="bg-blue-100 py-1 rounded">High</div>
-                  <div className="bg-green-100 py-1 rounded">Advanced</div>
+                <div className="grid grid-cols-4 text-center text-sm text-[#1E293B] pb-2 relative z-50">
+                  <div className="bg-red-200 py-1 rounded relative z-50">Low</div>
+                  <div className="bg-[#D0C569] py-1 rounded relative z-50">Medium</div>
+                  <div className="bg-blue-200 py-1 rounded relative z-50">High</div>
+                  <div className="bg-[#79c87a] py-1 rounded relative z-50">Advanced</div>
                 </div>
-                <div className="relative h-[calc(100%-3rem)] w-full">
+                {/* Set fixed height for chart container and remove background from CardHeader if present */}
+                <div className="relative h-[400px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -870,13 +895,11 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                           return levels[Math.round(value)] || ""
                         }}
                       />
-                      
-                      {/* Skill Level Bands - Darker colors for better visibility in fullscreen */}
-                      <ReferenceArea y1={0.5} y2={1.5} fill="#EF4444" fillOpacity={0.3} ifOverflow="extendDomain" />
-                      <ReferenceArea y1={1.5} y2={2.5} fill="#F59E0B" fillOpacity={0.3} ifOverflow="extendDomain" />
-                      <ReferenceArea y1={2.5} y2={3.5} fill="#3B82F6" fillOpacity={0.3} ifOverflow="extendDomain" />
-                      <ReferenceArea y1={3.5} y2={4.5} fill="#10B981" fillOpacity={0.3} ifOverflow="extendDomain" />
-                      
+                      {/* Skill Level Bands - Consistent, visible colors for both fullscreen and normal view */}
+                      <ReferenceArea y1={0.5} y2={1.5} fill="#FCA5A5" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Red for Low */}
+                      <ReferenceArea y1={1.5} y2={2.5} fill="#D0C569" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Yellow for Medium */}
+                      <ReferenceArea y1={2.5} y2={3.5} fill="#94BFA4" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Blue for High */}
+                      <ReferenceArea y1={3.5} y2={4.5} fill="#55CE57" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Green for Advanced */}
                       <Tooltip
                         cursor={{ strokeDasharray: "3 3" }}
                         formatter={(value, name, props) => {
@@ -937,10 +960,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
   <CardContent className="h-[460px] pt-4 bg-white">
     {/* Skill Band Labels */}
     <div className="grid grid-cols-4 text-center text-sm text-[#1E293B] pb-2">
-      <div className="bg-red-100 py-1 rounded">Low</div>
-      <div className="bg-yellow-100 py-1 rounded">Medium</div>
-      <div className="bg-blue-100 py-1 rounded">High</div>
-      <div className="bg-green-100 py-1 rounded">Advanced </div>
+      <div className="bg-[#FCA5A5] py-1 rounded">Low</div>
+      <div className="bg-[#D0C569] py-1 rounded">Medium</div>
+      <div className="bg-[#94BFA4] py-1 rounded">High</div>
+      <div className="bg-[#79c87a] py-1 rounded">Advanced </div>
     </div>
     <div className="relative h-full w-full">
     <ResponsiveContainer width="100%" height="100%">
@@ -967,10 +990,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
 
         {/* Skill Level Bands - place after axis so they're not covered */}
       {/* Darker Skill Level Bands rendered first for background visibility */}
-      <ReferenceArea y1={0.5} y2={1.5} fill="#EF4444" fillOpacity={0.3} ifOverflow="extendDomain" /> {/* Red */}
-      <ReferenceArea y1={1.5} y2={2.5} fill="#F59E0B" fillOpacity={0.3} ifOverflow="extendDomain" /> {/* Amber */}
-      <ReferenceArea y1={2.5} y2={3.5} fill="#3B82F6" fillOpacity={0.3} ifOverflow="extendDomain" /> {/* Blue */}
-      <ReferenceArea y1={3.5} y2={4.5} fill="#10B981" fillOpacity={0.3} ifOverflow="extendDomain" /> {/* Emerald */}
+      <ReferenceArea y1={0.5} y2={1.5} fill="#FCA5A5" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Red for Low */}
+      <ReferenceArea y1={1.5} y2={2.5} fill="#D0C569" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Yellow for Medium */}
+      <ReferenceArea y1={2.5} y2={3.5} fill="#94BFA4" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Blue for High */}
+      <ReferenceArea y1={3.5} y2={4.5} fill="#55CE57" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Green for Advanced */}
 
 
         <Tooltip

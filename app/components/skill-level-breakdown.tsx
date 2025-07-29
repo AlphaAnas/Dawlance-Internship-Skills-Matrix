@@ -1,25 +1,41 @@
 "use client"
 
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts"
-import type { ManufacturingEmployee } from "@/lib/types"
+
+// Use a flexible interface that matches the actual employee data structure
+interface FlexibleEmployee {
+  id?: string
+  name?: string
+  gender?: string
+  department?: string
+  skillLevel?: string
+  yearsExperience?: number
+}
 
 interface SkillLevelBreakdownProps {
-  data: ManufacturingEmployee[]
+  data: FlexibleEmployee[]
 }
 
 export default function SkillLevelBreakdown({ data }: SkillLevelBreakdownProps) {
   // Helper function to normalize skill levels (treat Expert as Advanced)
-  const normalizeSkillLevel = (skillLevel: string) => {
+  const normalizeSkillLevel = (skillLevel: string | undefined) => {
+    if (!skillLevel) return '';
     if (skillLevel === 'Expert' || skillLevel === 'Advanced') return 'Advanced';
     return skillLevel;
   };
 
-  const departments = [...new Set(data.map((employee) => employee.department))]
+  // Filter out employees without department and get unique departments
+  const validData = data.filter(emp => emp.department && emp.skillLevel && emp.gender);
+  const departments = [...new Set(validData.map((employee) => employee.department))].filter(Boolean) as string[];
 
   const skillBreakdownData = departments.map((department) => {
-    const employees = data.filter((e) => e.department === department)
-    const maleEmployees = employees.filter((e) => e.gender === "Male")
-    const femaleEmployees = employees.filter((e) => e.gender === "Female")
+    const employees = validData.filter((e) => e.department === department)
+    const maleEmployees = employees.filter((e) => 
+      e.gender?.toLowerCase() === "male" || e.gender === "Male" || e.gender === "MALE"
+    )
+    const femaleEmployees = employees.filter((e) => 
+      e.gender?.toLowerCase() === "female" || e.gender === "Female" || e.gender === "FEMALE"
+    )
 
     return {
       name: department.replace(" ", "\n"),
@@ -33,6 +49,23 @@ export default function SkillLevelBreakdown({ data }: SkillLevelBreakdownProps) 
       "Female Low": femaleEmployees.filter((e) => e.skillLevel === "Low").length,
     }
   })
+
+  // Add debugging
+  console.log("SkillLevelBreakdown - Valid Data Count:", validData.length);
+  console.log("SkillLevelBreakdown - Departments:", departments);
+  console.log("SkillLevelBreakdown - Chart Data:", skillBreakdownData);
+
+  // Return early if no valid data
+  if (!validData.length || !departments.length) {
+    return (
+      <div className="h-[400px] flex items-center justify-center">
+        <div className="text-center text-gray-500">
+          <p className="text-lg font-medium">No Data Available</p>
+          <p className="text-sm">No valid employee data found for skill level breakdown</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[400px]">

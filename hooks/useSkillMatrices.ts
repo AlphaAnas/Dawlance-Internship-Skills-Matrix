@@ -127,7 +127,7 @@ export const useSkillMatrices = (departmentId?: string): UseSkillMatricesReturn 
 
   const deleteMatrix = async (id: string): Promise<boolean> => {
     try {
-      const response = await fetch(`/api/skill-matrices/${id}`, {
+      const response = await fetch(`/api/skill-matrices?id=${id}`, {
         method: 'DELETE',
       });
 
@@ -149,7 +149,7 @@ export const useSkillMatrices = (departmentId?: string): UseSkillMatricesReturn 
 
   const getMatrixById = async (id: string): Promise<SkillMatrix | null> => {
     try {
-      const response = await fetch(`/api/skill-matrices/${id}`);
+      const response = await fetch(`/api/skill-matrices?matrixId=${id}`);
       const result = await response.json();
       
       if (result.success) {

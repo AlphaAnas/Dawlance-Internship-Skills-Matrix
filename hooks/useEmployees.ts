@@ -48,19 +48,19 @@ export const useEmployees = (): UseEmployeesReturn => {
       if (result.success) {
         // Transform the database data to match the expected format for the charts
         const transformedEmployees = result.data.map((emp: any) => {
-          const yearsExp = emp.yearsExperience || Math.floor(Math.random() * 15) + 1;
+          const yearsExp = emp.yearsExperience || null;
           const skillCount = emp.skills ? Object.keys(emp.skills).length : 0; // Count keys in skills object
           
           // Calculate performance score based on skill level, experience, and skill count
           const skillLevelScores: { [key: string]: number } = {
             'Expert': 100,
-            'Advanced': 95,
-            'High': 85,
-            'Medium': 70,
-            'Low': 55
+            'Advanced': 100,
+            'High': 75,
+            'Medium': 50,
+            'Low': 25
           };
           
-          const skillLevelScore = skillLevelScores[emp.skillLevel] || 60;
+          const skillLevelScore = skillLevelScores[emp.skillLevel] || 1089;
           
           const experienceBonus = Math.min(yearsExp * 2, 20);
           const skillCountBonus = Math.min(skillCount * 3, 15);

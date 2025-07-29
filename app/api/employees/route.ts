@@ -1,18 +1,105 @@
 
-//  _id: '6880bb40afba9b31a8256005',
-//       name: 'Maria Santos',
-//       employeeId: 'EMP-001',
-//       gender: 'Female',
-//       title: 'Senior Metal Worker',
-//       yearsExperience: 8,
-//       skillCount: 0,
-//       skillLevel: 'Low',
-//       department: 'Sheet Metal',
-//       skills: [],
-//       skill_profile: {},
-//       totalSkills: 0,
-//       departmentName: 'Unknown Department'
-//     };
+// employeeWithSkills[0] = 
+//   {
+//     _id: ObjectId { buffer: Buffer {} },
+//     name: 'Mahira Iqbal',
+//     employeeId: 'EMP-001',
+//     departmentId: ObjectId { buffer: Buffer {} },
+//     gender: 'Female',
+//     title: 'Senior Metal Worker',
+//     yearsExperience: 8,
+//     employeeSkills: Array(6) [
+//       {
+//         _id: ObjectId { buffer: Buffer {} },
+//         employeeId: ObjectId { buffer: Buffer {} },
+//         skillId: ObjectId { buffer: Buffer {} },
+//         level: 'Expert',
+//         acquiredDate: new Date('2025-04-07T00:51:13.000Z'),
+//         lastAssessedDate: new Date('2025-07-25T07:06:06.000Z'),
+//         notes: '',
+//         is_deleted: false,
+//         __v: 0,
+//         createdAt: new Date('2025-07-23T22:32:58.000Z'),
+//         updatedAt: new Date('2025-07-25T07:06:06.000Z')
+//       },
+//       {
+//         _id: ObjectId { buffer: Buffer {} },
+//         employeeId: ObjectId { buffer: Buffer {} },
+//         skillId: ObjectId { buffer: Buffer {} },
+//         level: 'Low',
+//         acquiredDate: new Date('2025-05-16T12:40:00.000Z'),
+//         lastAssessedDate: new Date('2025-07-07T20:19:25.000Z'),
+//         notes: '',
+//         is_deleted: false,
+//         __v: 0,
+//         createdAt: new Date('2025-07-23T22:32:58.000Z'),
+//         updatedAt: new Date('2025-07-23T22:32:58.000Z')
+//       },
+//       {
+//         _id: ObjectId { buffer: Buffer {} },
+//         employeeId: ObjectId { buffer: Buffer {} },
+//         skillId: ObjectId { buffer: Buffer {} },
+//         level: 'High',
+//         acquiredDate: new Date('2024-09-10T02:31:24.000Z'),
+//         lastAssessedDate: new Date('2025-07-15T14:20:19.000Z'),
+//         notes: '',
+//         is_deleted: false,
+//         __v: 0,
+//         createdAt: new Date('2025-07-23T22:32:58.000Z'),
+//         updatedAt: new Date('2025-07-23T22:32:58.000Z')
+//       },
+//       {
+//         _id: ObjectId { buffer: Buffer {} },
+//         employeeId: ObjectId { buffer: Buffer {} },
+//         skillId: ObjectId { buffer: Buffer {} },
+//         level: 'High',
+//         acquiredDate: new Date('2025-01-23T22:54:08.000Z'),
+//         lastAssessedDate: new Date('2025-07-13T21:28:47.000Z'),
+//         notes: '',
+//         is_deleted: false,
+//         __v: 0,
+//         createdAt: new Date('2025-07-23T22:32:58.000Z'),
+//         updatedAt: new Date('2025-07-23T22:32:58.000Z')
+//       },
+//       {
+//         _id: ObjectId { buffer: Buffer {} },
+//         employeeId: ObjectId { buffer: Buffer {} },
+//         skillId: ObjectId { buffer: Buffer {} },
+//         level: 'Advanced',
+//         acquiredDate: new Date('2025-07-25T06:28:30.000Z'),
+//         lastAssessedDate: new Date('2025-07-25T07:06:58.000Z'),
+//         notes: '',
+//         is_deleted: false,
+//         createdAt: new Date('2025-07-25T06:28:30.000Z'),
+//         updatedAt: new Date('2025-07-25T07:06:58.000Z'),
+//         __v: 0
+//       },
+//       {
+//         _id: ObjectId { buffer: Buffer {} },
+//         employeeId: ObjectId { buffer: Buffer {} },
+//         skillId: ObjectId { buffer: Buffer {} },
+//         level: 'Expert',
+//         acquiredDate: new Date('2025-07-25T06:28:30.000Z'),
+//         lastAssessedDate: new Date('2025-07-25T07:06:06.000Z'),
+//         notes: '',
+//         is_deleted: false,
+//         createdAt: new Date('2025-07-25T06:28:30.000Z'),
+//         updatedAt: new Date('2025-07-25T07:06:06.000Z'),
+//         __v: 0
+//       }
+//     ],
+//     skills: {
+//       Welding: 'Expert',
+//       'Blueprint Reading': 'Low',
+//       'Problem Solving': 'High',
+//       'Equipment Maintenance': 'High',
+//       'Press Brake PB-200': 'Advanced',
+//       'Laser Cutter LX-500': 'Expert'
+//     },
+//     skillCount: 6,
+//     department: 'Sheet Metal',
+//     skillLevel: 'High'
+//   }
 
 
 
@@ -197,7 +284,7 @@ export async function GET(req: NextRequest) {
       const skillScores = skillValues.map(level => {
         switch (level.toLowerCase()) {
           case 'expert': return 4;
-          case 'advanced': return 3;
+          case 'advanced': return 4;
           case 'high': return 3; // Treat High as Advanced
           case 'medium': return 2;
           case 'low': return 1;
@@ -209,7 +296,8 @@ export async function GET(req: NextRequest) {
       
       // Map average score back to skill level, treating Expert/Advanced as "Advanced"
       if (avgScore >= 3.5) return 'Advanced'; // Expert level
-      if (avgScore >= 2.5) return 'Advanced'; // Advanced/High level  
+      if (avgScore >= 3.5) return 'Advanced'; // Advanced/ level  
+      if (avgScore >= 2.5) return 'High'; // high level  
       if (avgScore >= 1.5) return 'Medium';
       return 'Low';
     };
@@ -224,7 +312,7 @@ export async function GET(req: NextRequest) {
         skillLevel: overallSkillLevel
       };
     });
-
+    console.log("An employees with skills ", employeesWithSkills[0])
     return NextResponse.json({
       success: true,
       data: employeesWithSkills,

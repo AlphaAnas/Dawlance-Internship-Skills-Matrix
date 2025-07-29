@@ -16,7 +16,6 @@ import AIChatbot from "../components/ai-chatbot"
 import FullscreenChart from "../components/FullscreenChart"
 import DatabaseLoading from "../components/DatabaseLoading"
 import DatabaseError from "../components/DatabaseError"
-import UserHeader from "../components/UserHeader"
 import { useEmployees } from "@/hooks/useEmployees"
 
 export default function FridgeManufacturingDashboard() {
@@ -25,6 +24,15 @@ export default function FridgeManufacturingDashboard() {
   const [selectedSkillLevel, setSelectedSkillLevel] = useState<string>("all")
   const [selectedGender, setSelectedGender] = useState<string>("all")
   const [selectedFactory, setSelectedFactory] = useState<string>("all")
+
+  // Debug log when filters change
+  console.log("Current filters:", { selectedDepartment, selectedSkillLevel, selectedGender, selectedFactory })
+
+  // Also create a handler function to test
+  const handleDepartmentChange = (value: string) => {
+    console.log("Department filter changing from", selectedDepartment, "to", value)
+    setSelectedDepartment(value)
+  }
 
   // Show loading state
   if (loading) {
@@ -38,6 +46,7 @@ export default function FridgeManufacturingDashboard() {
 
   // Get unique departments from actual employee data
   const departments = [...new Set(employees.map(emp => emp.department).filter(Boolean))].sort();
+  console.log("Available departments for filter:", departments)
   
   // Get unique factories from actual employee data
   const factories = [...new Set(employees.map(emp => emp.factory).filter(Boolean))].sort();
@@ -67,6 +76,16 @@ export default function FridgeManufacturingDashboard() {
     return true
   })
 
+  console.log("Filtered Data:", filteredData[0])
+  console.log("Filtered Data Length:", filteredData.length)
+  console.log("Sample departments:", filteredData.slice(0, 5).map(emp => emp.department))
+  console.log("Sample employee structure:", {
+    department: employees[0]?.department,
+    skillLevel: employees[0]?.skillLevel,
+    gender: employees[0]?.gender,
+    name: employees[0]?.name
+  })
+  
   const clearFilters = () => {
     setSelectedDepartment("all")
     setSelectedSkillLevel("all")
@@ -106,8 +125,8 @@ export default function FridgeManufacturingDashboard() {
                   <SelectContent>
                     <SelectItem value="all">All Factories</SelectItem>
                     {factories.map((factory) => (
-                      <SelectItem key={factory} value={factory}>
-                        {factory?.toUpperCase()}
+                      <SelectItem key={factory || 'unknown'} value={factory || ''}>
+                        {factory?.toUpperCase() || 'Unknown'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -119,7 +138,7 @@ export default function FridgeManufacturingDashboard() {
                 <Label htmlFor="department-select" className="text-xs font-medium text-gray-600">
                   Department
                 </Label>
-                <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                <Select value={selectedDepartment} onValueChange={handleDepartmentChange}>
                   <SelectTrigger id="department-select" className="w-full border-gray-300 h-8 text-sm">
                     <SelectValue placeholder="Department" />
                   </SelectTrigger>
@@ -280,6 +299,7 @@ export default function FridgeManufacturingDashboard() {
             </FullscreenChart>
           </CardHeader>
           <CardContent>
+            
             <SkillLevelBreakdown data={filteredData} />
           </CardContent>
         </Card>
