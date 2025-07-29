@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -39,12 +39,69 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
   // Fetch real department performance data
   const { performanceData, loading: perfLoading, error: perfError, calculateAndRefetch } = useDepartmentPerformance();
 
+  // State for fullscreen functionality
+  const [isFullScreen, setIsFullScreen] = useState(false);
+
+  // State for interactive filtering
+  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [hoveredDepartment, setHoveredDepartment] = useState<string | null>(null);
+
+  const toggleFullScreen = () => {
+    setIsFullScreen(!isFullScreen);
+  };
+
+  // Department abbreviations mapping
+  const departmentAbbreviations: { [key: string]: string } = {
+    'Sheet Metal': 'SM',
+    'Assembly Line': 'AL', 
+    'Cooling Systems': 'CS',
+    'Quality Control': 'QC',
+    'Manufacturing': 'MFG',
+    'Engineering': 'ENG',
+    'Research and Development': 'R&D',
+    'Production': 'PROD',
+    'Maintenance': 'MAINT',
+    'Logistics': 'LOG',
+    'Human Resources': 'HR',
+    'Finance': 'FIN',
+    'Information Technology': 'IT',
+    'Sales': 'SALES',
+    'Marketing': 'MKT'
+  };
+
+  // Get abbreviation for department
+  const getDepartmentAbbr = (deptName: string) => {
+    return departmentAbbreviations[deptName] || deptName.substring(0, 3).toUpperCase();
+  };
+
+  // Format legend labels with abbreviations
+  const formatLegend = (value: string | number) => {
+    const stringValue = String(value);
+    const abbr = getDepartmentAbbr(stringValue);
+    return `${abbr} - ${stringValue}`;
+  };
+
+  // Toggle department visibility
+  const toggleDepartment = (deptName: string) => {
+    setSelectedDepartments(prev => 
+      prev.includes(deptName) 
+        ? prev.filter(d => d !== deptName)
+        : [...prev, deptName]
+    );
+  };
+
   // Calculate performance if data exists but performance data is empty
   useEffect(() => {
     if (data.length > 0 && performanceData.length === 0 && !perfLoading) {
       calculateAndRefetch()
     }
   }, [data, performanceData, perfLoading, calculateAndRefetch])
+
+  // Initialize selected departments when data changes
+  useEffect(() => {
+    const departments = [...new Set(data.map((employee) => employee.department).filter(Boolean))];
+    setSelectedDepartments(departments);
+  }, [data]);
 
   // Get current month for chart description
   const currentDate = new Date();
@@ -64,7 +121,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-[#3B82F6] to-[#1E40AF] text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Users className="h-6 w-6" />
@@ -77,7 +134,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             </CardContent>
           </Card>
           
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-500 to-amber-600 text-white">
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-[#F59E0B] to-[#D97706] text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Clock className="h-6 w-6" />
@@ -90,7 +147,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-[#10B981] to-[#047857] text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Award className="h-6 w-6" />
@@ -103,7 +160,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-pink-300 text-white">
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-[#3B82F6] to-[#EC4899] text-white">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Users className="h-6 w-6" />
@@ -123,8 +180,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-blue-400 h-2 rounded-l-full" style={{width: '50%'}}></div>
-                  <div className="flex-1 bg-pink-300 h-2 rounded-r-full" style={{width: '50%'}}></div>
+                  <div className="flex-1 bg-[#3B82F6] h-2 rounded-l-full" style={{width: '50%'}}></div>
+                  <div className="flex-1 bg-[#EC4899] h-2 rounded-r-full" style={{width: '50%'}}></div>
                 </div>
                 <div className="flex justify-between text-xs text-pink-100">
                   <span>0% Men</span>
@@ -181,7 +238,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
   ]
 
   // Department workforce with efficiency metrics
-  const departments = [...new Set(data.map((employee) => employee.department))]
+  const departments = [...new Set(data.map((employee) => employee.department).filter(Boolean))]
   const departmentSizes = departments.map((dept, index) => {
     const employees = data.filter((e) => e.department === dept)
     const avgSkillLevel = employees.reduce((sum, e) => {
@@ -195,8 +252,59 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       size: employees.length,
       avgSkill: Math.round(avgSkillLevel * 25), // Convert to percentage
       color: colors[index % colors.length],
+      abbr: getDepartmentAbbr(dept)
     }
   })
+
+  // Filter department data based on selection
+  const filteredDepartmentSizes = departmentSizes.filter(dept => 
+    selectedDepartments.length === 0 || selectedDepartments.includes(dept.name)
+  );
+
+  // Filter performance data based on selection
+  const filteredPerformanceData = performanceData.map(monthData => {
+    const filtered: any = { month: monthData.month };
+    Object.keys(monthData).forEach(key => {
+      if (key !== 'month' && (selectedDepartments.length === 0 || selectedDepartments.includes(key))) {
+        filtered[key] = monthData[key];
+      }
+    });
+    return filtered;
+  });
+
+  // Department Filter Controls Component
+  const DepartmentFilters = () => (
+    <div className="mb-4 p-4 bg-gray-50 rounded-lg border">
+      <h4 className="text-sm font-medium text-gray-700 mb-3">Filter Departments:</h4>
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setSelectedDepartments(departments)}
+          className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors"
+        >
+          Select All
+        </button>
+        <button
+          onClick={() => setSelectedDepartments([])}
+          className="px-3 py-1 text-xs bg-gray-100 text-gray-800 rounded-full hover:bg-gray-200 transition-colors"
+        >
+          Clear All
+        </button>
+        {departments.map((dept) => (
+          <button
+            key={dept}
+            onClick={() => toggleDepartment(dept)}
+            className={`px-3 py-1 text-xs rounded-full transition-colors ${
+              selectedDepartments.includes(dept)
+                ? 'bg-green-100 text-green-800 border border-green-300'
+                : 'bg-gray-100 text-gray-600 border border-gray-300'
+            }`}
+          >
+            <span className="font-medium">{getDepartmentAbbr(dept)}</span> - {dept}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 
   // Gender distribution with more insights - updated labels
   const genderSkillData = [
@@ -267,10 +375,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
   })
 
   return (
-    <div className="space-y-8 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div className="space-y-8 p-6 bg-[#F8FAFC] min-h-screen">
       {/* Enhanced Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-[#3B82F6] to-[#1E40AF] text-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
               <Users className="h-6 w-6" />
@@ -283,7 +391,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-[#10B981] to-[#047857] text-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
               <Award className="h-6 w-6" />
@@ -298,7 +406,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-400 to-pink-600 text-white">
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-[#3B82F6] to-[#EC4899] text-white">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
               <Users className="h-6 w-6" />
@@ -318,8 +426,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className="flex-1 bg-blue-400 h-2 rounded-l-full" style={{width: `${totalEmployees > 0 ? (maleEmployees / totalEmployees) * 100 : 50}%`}}></div>
-                <div className="flex-1 bg-pink-300 h-2 rounded-r-full" style={{width: `${totalEmployees > 0 ? (femaleEmployees / totalEmployees) * 100 : 50}%`}}></div>
+                <div className="flex-1 bg-[#3B82F6] h-2 rounded-l-full" style={{width: `${totalEmployees > 0 ? (maleEmployees / totalEmployees) * 100 : 50}%`}}></div>
+                <div className="flex-1 bg-[#EC4899] h-2 rounded-r-full" style={{width: `${totalEmployees > 0 ? (femaleEmployees / totalEmployees) * 100 : 50}%`}}></div>
               </div>
               <div className="flex justify-between text-xs text-pink-100">
                 <span>{totalEmployees > 0 ? Math.round((maleEmployees / totalEmployees) * 100) : 0}% Men</span>
@@ -336,8 +444,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
         <Card className="border-0 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-slate-800">
-                <Target className="h-5 w-5 text-purple-600" />
+              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
+                <Target className="h-5 w-5 text-[#8B5CF6]" />
                 Skill Level Distribution
               </CardTitle>
               <CardDescription>Current workforce capability breakdown</CardDescription>
@@ -368,8 +476,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                       "Count"
                     ]}
                     contentStyle={{
-                      backgroundColor: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      backgroundColor: '#F8FAFC',
+                      border: '1px solid #E2E8F0',
                       borderRadius: '8px'
                     }}
                   />
@@ -414,8 +522,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
         <Card className="border-0 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-pink-50 to-purple-50 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-slate-800">
-                <Users className="h-5 w-5 text-pink-600" />
+              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
+                <Users className="h-5 w-5 text-[#EC4899]" />
                 Gender by Skill Level
               </CardTitle>
               <CardDescription>Diversity across skill levels</CardDescription>
@@ -451,8 +559,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                 <YAxis fontSize={11} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#F8FAFC',
+                    border: '1px solid #E2E8F0',
                     borderRadius: '8px'
                   }}
                 />
@@ -474,8 +582,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
         <Card className="border-0 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-slate-800">
-                <Factory className="h-5 w-5 text-blue-600" />
+              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
+                <Factory className="h-5 w-5 text-[#3B82F6]" />
                 Department Overview
               </CardTitle>
               <CardDescription>Size and average skill level</CardDescription>
@@ -520,8 +628,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                     name === 'size' ? 'Workforce' : 'Skill Level'
                   ]}
                   contentStyle={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#F8FAFC',
+                    border: '1px solid #E2E8F0',
                     borderRadius: '8px'
                   }}
                 />
@@ -536,8 +644,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
         <Card className="border-0 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-slate-800">
-                <Award className="h-5 w-5 text-orange-600" />
+              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
+                <Award className="h-5 w-5 text-[#F59E0B]" />
                 Department Performance Trends
               </CardTitle>
               <CardDescription>{chartDescription}</CardDescription>
@@ -562,10 +670,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                     <XAxis dataKey="month" fontSize={11} />
                     <YAxis domain={[0, 100]} fontSize={11} />
                     <Tooltip
-                      formatter={(value, name) => [
-                        `${value}%`,
-                        `${name} Performance`
-                      ]}
+                      formatter={(value, name) => [`${value}%`, `${formatLegend(name)} Performance`]}
                       labelFormatter={(label) => `Month: ${label}`}
                       contentStyle={{
                         backgroundColor: '#f8fafc',
@@ -573,20 +678,23 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                         borderRadius: '8px'
                       }}
                     />
-                    <Legend />
-                    {performanceData.length > 0 && Object.keys(performanceData[0]).filter(key => key !== 'month').map((dept, index) => {
-                      const colors = ['#EF4444', '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899'];
-                      return (
-                        <Line 
-                          key={dept}
-                          type="monotone" 
-                          dataKey={dept} 
-                          stroke={colors[index % colors.length]} 
-                          strokeWidth={3} 
-                          name={dept} 
-                        />
-                      );
-                    })}
+                    <Legend formatter={formatLegend} />
+                    {performanceData.length > 0 &&
+                      Object.keys(performanceData[0])
+                        .filter(key => key !== 'month')
+                        .map((dept, index) => {
+                          const colors = ['#60A5FA', '#4ADE80', '#F87171'];
+                          return (
+                            <Line
+                              key={dept}
+                              type="monotone"
+                              dataKey={dept}
+                              stroke={colors[index % colors.length]}
+                              strokeWidth={3}
+                              name={dept}
+                            />
+                          );
+                        })}
                   </LineChart>
                 )}
               </ResponsiveContainer>
@@ -609,36 +717,37 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                   <XAxis dataKey="month" fontSize={11} />
                   <YAxis domain={[0, 100]} fontSize={11} />
                   <Tooltip
-                    formatter={(value, name) => [
-                      `${value}%`,
-                      `${name} Performance`
-                    ]}
+                    formatter={(value, name) => [`${value}%`, `${formatLegend(name)} Performance`]}
                     labelFormatter={(label) => `Month: ${label}`}
                     contentStyle={{
-                      backgroundColor: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      backgroundColor: '#F8FAFC',
+                      border: '1px solid #E2E8F0',
                       borderRadius: '8px'
                     }}
                   />
-                  <Legend />
-                  {performanceData.length > 0 && Object.keys(performanceData[0]).filter(key => key !== 'month').map((dept, index) => {
-                    const colors = ['#EF4444', '#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899'];
-                    return (
-                      <Line 
-                        key={dept}
-                        type="monotone" 
-                        dataKey={dept} 
-                        stroke={colors[index % colors.length]} 
-                        strokeWidth={3} 
-                        name={dept} 
-                      />
-                    );
-                  })}
+                  <Legend formatter={formatLegend} />
+                  {performanceData.length > 0 &&
+                    Object.keys(performanceData[0])
+                      .filter(key => key !== 'month')
+                      .map((dept, index) => {
+                        const colors = ['#60A5FA', '#4ADE80', '#F87171'];
+                        return (
+                          <Line
+                            key={dept}
+                            type="monotone"
+                            dataKey={dept}
+                            stroke={colors[index % colors.length]}
+                            strokeWidth={3}
+                            name={dept}
+                          />
+                        );
+                      })}
                 </LineChart>
               )}
             </ResponsiveContainer>
           </CardContent>
         </Card>
+
       </div>
 
       {/* Third Row - Experience Analysis and Composition */}
@@ -647,8 +756,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
         <Card className="border-0 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-slate-800">
-                <Clock className="h-5 w-5 text-emerald-600" />
+              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
+                <Clock className="h-5 w-5 text-[#10B981]" />
                 Years of Experience Distribution
               </CardTitle>
               <CardDescription>Workforce experience level breakdown</CardDescription>
@@ -702,8 +811,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                     return range ? `${label} (${range.percentage}% of workforce)` : label
                   }}
                   contentStyle={{
-                    backgroundColor: '#f8fafc',
-                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#F8FAFC',
+                    border: '1px solid #E2E8F0',
                     borderRadius: '8px'
                   }}
                 />
@@ -722,8 +831,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
         <Card className="border-0 shadow-lg bg-transparent">
           <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="flex items-center gap-2 text-slate-800">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+              <CardTitle className="flex items-center gap-2 text-[#1E293B]">
+                <TrendingUp className="h-5 w-5 text-[#10B981]" />
                 Experience vs Skill Correlation
               </CardTitle>
               <CardDescription>Employee experience and skill level by gender</CardDescription>
@@ -734,7 +843,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             >
               <div className="h-full">
                 {/* Skill Band Labels */}
-                <div className="grid grid-cols-4 text-center text-sm text-gray-500 pb-2">
+                <div className="grid grid-cols-4 text-center text-sm text-[#1E293B] pb-2">
                   <div className="bg-red-100 py-1 rounded">Low</div>
                   <div className="bg-yellow-100 py-1 rounded">Medium</div>
                   <div className="bg-blue-100 py-1 rounded">High</div>
@@ -763,10 +872,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                       />
                       
                       {/* Skill Level Bands - Darker colors for better visibility in fullscreen */}
-                      <ReferenceArea y1={0.5} y2={1.5} fill="#FCA5A5" fillOpacity={0.6} ifOverflow="extendDomain" />
-                      <ReferenceArea y1={1.5} y2={2.5} fill="#FCD34D" fillOpacity={0.6} ifOverflow="extendDomain" />
-                      <ReferenceArea y1={2.5} y2={3.5} fill="#93C5FD" fillOpacity={0.6} ifOverflow="extendDomain" />
-                      <ReferenceArea y1={3.5} y2={4.5} fill="#6EE7B7" fillOpacity={0.6} ifOverflow="extendDomain" />
+                      <ReferenceArea y1={0.5} y2={1.5} fill="#EF4444" fillOpacity={0.3} ifOverflow="extendDomain" />
+                      <ReferenceArea y1={1.5} y2={2.5} fill="#F59E0B" fillOpacity={0.3} ifOverflow="extendDomain" />
+                      <ReferenceArea y1={2.5} y2={3.5} fill="#3B82F6" fillOpacity={0.3} ifOverflow="extendDomain" />
+                      <ReferenceArea y1={3.5} y2={4.5} fill="#10B981" fillOpacity={0.3} ifOverflow="extendDomain" />
                       
                       <Tooltip
                         cursor={{ strokeDasharray: "3 3" }}
@@ -802,11 +911,11 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                         content={() => (
                           <div className="flex justify-center gap-6 mt-4">
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                              <div className="w-3 h-3 rounded-full bg-[#3B82F6]"></div>
                               <span className="text-sm text-gray-600">Men</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded-full bg-pink-500"></div>
+                              <div className="w-3 h-3 rounded-full bg-[#EC4899]"></div>
                               <span className="text-sm text-gray-600">Women</span>
                             </div>
                           </div>
@@ -827,7 +936,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
 
   <CardContent className="h-[460px] pt-4 bg-white">
     {/* Skill Band Labels */}
-    <div className="grid grid-cols-4 text-center text-sm text-gray-500 pb-2">
+    <div className="grid grid-cols-4 text-center text-sm text-[#1E293B] pb-2">
       <div className="bg-red-100 py-1 rounded">Low</div>
       <div className="bg-yellow-100 py-1 rounded">Medium</div>
       <div className="bg-blue-100 py-1 rounded">High</div>
@@ -858,10 +967,10 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
 
         {/* Skill Level Bands - place after axis so they're not covered */}
       {/* Darker Skill Level Bands rendered first for background visibility */}
-      <ReferenceArea y1={0.5} y2={1.5} fill="#FCA5A5" fillOpacity={0.6} ifOverflow="extendDomain" /> {/* Red-400 */}
-      <ReferenceArea y1={1.5} y2={2.5} fill="#FCD34D" fillOpacity={0.6} ifOverflow="extendDomain" /> {/* Yellow-400 */}
-      <ReferenceArea y1={2.5} y2={3.5} fill="#93C5FD" fillOpacity={0.6} ifOverflow="extendDomain" /> {/* Blue-400 */}
-      <ReferenceArea y1={3.5} y2={4.5} fill="#6EE7B7" fillOpacity={0.6} ifOverflow="extendDomain" /> {/* Green-400 */}
+      <ReferenceArea y1={0.5} y2={1.5} fill="#EF4444" fillOpacity={0.3} ifOverflow="extendDomain" /> {/* Red */}
+      <ReferenceArea y1={1.5} y2={2.5} fill="#F59E0B" fillOpacity={0.3} ifOverflow="extendDomain" /> {/* Amber */}
+      <ReferenceArea y1={2.5} y2={3.5} fill="#3B82F6" fillOpacity={0.3} ifOverflow="extendDomain" /> {/* Blue */}
+      <ReferenceArea y1={3.5} y2={4.5} fill="#10B981" fillOpacity={0.3} ifOverflow="extendDomain" /> {/* Emerald */}
 
 
         <Tooltip
@@ -881,8 +990,8 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             return `${value} years experience`
           }}
           contentStyle={{
-            backgroundColor: '#f8fafc',
-            border: '1px solid #e2e8f0',
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
             borderRadius: '8px'
           }}
         />
@@ -891,11 +1000,11 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
           content={() => (
             <div className="flex justify-center gap-6 mt-4">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <div className="w-3 h-3 rounded-full bg-[#3B82F6]"></div>
                 <span className="text-sm text-gray-600">Men</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-pink-500"></div>
+                <div className="w-3 h-3 rounded-full bg-[#EC4899]"></div>
                 <span className="text-sm text-gray-600">Women</span>
               </div>
             </div>

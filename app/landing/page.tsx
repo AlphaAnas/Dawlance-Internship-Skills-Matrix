@@ -28,7 +28,7 @@ export default function FridgeManufacturingDashboard() {
 
   // Show loading state
   if (loading) {
-    return <DatabaseLoading message="Loading employee data from MongoDB..." />
+    return <DatabaseLoading message="Loading your Data..." />
   }
 
   // Show error state

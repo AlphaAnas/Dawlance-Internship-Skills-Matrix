@@ -24,22 +24,45 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      // Store user session
-      localStorage.setItem('userSession', JSON.stringify({
-        email,
-        role: userRole,
-        loginTime: new Date().toISOString()
-      }))
-      
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      
-      // All users go to the same dashboard
-      router.push("/landing")
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          role: userRole
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store user session with name and additional info
+        const sessionData = {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          employeeId: data.user.employeeId,
+          role: data.user.role,
+          department: data.user.department,
+          loginTime: data.user.loginTime
+        };
+        
+        console.log('Login successful, storing session:', sessionData); // Debug log
+        localStorage.setItem('userSession', JSON.stringify(sessionData));
+        
+        // Redirect to dashboard
+        router.push("/landing");
+      } else {
+        alert(data.message || 'Login failed');
+      }
     } catch (error) {
-      console.error("Login error:", error)
+      console.error("Login error:", error);
+      alert('An error occurred during login. Please try again.');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
 
@@ -59,7 +82,7 @@ export default function LoginPage() {
   ]
 
   return (
-    <div className="h-screen w-screen fixed top-0 left-0 m-0 p-0 overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800">
+    <div className="h-screen w-screen fixed top-0 left-0 m-0 p-0 overflow-hidden bg-gradient-to-br from-[#3B82F6] via-[#8B5CF6] to-[#3B82F6]">
       {/* Animated Background Shapes */}
       {floatingShapes.map((shape) => (
         <motion.div
@@ -127,7 +150,7 @@ export default function LoginPage() {
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className="relative mb-8"
               >
-                <div className="w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-500 rounded-2xl flex items-center justify-center shadow-2xl">
+                <div className="w-32 h-32 bg-gradient-to-br from-[#3B82F6] to-[#8B5CF6] rounded-2xl flex items-center justify-center shadow-2xl">
                   <motion.div
                     animate={{ y: [0, -5, 0] }}
                     transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
@@ -297,7 +320,7 @@ export default function LoginPage() {
                     <Button
                       type="submit"
                       disabled={isLoading}
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold h-12 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100"
+                      className="w-full bg-gradient-to-r from-[#3B82F6] to-[#8B5CF6] hover:from-[#1D4ED8] hover:to-[#7C3AED] text-white font-semibold h-12 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100"
                     >
                       {isLoading ? (
                         <motion.div

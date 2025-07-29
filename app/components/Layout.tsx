@@ -106,7 +106,11 @@ export default function Layout({ children }: LayoutProps) {
               {/* Right: User Info + Theme + Logout */}
               <div className="hidden sm:flex items-center space-x-3">
                 {userSession && (
-                  <div className="flex items-center space-x-2 mr-2">
+                  <div className={`flex items-center space-x-2 mr-2 px-4 py-2 rounded-xl transition-all duration-300 hover:shadow-lg ${
+                    isDark 
+                      ? 'bg-gray-700/30 hover:bg-gray-700/50 border border-gray-600/50' 
+                      : 'bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200/50'
+                  }`}>
                     <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${
                       userSession.role === 'admin' 
                         ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700' 
@@ -116,9 +120,20 @@ export default function Layout({ children }: LayoutProps) {
                     }`}>
                       <span className="capitalize">{userSession.role}</span>
                     </div>
-                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {userSession.email}
+                    <span className={`text-sm font-medium transition-all duration-300 hover:text-lg hover:font-semibold cursor-default ${
+                      isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+                    }`}>
+                      {userSession.name || userSession.email || 'Unknown User'}
                     </span>
+                    {userSession.department && (
+            
+                      <span className={`text-xs transition-colors duration-300 ${
+                        isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-600'
+                      }`}>
+                        • {userSession.department}
+                      </span>
+                    )
+                    }
                   </div>
                 )}
                 
@@ -199,7 +214,11 @@ export default function Layout({ children }: LayoutProps) {
 
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-4 pb-3 mx-2">
                     {userSession && (
-                      <div className="flex items-center px-3 mb-3">
+                      <div className={`flex items-center px-3 mb-3 py-2 rounded-xl transition-all duration-300 ${
+                        isDark 
+                          ? 'bg-gray-700/30 hover:bg-gray-700/50 border border-gray-600/50' 
+                          : 'bg-blue-50/80 hover:bg-blue-100/80 border border-blue-200/50'
+                      }`}>
                         <div className={`flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${
                           userSession.role === 'admin' 
                             ? 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700' 
@@ -209,9 +228,20 @@ export default function Layout({ children }: LayoutProps) {
                         }`}>
                           <span className="capitalize">{userSession.role}</span>
                         </div>
-                        <span className={`text-sm ml-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                          {userSession.email}
-                        </span>
+                        <div className="ml-2">
+                          <span className={`text-sm font-medium transition-all duration-300 hover:text-lg hover:font-semibold cursor-default block ${
+                            isDark ? 'text-gray-300 hover:text-white' : 'text-gray-700 hover:text-gray-900'
+                          }`}>
+                            {userSession.name || userSession.email}
+                          </span>
+                          {userSession.department && (
+                            <div className={`text-xs transition-colors duration-300 ${
+                              isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-600'
+                            }`}>
+                              {userSession.department}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                     
