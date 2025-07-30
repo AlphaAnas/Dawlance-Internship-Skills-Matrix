@@ -45,10 +45,10 @@ import DatabaseError from '../components/DatabaseError';
 import useUserPermissions from '../../hooks/useUserPermissions';
 
 const skillLevelColors = {
-  'Beginner': { bg: '#ef4444', text: '#ffffff' },
-  'Intermediate': { bg: '#f59e0b', text: '#ffffff' },
-  'Advanced': { bg: '#10b981', text: '#ffffff' },
-  'Expert': { bg: '#3b82f6', text: '#ffffff' }
+  'Beginner': { bg: '#ef4444', text: '#ffffff', number: 1 },      // Red = 1
+  'Intermediate': { bg: '#eab308', text: '#ffffff', number: 2 },  // Yellow = 2  
+  'Advanced': { bg: '#3b82f6', text: '#ffffff', number: 3 },      // Blue = 3
+  'Expert': { bg: '#10b981', text: '#ffffff', number: 4 }         // Green = 4
 };
 
 // Generate realistic skill levels based on employee experience
@@ -73,29 +73,21 @@ const generateSkillLevels = (employee: any, skills: string[]) => {
 };
 
 const PieChartSkillIndicator = ({ level, size = 80 }: { level: string; size?: number }) => {
-  const colors = skillLevelColors[level as keyof typeof skillLevelColors] || { bg: '#e5e7eb', text: '#6b7280' };
-  const percentage = {
-    'Beginner': 25,
-    'Intermediate': 50,
-    'Advanced': 75,
-    'Expert': 100
-  }[level as keyof typeof skillLevelColors] || 0;
-
+  const colors = skillLevelColors[level as keyof typeof skillLevelColors] || { bg: '#e5e7eb', text: '#6b7280', number: 0 };
+  
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex items-center justify-center">
       <div 
-        className="rounded-full flex items-center justify-center font-bold text-sm transition-transform hover:scale-110"
+        className="rounded-full flex items-center justify-center font-bold text-white transition-transform hover:scale-110"
         style={{ 
-          width: size, 
-          height: size, 
+          width: size * 0.4, 
+          height: size * 0.4, 
           backgroundColor: colors.bg,
-          color: colors.text,
-          background: `conic-gradient(${colors.bg} 0deg, ${colors.bg} ${percentage * 3.6}deg, #e5e7eb ${percentage * 3.6}deg, #e5e7eb 360deg)`
+          fontSize: `${size * 0.2}px`
         }}
       >
-        {percentage}%
+        {colors.number}
       </div>
-      <span className="text-xs text-gray-600">{level}</span>
     </div>
   );
 };
@@ -557,18 +549,39 @@ const SkillsMatrixManager = () => {
       const selectedDept = departments.find(d => d.id === selectedDepartment);
       if (!selectedDept) {
         console.error('Selected department not found');
-        // You might want to show an error message to the user
+        alert('Selected department not found. Please select a valid department.');
         return;
       }
 
+      // Validate required fields
+      if (!matrixName.trim()) {
+        alert('Matrix name is required');
+        return;
+      }
+
+      if (selectedEmployees.length === 0) {
+        alert('At least one employee must be selected');
+        return;
+      }
+
+      if (skills.length === 0) {
+        alert('At least one skill must be added');
+        return;
+      }
+
+      // Structure the data according to the expected format
       const matrixData = {
-        name: matrixName,
+        name: matrixName.trim(),
         departmentId: selectedDept._id || selectedDept.id, // Use MongoDB ObjectId
         description: `Skills matrix for ${selectedDept.name} department`,
-        employees: selectedEmployees,
-        skills: skills,
-        skillLevels: skillLevels
+        matrixData: {
+          employees: selectedEmployees,
+          skills: skills,
+          skillLevels: skillLevels
+        }
       };
+      
+      console.log('Saving matrix with data:', matrixData); // Debug log
       
       const result = await saveMatrix(matrixData);
       if (result.success) {
@@ -589,11 +602,11 @@ const SkillsMatrixManager = () => {
         console.log('Skills matrix saved successfully');
       } else {
         console.error('Failed to save skills matrix:', result.error);
-        // You might want to show an error message to the user
+        alert(`Failed to save skills matrix: ${result.error}`);
       }
     } catch (error) {
       console.error('Error saving skills matrix:', error);
-      // You might want to show an error message to the user
+      alert(`Error saving skills matrix: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
     }
   };
 
@@ -650,148 +663,124 @@ const SkillsMatrixManager = () => {
   if (showFinalTable) {
     return (
       <div className={`${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50'} flex transition-all duration-300`}>
-        {!isFullscreen }
         <div className={`flex ${!isFullscreen ? 'pt-20' : ''} w-full`}>
-        {/* Sidebar */}
-        <div className={`${(sidebarOpen && !isFullscreen) ? 'w-80' : 'w-0'} transition-all duration-300 bg-white shadow-lg overflow-hidden`}>
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Database className="h-5 w-5" />
-                Saved Matrices
-              </h2>
-              <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {matrices.map((matrix) => (
-                <div
-                  key={matrix._id}
-                  className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
-                    selectedMatrix?._id === matrix._id ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
-                  onClick={() => loadMatrix(matrix)}
-                >
-                  <h3 className="font-semibold text-gray-900 mb-1">{matrix.name}</h3>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {departments.find(d => d.id === matrix.department)?.name}
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span>{matrix.employeeCount} employees</span>
-                    <span>{matrix.skillCount} skills</span>
+        {/* Sidebar - Hide in fullscreen */}
+        {!isFullscreen && (
+          <div className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 bg-white shadow-lg overflow-hidden`}>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  Saved Matrices
+                </h2>
+                <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {matrices.map((matrix) => (
+                  <div
+                    key={matrix._id}
+                    className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
+                      selectedMatrix?._id === matrix._id ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                    onClick={() => loadMatrix(matrix)}
+                  >
+                    <h3 className="font-semibold text-gray-900 mb-1">{matrix.name}</h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      {departments.find(d => d.id === matrix.department)?.name}
+                    </p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span>{matrix.employeeCount} employees</span>
+                      <span>{matrix.skillCount} skills</span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
+                      <Clock className="h-3 w-3" />
+                      {new Date(matrix.createdAt).toLocaleDateString()}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
-                    <Clock className="h-3 w-3" />
-                    {new Date(matrix.createdAt).toLocaleDateString()}
+                ))}
+                {matrices.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No saved matrices yet</p>
                   </div>
-                </div>
-              ))}
-              {matrices.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p>No saved matrices yet</p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Main Content */}
-        <div className={`flex-1 ${isFullscreen ? 'p-4' : 'p-6'} ${isFullscreen ? 'bg-white' : ''} transition-all duration-300`}>
-          <div className={`${isFullscreen ? 'max-w-full' : 'max-w-7xl'} mx-auto`}>
-            {/* Header - smaller in fullscreen */}
-            <div className={`${isFullscreen ? 'mb-4' : 'mb-8'} transition-all duration-300`}>
-              <div className="flex items-center gap-4 mb-4">
-                {!isFullscreen && (
-                  <>
-                    <Button 
-                      onClick={() => setSidebarOpen(!sidebarOpen)}
-                      variant="outline"
-                      size="sm"
-                      className="hover:bg-orange-50 hover:border-orange-300"
-                    >
-                      <Menu className="h-4 w-4 mr-2" />
-                      Matrices ({matrices.length})
-                    </Button>
-                    <Button 
-                      onClick={resetMatrix}
-                      variant="outline"
-                      className="hover:bg-blue-50 hover:border-blue-300"
-                    >
-                      ← Back to Matrix Builder
-                    </Button>
-                  </>
-                )}
-                {isFullscreen && (
+        <div className={`flex-1 ${isFullscreen ? 'p-0' : 'p-6'} transition-all duration-300`}>
+          <div className={`${isFullscreen ? 'h-screen max-w-full' : 'max-w-7xl'} mx-auto`}>
+            {/* Header - Minimal in fullscreen */}
+            {!isFullscreen && (
+              <div className="mb-8 transition-all duration-300">
+                <div className="flex items-center gap-4 mb-4">
+                  <Button 
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    variant="outline"
+                    size="sm"
+                    className="hover:bg-orange-50 hover:border-orange-300"
+                  >
+                    <Menu className="h-4 w-4 mr-2" />
+                    Matrices ({matrices.length})
+                  </Button>
                   <Button 
                     onClick={resetMatrix}
                     variant="outline"
-                    size="sm"
                     className="hover:bg-blue-50 hover:border-blue-300"
                   >
                     ← Back to Matrix Builder
                   </Button>
-                )}
-              </div>
-              {!isFullscreen && (
-                <>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-blue-500 bg-clip-text text-transparent mb-2">
-                    Skills Matrix
-                  </h1>
-                  <p className="text-xl text-gray-600">View and manage employee skill levels</p>
-                </>
-              )}
-              {isFullscreen && (
-                <div className="flex items-center gap-4">
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-blue-500 bg-clip-text text-transparent">
-                    Skills Matrix - {matrixName}
-                  </h1>
-                  <Badge variant="secondary" className="px-3 py-1">
-                    Fullscreen Mode
-                  </Badge>
                 </div>
-              )}
-            </div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-500 to-blue-500 bg-clip-text text-transparent mb-2">
+                  Skills Matrix
+                </h1>
+                <p className="text-xl text-gray-600">View and manage employee skill levels</p>
+              </div>
+            )}
 
-            <Card className={`border-0 bg-white/90 backdrop-blur-sm shadow-xl ${isFullscreen ? 'h-[calc(100vh-120px)]' : ''} transition-all duration-300`}>
-              <CardHeader className={`${isFullscreen ? 'py-4' : 'py-6'} transition-all duration-300`}>
+            <Card className={`border-0 ${isFullscreen ? 'bg-white h-screen rounded-none shadow-none' : 'bg-white/90 backdrop-blur-sm shadow-xl'} transition-all duration-300`}>
+              <CardHeader className={`${isFullscreen ? 'py-2 px-4' : 'py-6'} transition-all duration-300`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="flex items-center gap-4 mb-4">
-                      <CardTitle className={`${isFullscreen ? 'text-2xl' : 'text-3xl'} transition-all duration-300`}>
-                        {!isFullscreen && matrixName}
-                        {isFullscreen && `${selectedEmployees.length} × ${skills.length} Matrix`}
+                    <div className="flex items-center gap-4 mb-2">
+                      <CardTitle className={`${isFullscreen ? 'text-xl' : 'text-3xl'} transition-all duration-300`}>
+                        {isFullscreen ? `${matrixName} (${selectedEmployees.length} × ${skills.length})` : matrixName}
                       </CardTitle>
                       {isEditMode && (
-                        <Badge variant="destructive" className={`px-4 py-2 ${isFullscreen ? 'text-sm' : 'text-lg'} transition-all duration-300`}>
-                          <Edit3 className={`${isFullscreen ? 'h-4 w-4' : 'h-5 w-5'} mr-2`} />
-                          Editing
+                        <Badge variant="destructive" className={`px-3 py-1 ${isFullscreen ? 'text-xs' : 'text-lg'} transition-all duration-300`}>
+                          <Edit3 className={`${isFullscreen ? 'h-3 w-3' : 'h-5 w-5'} mr-1`} />
+                          {isFullscreen ? 'Edit' : 'Editing'}
                         </Badge>
                       )}
                       {!isEditMode && (
-                        <Badge variant="secondary" className={`px-4 py-2 ${isFullscreen ? 'text-sm' : 'text-lg'} transition-all duration-300`}>
-                          <Eye className={`${isFullscreen ? 'h-4 w-4' : 'h-5 w-5'} mr-2`} />
-                          View Only
+                        <Badge variant="secondary" className={`px-3 py-1 ${isFullscreen ? 'text-xs' : 'text-lg'} transition-all duration-300`}>
+                          <Eye className={`${isFullscreen ? 'h-3 w-3' : 'h-5 w-5'} mr-1`} />
+                          {isFullscreen ? 'View' : 'View Only'}
                         </Badge>
                       )}
                     </div>
-                    <CardDescription className={`${isFullscreen ? 'text-lg' : 'text-xl'} transition-all duration-300`}>
-                      {selectedEmployees.length} employees • {skills.length} skills
-                    </CardDescription>
+                    {!isFullscreen && (
+                      <CardDescription className="text-xl transition-all duration-300">
+                        {selectedEmployees.length} employees • {skills.length} skills
+                      </CardDescription>
+                    )}
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex gap-2">
                     {/* Fullscreen Toggle Button */}
                     <Button
                       onClick={toggleFullscreen}
-                      size={isFullscreen ? "default" : "lg"}
+                      size={isFullscreen ? "sm" : "lg"}
                       variant="outline"
-                      className={`${isFullscreen ? 'h-12 px-6 text-lg' : 'h-16 px-10 text-xl'} hover:bg-purple-50 hover:border-purple-300 transition-all duration-300`}
+                      className={`${isFullscreen ? 'h-8 px-3 text-sm' : 'h-16 px-10 text-xl'} hover:bg-purple-50 hover:border-purple-300 transition-all duration-300`}
                     >
                       {isFullscreen ? (
                         <>
-                          <Minimize className={`${isFullscreen ? 'h-5 w-5' : 'h-6 w-6'} mr-3`} />
-                          Exit Fullscreen
+                          <Minimize className="h-3 w-3 mr-1" />
+                          Exit
                         </>
                       ) : (
                         <>
@@ -800,22 +789,32 @@ const SkillsMatrixManager = () => {
                         </>
                       )}
                     </Button>
+                    {!isFullscreen && (
+                      <Button 
+                        onClick={resetMatrix}
+                        variant="outline"
+                        size="lg"
+                        className="h-16 px-10 text-xl hover:bg-blue-50 hover:border-blue-300"
+                      >
+                        ← Back
+                      </Button>
+                    )}
                     {permissions.canCreateSkillsMatrix && (
                       <Button
                         onClick={() => setIsEditMode(!isEditMode)}
-                        size={isFullscreen ? "default" : "lg"}
+                        size={isFullscreen ? "sm" : "lg"}
                         variant={isEditMode ? "destructive" : "secondary"}
-                        className={`${isFullscreen ? 'h-12 px-6 text-lg' : 'h-16 px-10 text-xl'} transition-all duration-300`}
+                        className={`${isFullscreen ? 'h-8 px-3 text-sm' : 'h-16 px-10 text-xl'} transition-all duration-300`}
                       >
                         {isEditMode ? (
                           <>
-                            <Eye className={`${isFullscreen ? 'h-5 w-5' : 'h-6 w-6'} mr-3`} />
-                            View Mode
+                            <Eye className={`${isFullscreen ? 'h-3 w-3' : 'h-6 w-6'} mr-${isFullscreen ? '1' : '3'}`} />
+                            {isFullscreen ? 'View' : 'View Mode'}
                           </>
                         ) : (
                           <>
-                            <Edit3 className={`${isFullscreen ? 'h-5 w-5' : 'h-6 w-6'} mr-3`} />
-                            Edit Mode
+                            <Edit3 className={`${isFullscreen ? 'h-3 w-3' : 'h-6 w-6'} mr-${isFullscreen ? '1' : '3'}`} />
+                            {isFullscreen ? 'Edit' : 'Edit Mode'}
                           </>
                         )}
                       </Button>
@@ -823,18 +822,18 @@ const SkillsMatrixManager = () => {
                     {isEditMode && (
                       <Button
                         onClick={handleSave}
-                        size={isFullscreen ? "default" : "lg"}
-                        className={`${isFullscreen ? 'h-12 px-6 text-lg' : 'h-16 px-10 text-xl'} bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600 transition-all duration-300`}
+                        size={isFullscreen ? "sm" : "lg"}
+                        className={`${isFullscreen ? 'h-8 px-3 text-sm' : 'h-16 px-10 text-xl'} bg-gradient-to-r from-[#4ADE80] to-[#007270] hover:from-[#22c55e] hover:to-[#006663] transition-all duration-300`}
                       >
                         {saved ? (
                           <>
-                            <CheckCircle className={`${isFullscreen ? 'h-5 w-5' : 'h-6 w-6'} mr-3`} />
-                            Saved!
+                            <CheckCircle className={`${isFullscreen ? 'h-3 w-3' : 'h-6 w-6'} mr-${isFullscreen ? '1' : '3'}`} />
+                            {isFullscreen ? 'Saved!' : 'Saved!'}
                           </>
                         ) : (
                           <>
-                            <Save className={`${isFullscreen ? 'h-5 w-5' : 'h-6 w-6'} mr-3`} />
-                            Save Changes
+                            <Save className={`${isFullscreen ? 'h-3 w-3' : 'h-6 w-6'} mr-${isFullscreen ? '1' : '3'}`} />
+                            {isFullscreen ? 'Save' : 'Save Changes'}
                           </>
                         )}
                       </Button>
@@ -842,17 +841,17 @@ const SkillsMatrixManager = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className={`${isFullscreen ? 'p-4 h-[calc(100%-180px)]' : 'p-6'} transition-all duration-300`}>
-                <div className={`rounded-2xl border-2 border-gray-200 overflow-hidden ${isFullscreen ? 'h-full' : ''}`}>
-                  <div className={`overflow-auto ${isFullscreen ? 'h-full' : ''}`}>
-                    <Table>
+              <CardContent className={`${isFullscreen ? 'p-0 h-[calc(100vh-80px)]' : 'p-6'} transition-all duration-300`}>
+                <div className={`${isFullscreen ? 'h-full border-0' : 'rounded-2xl border-2 border-gray-200'} overflow-visible`}>
+                  <div className={`${isFullscreen ? 'h-full overflow-auto' : 'overflow-x-auto overflow-y-auto max-h-[80vh]'} ${skills.length >= 7 ? 'overflow-x-scroll' : ''} overflow-y-visible`}>
+                    <Table className={`${skills.length >= 7 ? 'min-w-max' : 'min-w-full'}`}>
                       <TableHeader>
-                        <TableRow className="bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600">
-                          <TableHead className={`text-white font-bold ${isFullscreen ? 'text-lg py-4 px-6' : 'text-xl py-6 px-8'} sticky left-0 z-20 bg-gradient-to-r from-orange-500 to-blue-500 min-w-[280px] transition-all duration-300`}>
+                        <TableRow className="bg-gradient-to-r from-[#4ADE80] to-[#007270] hover:from-[#22c55e] hover:to-[#006663]">
+                          <TableHead className={`text-white font-bold ${isFullscreen ? 'text-sm py-3 px-4' : 'text-lg py-4 px-6'} sticky left-0 z-20 bg-gradient-to-r from-[#4ADE80] to-[#007270] min-w-[200px] transition-all duration-300`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <User className="h-5 w-5" />
-                                Employee (Rows)
+                                <User className={`${isFullscreen ? 'h-4 w-4' : 'h-5 w-5'}`} />
+                                <span className={`${isFullscreen ? 'text-xs' : 'text-base'}`}>Employee</span>
                               </div>
                               {isEditMode && (
                                 <Button
@@ -860,7 +859,7 @@ const SkillsMatrixManager = () => {
                                   size="sm"
                                   className="bg-green-600 hover:bg-green-700"
                                 >
-                                  <Plus className="h-4 w-4" />
+                                  <Plus className="h-3 w-3" />
                                 </Button>
                               )}
                             </div>
@@ -868,24 +867,24 @@ const SkillsMatrixManager = () => {
                           {skills.map((skill, index) => (
                             <TableHead
                               key={`skill-${index}`}
-                              className={`text-white font-bold ${isFullscreen ? 'text-lg py-4 px-6' : 'text-xl py-6 px-8'} text-center min-w-[220px] whitespace-nowrap transition-all duration-300`}
+                              className={`text-white font-bold ${isFullscreen ? 'text-sm py-3 px-4' : 'text-lg py-4 px-6'} text-center min-w-[150px] whitespace-nowrap transition-all duration-300`}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                  <Cog className="h-5 w-5" />
+                                  <Cog className={`${isFullscreen ? 'h-4 w-4' : 'h-5 w-5'}`} />
                                   {editingSkill === index && isEditMode ? (
                                     <Input
                                       value={skill}
                                       onChange={(e) => updateSkillName(index, e.target.value)}
                                       onBlur={() => setEditingSkill(null)}
                                       onKeyPress={(e) => e.key === 'Enter' && setEditingSkill(null)}
-                                      className="w-32 h-8 text-sm bg-white text-black"
+                                      className="w-24 h-6 text-xs bg-white text-black"
                                       autoFocus
                                     />
                                   ) : (
                                     <span
                                       onClick={() => isEditMode && setEditingSkill(index)}
-                                      className={isEditMode ? "cursor-pointer hover:bg-orange-600 px-2 py-1 rounded" : ""}
+                                      className={`${isFullscreen ? 'text-xs' : 'text-sm'} ${isEditMode ? "cursor-pointer hover:bg-[#22c55e] px-2 py-1 rounded" : ""}`}
                                     >
                                       {skill}
                                     </span>
@@ -897,17 +896,18 @@ const SkillsMatrixManager = () => {
                                       <Button
                                         onClick={addNewSkillColumn}
                                         size="sm"
-                                        className="bg-green-600 hover:bg-green-700"
+                                        className="bg-green-600 hover:bg-green-700 h-6 w-6 p-0"
                                       >
-                                        <Plus className="h-4 w-4" />
+                                        <Plus className="h-3 w-3" />
                                       </Button>
                                     )}
                                     <Button
                                       onClick={() => deleteSkillColumn(index)}
                                       size="sm"
                                       variant="destructive"
+                                      className="h-6 w-6 p-0"
                                     >
-                                      <Trash2 className="h-4 w-4" />
+                                      <Trash2 className="h-3 w-3" />
                                     </Button>
                                   </div>
                                 )}
@@ -924,11 +924,11 @@ const SkillsMatrixManager = () => {
                               idx % 2 === 0 ? "bg-white" : "bg-gray-50"
                             } hover:bg-orange-50 transition-colors duration-200`}
                           >
-                            <TableCell className={`font-semibold ${isFullscreen ? 'text-base py-6 px-6' : 'text-lg py-8 px-8'} sticky left-0 z-10 bg-inherit border-r-2 border-gray-200 transition-all duration-300`}>
+                            <TableCell className={`font-semibold ${isFullscreen ? 'text-sm py-4 px-4' : 'text-base py-6 px-6'} sticky left-0 z-10 bg-inherit border-r-2 border-gray-200 transition-all duration-300`}>
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                  <div className={`${isFullscreen ? 'w-12 h-12' : 'w-14 h-14'} bg-gradient-to-br from-orange-500 to-blue-500 rounded-xl flex items-center justify-center transition-all duration-300`}>
-                                    <span className={`text-white font-bold ${isFullscreen ? 'text-base' : 'text-lg'} transition-all duration-300`}>
+                                <div className="flex items-center gap-3">
+                                  <div className={`${isFullscreen ? 'w-8 h-8' : 'w-12 h-12'} bg-gradient-to-br from-[#4ADE80] to-[#007270] rounded-xl flex items-center justify-center transition-all duration-300`}>
+                                    <span className={`text-white font-bold ${isFullscreen ? 'text-xs' : 'text-sm'} transition-all duration-300`}>
                                       {emp.name
                                         .split(" ")
                                         .map((n: string) => n[0])
@@ -943,21 +943,21 @@ const SkillsMatrixManager = () => {
                                         onChange={(e) => updateEmployeeName(emp.id, e.target.value)}
                                         onBlur={() => setEditingEmployee(null)}
                                         onKeyPress={(e) => e.key === 'Enter' && setEditingEmployee(null)}
-                                        className="w-48 h-8 text-sm mb-1"
+                                        className={`${isFullscreen ? 'w-32 h-6 text-xs' : 'w-40 h-8 text-sm'} mb-1`}
                                         autoFocus
                                       />
                                     ) : (
                                       <div
                                         onClick={() => isEditMode && setEditingEmployee(emp.id)}
-                                        className={`font-bold ${isFullscreen ? 'text-lg' : 'text-xl'} text-gray-900 transition-all duration-300 ${
+                                        className={`font-bold ${isFullscreen ? 'text-sm' : 'text-base'} text-gray-900 transition-all duration-300 ${
                                           isEditMode ? "cursor-pointer hover:bg-gray-200 px-2 py-1 rounded" : ""
                                         }`}
                                       >
                                         {emp.name}
                                       </div>
                                     )}
-                                    <div className={`${isFullscreen ? 'text-base' : 'text-lg'} text-gray-500 transition-all duration-300`}>ID: {emp.id}</div>
-                                    <div className="text-sm text-gray-400">{emp.experience} experience</div>
+                                    <div className={`${isFullscreen ? 'text-xs' : 'text-sm'} text-gray-500 transition-all duration-300`}>ID: {emp.id}</div>
+                                    <div className={`${isFullscreen ? 'text-xs' : 'text-xs'} text-gray-400`}>{emp.experience} exp</div>
                                   </div>
                                 </div>
                                 {isEditMode && (
@@ -965,19 +965,20 @@ const SkillsMatrixManager = () => {
                                     onClick={() => deleteEmployeeRow(emp.id)}
                                     size="sm"
                                     variant="destructive"
+                                    className="h-6 w-6 p-0"
                                   >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-3 w-3" />
                                   </Button>
                                 )}
                               </div>
                             </TableCell>
                             {skills.map((skill, skillIdx) => (
-                              <TableCell key={`skill-${skillIdx}`} className={`${isFullscreen ? 'py-6 px-6' : 'py-8 px-8'} text-center transition-all duration-300`}>
+                              <TableCell key={`skill-${skillIdx}`} className={`${isFullscreen ? 'py-4 px-4' : 'py-6 px-6'} text-center transition-all duration-300`}>
                                 {!isEditMode || saved ? (
                                   <div className="flex justify-center">
                                     <PieChartSkillIndicator 
                                       level={getSkillLevel(emp, skill)} 
-                                      size={isFullscreen ? 60 : 80} 
+                                      size={isFullscreen ? 40 : 60} 
                                     />
                                   </div>
                                 ) : (
@@ -986,15 +987,15 @@ const SkillsMatrixManager = () => {
                                       value={getSkillLevel(emp, skill)}
                                       onValueChange={(value) => handleSkillChange(emp.name, skill, value)}
                                     >
-                                      <SelectTrigger className={`${isFullscreen ? 'w-32' : 'w-40'} transition-all duration-300`}>
+                                      <SelectTrigger className={`${isFullscreen ? 'w-24' : 'w-32'} transition-all duration-300`}>
                                         <SelectValue placeholder="Select level" />
                                       </SelectTrigger>
-                                      <SelectContent>
+                                      <SelectContent className="z-[9999] relative">
                                         {Object.entries(skillLevelColors).map(([level]) => (
                                           <SelectItem key={level} value={level}>
-                                            <div className="flex items-center gap-3">
-                                              <PieChartSkillIndicator level={level} size={24} />
-                                              {level}
+                                            <div className="flex items-center gap-2">
+                                              <PieChartSkillIndicator level={level} size={12} />
+                                              <span className="text-xs">{level}</span>
                                             </div>
                                           </SelectItem>
                                         ))}
@@ -1022,8 +1023,8 @@ const SkillsMatrixManager = () => {
           saveResult={saveResult}
         />        {/* Fullscreen hint */}
         {isFullscreen && (
-          <div className="fixed bottom-4 right-4 bg-black/80 text-white px-4 py-2 rounded-lg text-sm z-50">
-            Press <kbd className="bg-white/20 px-2 py-1 rounded">Esc</kbd> to exit fullscreen
+          <div className="fixed top-4 right-4 bg-gradient-to-r from-[#4ADE80] to-[#007270] text-white px-4 py-2 rounded-lg text-sm z-50 shadow-lg">
+            Press <kbd className="bg-white/20 px-2 py-1 rounded ml-1 mr-1">Esc</kbd> to exit fullscreen
           </div>
         )}
         </div>
