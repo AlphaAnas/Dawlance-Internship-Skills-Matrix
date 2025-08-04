@@ -160,6 +160,7 @@ export async function GET(req: NextRequest) {
             category: skill.category,
             isCritical: skill.isCritical,
             isMachineRelated: skill.isMachineRelated,
+            femaleEligible: skill.femaleEligible,
             department: skill.departmentId?.name
           })),
           employeeCount: employeesWithSkills.length,

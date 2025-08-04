@@ -64,9 +64,9 @@ import { useEmployees } from "../../hooks/useEmployees";
 import { useDepartments } from "../../hooks/useDepartments";
 import { useSkillMatrices } from "../../hooks/useSkillMatrices";
 import { useSkills } from "../../hooks/useSkills";
-import { useMachines } from "../../hooks/useMachines";
 import DatabaseLoading from "../components/DatabaseLoading";
 import DatabaseError from "../components/DatabaseError";
+import MachineTagBadge from "../components/MachineTagBadge";
 import useUserPermissions from "../../hooks/useUserPermissions";
 
 const skillLevelColors = {
@@ -376,12 +376,7 @@ const SkillsMatrixManager = () => {
     error: skillsError,
     getSkillsByDepartment,
   } = useSkills();
-  const {
-    machines: dbMachines,
-    loading: machinesLoading,
-    error: machinesError,
-    getMachinesByDepartment,
-  } = useMachines();
+  // Removed useMachines hook as system now uses Skills table only
 
   // New state for department and employee management
   const [departments, setDepartments] = useState<any[]>([]);
@@ -472,29 +467,19 @@ const SkillsMatrixManager = () => {
     (emp) => !selectedEmployees.find((selected) => selected.id === emp.id)
   );
 
-  // Get department skills and machines from database
+  // Get department skills from database
   const departmentSkills = selectedDepartment
     ? getSkillsByDepartment(selectedDepartment)
     : [];
-  const departmentMachines = selectedDepartment
-    ? getMachinesByDepartment(selectedDepartment)
-    : [];
 
-  // Combine skills and machines for the available options
-  const combinedSkillsAndMachines = [
-    ...departmentSkills.map((skill) => ({
-      name: skill.name,
-      type: "skill",
-      data: skill,
-    })),
-    ...departmentMachines.map((machine) => ({
-      name: machine.name,
-      type: "machine",
-      data: machine,
-    })),
-  ];
+  // Use skills for the available options
+  const availableSkillsAndMachines = departmentSkills.map((skill) => ({
+    name: skill.name,
+    type: "skill",
+    data: skill,
+  }));
 
-  const filteredSkills = combinedSkillsAndMachines.filter(
+  const filteredSkills = availableSkillsAndMachines.filter(
     (item) =>
       item.name.toLowerCase().includes(skillFilter.toLowerCase()) &&
       !skills.includes(item.name)
@@ -699,7 +684,16 @@ const SkillsMatrixManager = () => {
         description: `Skills matrix for ${selectedDept.name} department`,
         matrixData: {
           employees: selectedEmployees,
-          skills: skills,
+          skills: skills, // Keep as simple string array
+          skillProperties: skills.map(skillName => {
+            // Store skill properties separately to maintain compatibility
+            const skillFromDB = departmentSkills.find(dbSkill => dbSkill.name === skillName);
+            return {
+              name: skillName,
+              isCritical: skillFromDB?.isCritical || false,
+              femaleEligible: skillFromDB?.femaleEligible !== false
+            };
+          }),
           skillLevels: skillLevels,
         },
       };
@@ -741,7 +735,16 @@ const SkillsMatrixManager = () => {
     setMatrixName(matrix.name);
     setSelectedDepartment(matrix.departmentId);
     setSelectedEmployees(matrix.matrixData?.employees || []);
-    setSkills(matrix.matrixData?.skills || []);
+    
+    // Ensure skills is always an array of strings, even if old data has objects
+    const matrixSkills = matrix.matrixData?.skills || [];
+    const skillStrings = matrixSkills.map((skill: any) => {
+      // If skill is an object with name property, extract the name
+      // If skill is already a string, use it as is
+      return typeof skill === 'object' && skill.name ? skill.name : skill;
+    });
+    setSkills(skillStrings);
+    
     setSkillLevels(matrix.matrixData?.skillLevels || {});
     setSelectedMatrix(matrix);
     setShowFinalTable(true);
@@ -784,8 +787,7 @@ const SkillsMatrixManager = () => {
     employeesLoading ||
     departmentsLoading ||
     matricesLoading ||
-    skillsLoading ||
-    machinesLoading
+    skillsLoading
   ) {
     return <DatabaseLoading />;
   }
@@ -795,8 +797,7 @@ const SkillsMatrixManager = () => {
     employeesError ||
     departmentsError ||
     matricesError ||
-    skillsError ||
-    machinesError
+    skillsError
   ) {
     return (
       <DatabaseError
@@ -805,7 +806,6 @@ const SkillsMatrixManager = () => {
           departmentsError ||
           matricesError ||
           skillsError ||
-          machinesError ||
           ""
         }
         onRetry={() => window.location.reload()}
@@ -1158,7 +1158,26 @@ const SkillsMatrixManager = () => {
                                 )}
                               </div>
                             </TableHead>
-                            {skills.map((skill, index) => (
+                            {skills.map((skill, index) => {
+                              // Ensure skill is always a string (safety check for old data)
+                              const skillName = typeof skill === 'object' && skill && (skill as any).name ? (skill as any).name : skill;
+                              
+                              // Try to get skill properties from saved matrix data first, then fallback to database lookup
+                              let skillProperties = null;
+                              if (selectedMatrix?.matrixData?.skillProperties) {
+                                skillProperties = selectedMatrix.matrixData.skillProperties.find((prop: any) => prop.name === skillName);
+                              }
+                              // Fallback to database lookup if not found in matrix data
+                              if (!skillProperties) {
+                                const skillFromDB = departmentSkills.find(dbSkill => dbSkill.name === skillName);
+                                skillProperties = {
+                                  name: skillName,
+                                  isCritical: skillFromDB?.isCritical || false,
+                                  femaleEligible: skillFromDB?.femaleEligible !== false
+                                };
+                              }
+                              
+                              return (
                               <TableHead
                                 key={`skill-${index}`}
                                 className={`text-black bg-[#ffc26e] font-bold ${
@@ -1167,68 +1186,88 @@ const SkillsMatrixManager = () => {
                                     : "text-lg py-4 px-6"
                                 } text-center min-w-[150px] whitespace-nowrap border-r border-orange-300 shadow-sm transition-all duration-300`}
                               >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <Cog
-                                      className={`${
-                                        isFullscreen ? "h-4 w-4" : "h-5 w-5"
-                                      }`}
-                                    />
-                                    {editingSkill === index && isEditMode ? (
-                                      <Input
-                                        value={skill}
-                                        onChange={(e) =>
-                                          updateSkillName(index, e.target.value)
-                                        }
-                                        onBlur={() => setEditingSkill(null)}
-                                        onKeyPress={(e) =>
-                                          e.key === "Enter" &&
-                                          setEditingSkill(null)
-                                        }
-                                        className="w-24 h-6 text-xs bg-white text-black border border-gray-300"
-                                        autoFocus
+                                <div className="flex flex-col gap-1">
+                                  {/* Skill badges row */}
+                                  <div className="flex items-center justify-center gap-1">
+                                    {skillProperties?.femaleEligible && (
+                                      <MachineTagBadge
+                                        femaleEligible={true}
+                                        size="sm"
                                       />
-                                    ) : (
-                                      <span
-                                        onClick={() =>
-                                          isEditMode && setEditingSkill(index)
-                                        }
-                                        className={`${
-                                          isFullscreen ? "text-sm" : "text-base"
-                                        } font-bold text-black ${
-                                          isEditMode
-                                            ? "cursor-pointer hover:bg-orange-200 px-2 py-1 rounded border border-orange-400"
-                                            : ""
-                                        }`}
-                                      >
-                                        {skill}
-                                      </span>
+                                    )}
+                                    {skillProperties?.isCritical && (
+                                      <MachineTagBadge
+                                        isCritical={true}
+                                        size="sm"
+                                      />
                                     )}
                                   </div>
-                                  {isEditMode && (
-                                    <div className="flex gap-1">
-                                      {index === skills.length - 1 && (
-                                        <Button
-                                          onClick={addNewSkillColumn}
-                                          size="sm"
-                                          className="bg-green-600 hover:bg-green-700 h-6 w-6 p-0 border border-green-700 text-white shadow-sm"
+                                  
+                                  {/* Skill name and controls row */}
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <Cog
+                                        className={`${
+                                          isFullscreen ? "h-4 w-4" : "h-5 w-5"
+                                        }`}
+                                      />
+                                      {editingSkill === index && isEditMode ? (
+                                        <Input
+                                          value={skill}
+                                          onChange={(e) =>
+                                            updateSkillName(index, e.target.value)
+                                          }
+                                          onBlur={() => setEditingSkill(null)}
+                                          onKeyPress={(e) =>
+                                            e.key === "Enter" &&
+                                            setEditingSkill(null)
+                                          }
+                                          className="w-24 h-6 text-xs bg-white text-black border border-gray-300"
+                                          autoFocus
+                                        />
+                                      ) : (
+                                        <span
+                                          onClick={() =>
+                                            isEditMode && setEditingSkill(index)
+                                          }
+                                          className={`${
+                                            isFullscreen ? "text-sm" : "text-base"
+                                          } font-bold text-black ${
+                                            isEditMode
+                                              ? "cursor-pointer hover:bg-orange-200 px-2 py-1 rounded border border-orange-400"
+                                              : ""
+                                          }`}
                                         >
-                                          <Plus className="h-3 w-3" />
-                                        </Button>
+                                          {skill}
+                                        </span>
                                       )}
-                                      <Button
-                                        onClick={() => deleteSkillColumn(index)}
-                                        size="sm"
-                                        variant="destructive"
-                                        className="h-6 w-6 p-0 bg-red-600 hover:bg-red-700 border border-red-700 text-white shadow-sm"
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
                                     </div>
-                                  )}
+                                    {isEditMode && (
+                                      <div className="flex gap-1">
+                                        {index === skills.length - 1 && (
+                                          <Button
+                                            onClick={addNewSkillColumn}
+                                            size="sm"
+                                            className="bg-green-600 hover:bg-green-700 h-6 w-6 p-0 border border-green-700 text-white shadow-sm"
+                                          >
+                                            <Plus className="h-3 w-3" />
+                                          </Button>
+                                        )}
+                                        <Button
+                                          onClick={() => deleteSkillColumn(index)}
+                                          size="sm"
+                                          variant="destructive"
+                                          className="h-6 w-6 p-0 bg-red-600 hover:bg-red-700 border border-red-700 text-white shadow-sm"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </TableHead>
-                            ))}
+                              );
+                            })}
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -1735,11 +1774,7 @@ const SkillsMatrixManager = () => {
                                   {skillItem.name}
                                 </span>
                                 <div className="text-xs text-gray-500 capitalize">
-                                  {skillItem.type}{" "}
-                                  {skillItem.type === "machine" &&
-                                    "type" in skillItem.data &&
-                                    skillItem.data.type &&
-                                    `• ${skillItem.data.type}`}
+                                  {skillItem.type}
                                 </div>
                               </div>
                             </div>

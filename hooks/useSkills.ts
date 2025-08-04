@@ -6,6 +6,7 @@ interface Skill {
   category: string;
   isMachineRelated?: boolean;
   isCritical?: boolean;
+  femaleEligible?: boolean;
   department?: string;
   departmentId?: string;
   createdAt: string;

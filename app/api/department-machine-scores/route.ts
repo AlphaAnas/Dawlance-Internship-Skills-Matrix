@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
-import { Employee, Department, EmployeeSkill, Skill, Machine } from '@/lib/models';
+import { Employee, Department, EmployeeSkill, Skill } from '@/lib/models';
 import mongoose from 'mongoose';
 
 export async function GET(req: NextRequest) {
@@ -40,8 +40,8 @@ async function getSkillsMatrixData(departmentId?: string | null) {
   const matrixData = [];
 
   for (const department of departments) {
-    // Get all machines in this department
-    const machines = await Skill.find({ 
+    // Get all skills in this department
+    const skills = await Skill.find({ 
       departmentId: department._id, 
       is_deleted: false 
     });
@@ -57,12 +57,12 @@ async function getSkillsMatrixData(departmentId?: string | null) {
     // Calculate department-level scores
     const departmentScores = await calculateDepartmentSkillScores(department._id);
     
-    // Calculate machine-level scores
-    const machineScores = [];
-    for (const machine of machines) {
-      const machineScore = await calculateMachineSkillScores(machine._id, department._id);
-      if (machineScore) {
-        machineScores.push(machineScore);
+    // Calculate skill-level scores
+    const skillScores = [];
+    for (const skill of skills) {
+      const skillScore = await calculateSkillScores(skill._id, department._id);
+      if (skillScore) {
+        skillScores.push(skillScore);
       }
     }
 
@@ -74,7 +74,7 @@ async function getSkillsMatrixData(departmentId?: string | null) {
         averageScore: departmentScores.averageScore,
         skillBreakdown: departmentScores.skillBreakdown
       },
-      machines: machineScores
+      skills: skillScores
     });
   }
 
@@ -105,9 +105,9 @@ async function calculateDepartmentSkillScores(departmentId: mongoose.Types.Objec
       // Calculate average skill score for this employee
       let employeeScore = 0;
       for (const skill of employeeSkills) {
-        const skillPoints = getSkillLevelPoints(skill.skillLevel);
+        const skillPoints = getSkillLevelPoints(skill.level);
         employeeScore += skillPoints;
-        skillLevelCounts[skill.skillLevel as keyof typeof skillLevelCounts]++;
+        skillLevelCounts[skill.level as keyof typeof skillLevelCounts]++;
       }
       employeeScore = employeeScore / employeeSkills.length;
       totalScore += employeeScore;
@@ -122,22 +122,24 @@ async function calculateDepartmentSkillScores(departmentId: mongoose.Types.Objec
   };
 }
 
-async function calculateMachineSkillScores(machineId: mongoose.Types.ObjectId, departmentId: mongoose.Types.ObjectId) {
-  // Get machine details
-  const machine = await Skill.findById(machineId);
-  if (!machine) return null;
+async function calculateSkillScores(skillId: mongoose.Types.ObjectId, departmentId: mongoose.Types.ObjectId) {
+  // Get skill details
+  const skill = await Skill.findById(skillId);
+  if (!skill) return null;
 
-  // Get employees who can operate this machine
+  // Get employees who have this skill
   const employeeSkills = await EmployeeSkill.find({ 
-    machineId: machineId, 
+    skillId: skillId, 
     is_deleted: false 
   }).populate('employeeId');
 
   if (employeeSkills.length === 0) {
     return {
-      id: machine._id,
-      name: machine.name,
-      type: machine.machineType || 'Unknown',
+      id: skill._id,
+      name: skill.name,
+      category: skill.category,
+      isCritical: skill.isCritical,
+      femaleEligible: skill.femaleEligible,
       operatorCount: 0,
       averageSkillLevel: 0,
       skillDistribution: { Low: 0, Medium: 0, High: 0, Advanced: 0, Expert: 0 }
@@ -148,17 +150,19 @@ async function calculateMachineSkillScores(machineId: mongoose.Types.ObjectId, d
   const skillDistribution = { Low: 0, Medium: 0, High: 0, Advanced: 0, Expert: 0 };
 
   for (const employeeSkill of employeeSkills) {
-    const skillPoints = getSkillLevelPoints(employeeSkill.skillLevel);
+    const skillPoints = getSkillLevelPoints(employeeSkill.level);
     totalScore += skillPoints;
-    skillDistribution[employeeSkill.skillLevel as keyof typeof skillDistribution]++;
+    skillDistribution[employeeSkill.level as keyof typeof skillDistribution]++;
   }
 
   const averageScore = (totalScore / employeeSkills.length) * 25; // Convert to percentage
 
   return {
-    id: machine._id,
-    name: machine.name,
-    type: machine.machineType || 'Unknown',
+    id: skill._id,
+    name: skill.name,
+    category: skill.category,
+    isCritical: skill.isCritical,
+    femaleEligible: skill.femaleEligible,
     operatorCount: employeeSkills.length,
     averageSkillLevel: Math.round(averageScore),
     skillDistribution: skillDistribution
