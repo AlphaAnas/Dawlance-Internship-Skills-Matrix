@@ -94,16 +94,21 @@ This skill assessment can be used for:
   console.log("Parsed skills:", parsedSkills)
 
   // Helper to map skill level to display label
+  // const getDisplayLabel = (level: string) => {
+  //   return level === "Expert" || level === "Advanced" ? "Expert" : level
+  // }
   const getDisplayLabel = (level: string) => {
-    return level === "Expert" || level === "Advanced" ? "Advanced" : level
-  }
+  return level === "None" ? "None" : level
+}
+
 
   // Helper to get color for skill level (Advanced/Expert always green)
   const getSkillColor = (level: string) => {
     switch (level) {
       case "Expert":
-      case "Advanced":
-        return "bg-emerald-600 text-white dark:bg-emerald-500"
+         return "bg-emerald-600 text-white dark:bg-emerald-500"
+      // case "Advanced":
+      //   return "bg-emerald-600 text-white dark:bg-emerald-500"
       case "High":
         return "bg-blue-600 text-white dark:bg-blue-500"
       case "Medium":
@@ -152,10 +157,10 @@ This skill assessment can be used for:
       return {
         skill: skill.length > 15 ? skill.substring(0, 15) + "..." : skill,
         fullSkill: skill,
-        level: displayLevel === "Advanced" ? 4 : displayLevel === "High" ? 3 : displayLevel === "Medium" ? 2 : 1,
+        level: displayLevel === "Expert" ? 4 : displayLevel === "High" ? 3 : displayLevel === "Medium" ? 2 : 1,
         levelLabel: displayLevel,
         color:
-          displayLevel === "Advanced" ? "#10b981" : displayLevel === "High" ? "#3b82f6" : displayLevel === "Medium" ? "#f59e0b" : "#ef4444",
+          displayLevel === "Expert" ? "#10b981" : displayLevel === "High" ? "#3b82f6" : displayLevel === "Medium" ? "#f59e0b" : "#ef4444",
       };
     })
     .sort((a, b) => b.level - a.level);
@@ -212,9 +217,9 @@ This skill assessment can be used for:
   const averageLevel = calculateAverageSkillLevel(parsedSkills)
   const skillDistribution = getSkillDistribution(parsedSkills)
 
-  // Calculate advanced (Expert/Advanced) skills count
+  // Calculate advanced (Expert/Expert) skills count
   const advancedSkillsCount = Object.values(parsedSkills).filter(
-    (level) => getDisplayLabel(typeof level === 'string' ? level : '') === 'Advanced'
+    (level) => getDisplayLabel(typeof level === 'string' ? level : '') === 'Expert'
   ).length;
 
   return (
@@ -524,7 +529,7 @@ This skill assessment can be used for:
                   <div className="flex justify-center mt-6">
                     <div className="flex flex-wrap justify-center items-center gap-6 p-4 rounded-xl bg-gradient-to-r from-gray-50/50 to-gray-100/50 dark:from-gray-700/30 dark:to-gray-600/30">
                       {[
-                        { level: "Advanced", color: "#10b981", score: "4" },
+                        { level: "Expert", color: "#10b981", score: "4" },
                         { level: "High", color: "#3b82f6", score: "3" },
                         { level: "Medium", color: "#f59e0b", score: "2" },
                         { level: "Low", color: "#ef4444", score: "1" },

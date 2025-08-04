@@ -13,7 +13,7 @@ const EmployeeSkillSchema = new mongoose.Schema({
   },
   level: {
     type: String,
-    enum: ['Low', 'Medium', 'High', 'Expert', 'Advanced'],
+    enum: ['None', 'Low', 'Medium', 'High', 'Expert'],
     required: true
   },
   acquiredDate: {

@@ -167,7 +167,7 @@ export default function FridgeManufacturingDashboard() {
                     <SelectItem value="Advanced">
                       <div className="flex items-center gap-2">
                         <span className="h-3 w-3 rounded-full bg-purple-600"></span>
-                        Advanced
+                        Advanced/Expert
                       </div>
                     </SelectItem>
                     <SelectItem value="high">

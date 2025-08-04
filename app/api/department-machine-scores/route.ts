@@ -41,7 +41,7 @@ async function getSkillsMatrixData(departmentId?: string | null) {
 
   for (const department of departments) {
     // Get all machines in this department
-    const machines = await Machine.find({ 
+    const machines = await Skill.find({ 
       departmentId: department._id, 
       is_deleted: false 
     });
@@ -124,7 +124,7 @@ async function calculateDepartmentSkillScores(departmentId: mongoose.Types.Objec
 
 async function calculateMachineSkillScores(machineId: mongoose.Types.ObjectId, departmentId: mongoose.Types.ObjectId) {
   // Get machine details
-  const machine = await Machine.findById(machineId);
+  const machine = await Skill.findById(machineId);
   if (!machine) return null;
 
   // Get employees who can operate this machine

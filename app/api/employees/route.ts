@@ -190,9 +190,13 @@ export async function GET(req: NextRequest) {
         
         employee.employeeSkills.forEach((es: any) => {
           const skill = employee.skills.find((sk: any) => sk._id.toString() === es.skillId.toString());
-          if (skill && skill.name && es.level) {
-            map[skill.name] = es.level;
-          }
+          // if (skill && skill.name && es.level) {
+          //   map[skill.name] = es.level;
+          // }
+          if (skill && skill.name && es.level && es.level !== 'None') {
+              const normalizedLevel = es.level === 'Advanced' ? 'Expert' : es.level;
+              map[skill.name] = normalizedLevel;
+            }
         });
         return map;
       };
@@ -268,10 +272,14 @@ export async function GET(req: NextRequest) {
       
       employee.employeeSkills.forEach((es: any) => {
         const skill = employee.skills.find((sk: any) => sk._id.toString() === es.skillId.toString());
-        if (skill && skill.name && es.level) {
-          // Level is already stored as text in the database
-          map[skill.name] = es.level;
-        }
+        // if (skill && skill.name && es.level) {
+        //   // Level is already stored as text in the database
+        //   map[skill.name] = es.level;
+        // }
+        if (skill && skill.name && es.level && es.level !== 'None') {
+  const normalizedLevel = es.level === 'Advanced' ? 'Expert' : es.level;
+  map[skill.name] = normalizedLevel;
+}
       });
       return map;
     };
@@ -295,8 +303,8 @@ export async function GET(req: NextRequest) {
       const avgScore = skillScores.reduce((sum, score) => sum + score, 0) / skillScores.length;
       
       // Map average score back to skill level, treating Expert/Advanced as "Advanced"
-      if (avgScore >= 3.5) return 'Advanced'; // Expert level
-      if (avgScore >= 3.5) return 'Advanced'; // Advanced/ level  
+      if (avgScore >= 3.5) return 'Expert'; // Expert level
+      if (avgScore >= 3.5) return 'Expert'; // Advanced/ level  
       if (avgScore >= 2.5) return 'High'; // high level  
       if (avgScore >= 1.5) return 'Medium';
       return 'Low';
@@ -379,23 +387,48 @@ export async function POST(req: NextRequest) {
 
     // Handle skills creation/association
     let skillsObj: Record<string, string> = {};
+    // if (Array.isArray(skills) && skills.length > 0) {
+    //   for (const skill of skills) {
+    //     if (!skill.name || !skill.level) continue;
+    //     let level = skill.level === 'Advanced' ? 'Expert' : skill.level;
+    //     if (level === 'None') continue; // Skip invalid levels
+
+    //     // Find or create the skill
+    //     let skillDoc = await Skill.findOne({ name: skill.name, is_deleted: false });
+    //     if (!skillDoc) {
+    //       skillDoc = await Skill.create({ name: skill.name, category: 'TECHNICAL' }); // Default category
+    //     }
+    //     // Create EmployeeSkill
+    //     await EmployeeSkill.create({
+    //       employeeId: newEmployee._id,
+    //       skillId: skillDoc._id,
+    //       level: skill.level,
+    //     });
+    //     skillsObj[skill.name] = skill.level;
+    //   }
+    // }
     if (Array.isArray(skills) && skills.length > 0) {
-      for (const skill of skills) {
-        if (!skill.name || !skill.level) continue;
-        // Find or create the skill
-        let skillDoc = await Skill.findOne({ name: skill.name, is_deleted: false });
-        if (!skillDoc) {
-          skillDoc = await Skill.create({ name: skill.name, category: 'TECHNICAL' }); // Default category
-        }
-        // Create EmployeeSkill
-        await EmployeeSkill.create({
-          employeeId: newEmployee._id,
-          skillId: skillDoc._id,
-          level: skill.level,
-        });
-        skillsObj[skill.name] = skill.level;
-      }
+  for (const skill of skills) {
+    if (!skill.name || !skill.level) continue;
+
+    let level = skill.level === 'Advanced' ? 'Expert' : skill.level;
+    if (level === 'None') continue; // Skip invalid levels
+
+    let skillDoc = await Skill.findOne({ name: skill.name, is_deleted: false });
+    if (!skillDoc) {
+      skillDoc = await Skill.create({ name: skill.name, category: 'TECHNICAL' });
     }
+
+    await EmployeeSkill.create({
+      employeeId: newEmployee._id,
+      skillId: skillDoc._id,
+      level,
+    });
+
+    skillsObj[skill.name] = level;
+  }
+}
+
 
     // Return the created employee (add skills object for UI compatibility)
     return NextResponse.json({

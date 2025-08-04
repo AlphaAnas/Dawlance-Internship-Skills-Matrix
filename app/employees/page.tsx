@@ -271,7 +271,7 @@ export default function EmployeesPage() {
 
   const getSkillColor = (level: string) => {
     switch (level) {
-      case "Advanced":
+      case "Expert":
         return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-300 dark:border-green-800";
       case "High":
         return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-800";
@@ -836,7 +836,7 @@ export default function EmployeesPage() {
                       <SelectItem value="Medium">Medium</SelectItem>
                       <SelectItem value="High">High</SelectItem>
                       <SelectItem value="Expert">Expert</SelectItem>
-                      <SelectItem value="Advanced">Advanced</SelectItem>
+                      {/* <SelectItem value="Advanced">Advanced</SelectItem> */}
                     </SelectContent>
                   </Select>
                   <Button

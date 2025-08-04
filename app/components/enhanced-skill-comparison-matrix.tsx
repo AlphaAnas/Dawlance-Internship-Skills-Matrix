@@ -48,7 +48,8 @@ export default function EnhancedSkillComparisonMatrix({ data }: EnhancedSkillCom
   // Helper function to normalize skill levels (treat Expert as Advanced)
   const normalizeSkillLevel = (skillLevel: string | undefined) => {
     if (!skillLevel) return '';
-    if (skillLevel === 'Expert' || skillLevel === 'Advanced') return 'Advanced';
+    const lowerSkill = skillLevel.toLowerCase();
+    if (lowerSkill === 'expert' || lowerSkill === 'advanced') return 'Advanced';
     return skillLevel;
   };
 

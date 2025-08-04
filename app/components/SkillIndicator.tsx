@@ -20,7 +20,7 @@ export default function SkillIndicator({
 
   const getSkillData = (skillLevel: string) => {
     switch (skillLevel) {
-      case "Advanced":
+      case "Expert":
         return {
           percentage: 100,
           color: "#10b981", // Emerald

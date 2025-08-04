@@ -8,7 +8,8 @@ import {
   EmployeeSkill,
   EmployeeWorkHistory,
   SkillMatrix,
-  ExportLog
+  ExportLog,
+  DepartmentPerformance
 } from './models';
 
 export async function seedDatabase() {
@@ -26,6 +27,7 @@ export async function seedDatabase() {
     await EmployeeWorkHistory.deleteMany({});
     await SkillMatrix.deleteMany({});
     await ExportLog.deleteMany({});
+    await DepartmentPerformance.deleteMany({});
 
     console.log('Cleared existing data');
 
@@ -33,132 +35,97 @@ export async function seedDatabase() {
     const departments = await Department.insertMany([
       { name: 'Sheet Metal', description: 'Metal cutting, forming and welding operations' },
       { name: 'Assembly Line', description: 'Product assembly and integration' },
-      { name: 'Cooling Systems', description: 'Refrigeration system manufacturing and testing' },
       { name: 'Quality Control', description: 'Product testing and quality assurance' },
-      { name: 'Painting', description: 'Surface preparation and painting operations' },
-      { name: 'Packaging', description: 'Final packaging and shipping preparation' },
-      { name: 'Blow Molding', description: 'Plastic component manufacturing' },
+      { name: 'Welding', description: 'Welding operations and fabrication' },
       { name: 'Maintenance', description: 'Equipment maintenance and repair' }
     ]);
 
     console.log('Created departments:', departments.length);
 
-    // 2. Create Skills with comprehensive coverage for each department
+    // 2. Create Skills for all departments
     const skills = await Skill.insertMany([
-      // Sheet Metal Skills (Department 0)
-      { name: 'Laser Cutting Operation', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
-      { name: 'Metal Cutting', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
-      { name: 'TIG Welding', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
-      { name: 'MIG Welding', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
-      { name: 'Arc Welding', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
-      { name: 'Press Brake Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
-      { name: 'Plasma Cutting', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
-      { name: 'Sheet Metal Shearing', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
-      { name: 'Roll Forming', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
-      { name: 'Blueprint Reading', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
-      { name: 'Metal Fabrication', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
-      { name: 'Quality Measurement', category: 'TECHNICAL', departmentId: departments[0]._id, femaleEligible: true },
+      // Sheet Metal Skills (Department 0) - Specific skills as requested
+      { name: 'Shearing & Cutting Operations', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Press Operations', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Die Setting', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: '300 Ton Press', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'OLMA', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: '250 Ton Press', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Colmal Shearing', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Z-bottom Assembly', category: 'LABOUR', departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Heat Shrink Filling AMT', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Cutting / Flaring', category: 'TECHNICAL', departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'Spot Welding', category: 'TECHNICAL', isCritical: true, departmentId: departments[0]._id, femaleEligible: true },
+      { name: 'AMT Bending', category: 'MACHINE', isMachineRelated: true, departmentId: departments[0]._id, femaleEligible: true },
       
       // Assembly Line Skills (Department 1)
       { name: 'Assembly Line Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[1]._id, femaleEligible: true },
       { name: 'Component Assembly', category: 'LABOUR', departmentId: departments[1]._id, femaleEligible: true },
       { name: 'Torque Specifications', category: 'TECHNICAL', isCritical: true, departmentId: departments[1]._id, femaleEligible: true },
-      { name: 'Pneumatic Press Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[1]._id, femaleEligible: true },
-      { name: 'Screw Driver Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[1]._id, femaleEligible: true },
-      { name: 'Component Feeding', category: 'MACHINE', isMachineRelated: true, departmentId: departments[1]._id, femaleEligible: true },
-      { name: 'Line Coordination', category: 'TECHNICAL', departmentId: departments[1]._id, femaleEligible: true },
-      { name: 'Assembly Quality Check', category: 'TECHNICAL', departmentId: departments[1]._id, femaleEligible: true },
-      { name: 'Production Scheduling', category: 'TECHNICAL', departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Quality Inspection', category: 'TECHNICAL', isCritical: true, departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Line Troubleshooting', category: 'TECHNICAL', departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Production Monitoring', category: 'TECHNICAL', departmentId: departments[1]._id, femaleEligible: true },
+      { name: 'Parts Handling', category: 'LABOUR', departmentId: departments[1]._id, femaleEligible: true },
       { name: 'Tool Maintenance', category: 'TECHNICAL', departmentId: departments[1]._id, femaleEligible: true },
       
-      // Cooling Systems Skills (Department 2)
-      { name: 'Compressor Testing', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
-      { name: 'Refrigeration Systems', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
-      { name: 'Leak Testing', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
-      { name: 'Compressor Installation', category: 'TECHNICAL', departmentId: departments[2]._id, femaleEligible: true },
-      { name: 'Refrigeration Assembly', category: 'TECHNICAL', departmentId: departments[2]._id, femaleEligible: true },
-      { name: 'Pressure Testing', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
-      { name: 'Brazing', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
-      { name: 'Refrigerant Handling', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
-      { name: 'System Diagnostics', category: 'TECHNICAL', departmentId: departments[2]._id, femaleEligible: true },
-      { name: 'Cooling System Design', category: 'TECHNICAL', departmentId: departments[2]._id, femaleEligible: true },
+      // Quality Control Skills (Department 2)
+      { name: 'CMM Operation', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Quality Testing', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Electrical Testing', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Dimensional Inspection', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Visual Inspection', category: 'TECHNICAL', departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Test Report Writing', category: 'TECHNICAL', departmentId: departments[2]._id, femaleEligible: true },
+      { name: 'Calibration Procedures', category: 'TECHNICAL', isCritical: true, departmentId: departments[2]._id, femaleEligible: true },
       
-      // Quality Control Skills (Department 3)
-      { name: 'CMM Operation', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
-      { name: 'Quality Testing', category: 'TECHNICAL', isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
-      { name: 'Hardness Testing', category: 'MACHINE', isMachineRelated: true, departmentId: departments[3]._id, femaleEligible: true },
-      { name: 'Surface Roughness Testing', category: 'MACHINE', isMachineRelated: true, departmentId: departments[3]._id, femaleEligible: true },
-      { name: 'Electrical Testing', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
-      { name: 'Statistical Analysis', category: 'TECHNICAL', departmentId: departments[3]._id, femaleEligible: true },
-      { name: 'Documentation', category: 'TECHNICAL', departmentId: departments[3]._id, femaleEligible: true },
-      { name: 'Calibration', category: 'TECHNICAL', isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
-      { name: 'Dimensional Inspection', category: 'TECHNICAL', departmentId: departments[3]._id, femaleEligible: true },
-      { name: 'Non-Destructive Testing', category: 'TECHNICAL', departmentId: departments[3]._id, femaleEligible: true },
+      // Welding Skills (Department 3)
+      { name: 'TIG Welding', category: 'TECHNICAL', isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'MIG Welding', category: 'TECHNICAL', isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Arc Welding', category: 'TECHNICAL', isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Gas Welding', category: 'TECHNICAL', departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Weld Inspection', category: 'TECHNICAL', isCritical: true, departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Joint Preparation', category: 'TECHNICAL', departmentId: departments[3]._id, femaleEligible: true },
+      { name: 'Electrode Selection', category: 'TECHNICAL', departmentId: departments[3]._id, femaleEligible: true },
       
-      // Painting Skills (Department 4)
-      { name: 'Spray Booth Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[4]._id, femaleEligible: true },
-      { name: 'Spray Painting', category: 'MACHINE', isMachineRelated: true, departmentId: departments[4]._id, femaleEligible: true },
-      { name: 'Paint Robot Programming', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[4]._id, femaleEligible: true },
-      { name: 'Powder Coating', category: 'MACHINE', isMachineRelated: true, departmentId: departments[4]._id, femaleEligible: true },
-      { name: 'Paint Mixing', category: 'MACHINE', isMachineRelated: true, departmentId: departments[4]._id, femaleEligible: true },
-      { name: 'Surface Preparation', category: 'LABOUR', departmentId: departments[4]._id, femaleEligible: true },
-      { name: 'Color Matching', category: 'TECHNICAL', departmentId: departments[4]._id, femaleEligible: true },
-      { name: 'Curing Process Control', category: 'MACHINE', isMachineRelated: true, departmentId: departments[4]._id, femaleEligible: true },
-      { name: 'Paint Quality Control', category: 'TECHNICAL', departmentId: departments[4]._id, femaleEligible: true },
-      { name: 'Coating Thickness Measurement', category: 'TECHNICAL', departmentId: departments[4]._id, femaleEligible: true },
-      
-      // Packaging Skills (Department 5)
-      { name: 'Carton Erection', category: 'MACHINE', isMachineRelated: true, departmentId: departments[5]._id, femaleEligible: true },
-      { name: 'Shrink Wrapping', category: 'MACHINE', isMachineRelated: true, departmentId: departments[5]._id, femaleEligible: true },
-      { name: 'Label Application', category: 'MACHINE', isMachineRelated: true, departmentId: departments[5]._id, femaleEligible: true },
-      { name: 'Palletizing', category: 'MACHINE', isMachineRelated: true, departmentId: departments[5]._id, femaleEligible: true },
-      { name: 'Package Assembly', category: 'LABOUR', departmentId: departments[5]._id, femaleEligible: true },
-      { name: 'Labeling', category: 'LABOUR', departmentId: departments[5]._id, femaleEligible: true },
-      { name: 'Shipping Documentation', category: 'TECHNICAL', departmentId: departments[5]._id, femaleEligible: true },
-      { name: 'Inventory Management', category: 'TECHNICAL', departmentId: departments[5]._id, femaleEligible: true },
-      { name: 'Package Design', category: 'TECHNICAL', departmentId: departments[5]._id, femaleEligible: true },
-      { name: 'Material Handling', category: 'LABOUR', departmentId: departments[5]._id, femaleEligible: true },
-      
-      // Blow Molding Skills (Department 6)
-      { name: 'Blow Molding Operation', category: 'MACHINE', isMachineRelated: true, departmentId: departments[6]._id, femaleEligible: true },
-      { name: 'Injection Molding', category: 'MACHINE', isMachineRelated: true, isCritical: true, departmentId: departments[6]._id, femaleEligible: true },
-      { name: 'Plastic Extrusion', category: 'MACHINE', isMachineRelated: true, departmentId: departments[6]._id, femaleEligible: true },
-      { name: 'Thermoforming', category: 'MACHINE', isMachineRelated: true, departmentId: departments[6]._id, femaleEligible: true },
-      { name: 'Plastic Welding', category: 'TECHNICAL', departmentId: departments[6]._id, femaleEligible: true },
-      { name: 'Mold Setup', category: 'TECHNICAL', isCritical: true, departmentId: departments[6]._id, femaleEligible: true },
-      { name: 'Material Selection', category: 'TECHNICAL', departmentId: departments[6]._id, femaleEligible: true },
-      { name: 'Process Optimization', category: 'TECHNICAL', departmentId: departments[6]._id, femaleEligible: true },
-      { name: 'Plastic Testing', category: 'TECHNICAL', departmentId: departments[6]._id, femaleEligible: true },
-      { name: 'Cycle Time Management', category: 'TECHNICAL', departmentId: departments[6]._id, femaleEligible: true },
-      
-      // Maintenance Skills (Department 7)
-      { name: 'CNC Repair', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: true },
-      { name: 'Welding Repair', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: true },
-      { name: 'Hydraulic Systems', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: true },
-      { name: 'Electrical Repair', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: false },
-      { name: 'Mechanical Repair', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: true },
-      { name: 'Pneumatic Systems', category: 'TECHNICAL', departmentId: departments[7]._id, femaleEligible: true },
-      { name: 'Preventive Maintenance', category: 'TECHNICAL', departmentId: departments[7]._id, femaleEligible: true },
-      { name: 'Troubleshooting', category: 'TECHNICAL', isCritical: true, departmentId: departments[7]._id, femaleEligible: true },
-      { name: 'Equipment Calibration', category: 'TECHNICAL', departmentId: departments[7]._id, femaleEligible: true },
-      { name: 'Spare Parts Management', category: 'TECHNICAL', departmentId: departments[7]._id, femaleEligible: true },
-      
-      // General/Cross-Department Skills
-      { name: 'Safety Protocols', category: 'SAFETY', isCritical: true, femaleEligible: true },
-      { name: 'Team Leadership', category: 'TECHNICAL', femaleEligible: true },
-      { name: 'Problem Solving', category: 'TECHNICAL', femaleEligible: true },
-      { name: 'Equipment Maintenance', category: 'TECHNICAL', femaleEligible: true },
-      { name: '5S Implementation', category: 'TECHNICAL', femaleEligible: true },
-      { name: 'Lean Manufacturing', category: 'TECHNICAL', femaleEligible: true },
-      { name: 'Six Sigma', category: 'TECHNICAL', femaleEligible: true },
-      { name: 'Computer Literacy', category: 'TECHNICAL', femaleEligible: true },
-      { name: 'Communication Skills', category: 'TECHNICAL', femaleEligible: true },
-      { name: 'Time Management', category: 'TECHNICAL', femaleEligible: true }
+      // Maintenance Skills (Department 4)
+      { name: 'Mechanical Maintenance', category: 'TECHNICAL', isCritical: true, departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Electrical Maintenance', category: 'TECHNICAL', isCritical: true, departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Hydraulic Systems', category: 'TECHNICAL', isCritical: true, departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Pneumatic Systems', category: 'TECHNICAL', departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Preventive Maintenance', category: 'TECHNICAL', isCritical: true, departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Troubleshooting', category: 'TECHNICAL', isCritical: true, departmentId: departments[4]._id, femaleEligible: true },
+      { name: 'Equipment Repair', category: 'TECHNICAL', departmentId: departments[4]._id, femaleEligible: true }
     ]);
 
     console.log('Created skills:', skills.length);
 
-    // 3. Create Machines with comprehensive coverage for each department
+    // 3. Create essential machines for each department
+    const machines = await Machine.insertMany([
+      // Sheet Metal Machines
+      { name: '300 Ton Press', machineId: 'LC-001', departmentId: departments[0]._id, type: 'Press Machine', manufacturer: 'TechPress', model: '300T', status: 'ACTIVE', specifications: { capacity: '300 tons', workArea: '3000x1500mm' } },
+      { name: '250 Ton Press', machineId: 'PB-001', departmentId: departments[0]._id, type: 'Press Machine', manufacturer: 'MetalForm', model: '250T', status: 'ACTIVE', specifications: { capacity: '250 tons', maxLength: '3200mm' } },
+      { name: 'OLMA Machine', machineId: 'WS-001', departmentId: departments[0]._id, type: 'OLMA System', manufacturer: 'OLMA Tech', model: 'OLM-150', status: 'ACTIVE', specifications: { processes: ['cutting', 'forming'] } },
+      { name: 'Colmal Shearing Machine', machineId: 'PC-001', departmentId: departments[0]._id, type: 'Shearing Machine', manufacturer: 'Colmal', model: 'CS-80', status: 'ACTIVE', specifications: { maxCutThickness: '50mm' } },
+      { name: 'AMT Bending Machine', machineId: 'SMS-001', departmentId: departments[0]._id, type: 'Bending Machine', manufacturer: 'AMT Tech', model: 'AMT-3000', status: 'ACTIVE', specifications: { maxLength: '3000mm', maxThickness: '10mm' } },
+      { name: 'Heat Shrink AMT', machineId: 'RF-001', departmentId: departments[0]._id, type: 'Heat Shrink System', manufacturer: 'AMT Systems', model: 'HS-120', status: 'ACTIVE', specifications: { maxWidth: '1200mm' } },
+      
+      // Assembly Line Machines
+      { name: 'Assembly Line AL-300', machineId: 'AL-001', departmentId: departments[1]._id, type: 'Assembly Line', manufacturer: 'AutoAssembly', model: 'AL-300', status: 'ACTIVE', specifications: { length: '50m', speed: 'variable', stations: '15' } },
+      { name: 'Torque Station TS-100', machineId: 'TS-001', departmentId: departments[1]._id, type: 'Torque Station', manufacturer: 'PrecisionTools', model: 'TS-100', status: 'ACTIVE', specifications: { torqueRange: '1-100Nm', accuracy: '±2%' } },
+      
+      // Quality Control Machines
+      { name: 'CMM Measuring Machine', machineId: 'CMM-001', departmentId: departments[2]._id, type: 'CMM Machine', manufacturer: 'MeasurePro', model: 'CMM-500', status: 'ACTIVE', specifications: { accuracy: '±2µm', workVolume: '500x500x400mm' } },
+      { name: 'Electrical Tester ET-1000', machineId: 'ET-001', departmentId: departments[2]._id, type: 'Electrical Tester', manufacturer: 'ElectroTest', model: 'ET-1000', status: 'ACTIVE', specifications: { voltage: '0-1000V', insulation: '0-10GΩ' } },
+      
+      // Welding Machines
+      { name: 'TIG Welding Station', machineId: 'TIG-001', departmentId: departments[3]._id, type: 'Welding Station', manufacturer: 'WeldTech', model: 'TIG-250', status: 'ACTIVE', specifications: { amperage: '250A', processes: ['TIG'] } },
+      { name: 'MIG Welding Station', machineId: 'MIG-001', departmentId: departments[3]._id, type: 'Welding Station', manufacturer: 'WeldTech', model: 'MIG-300', status: 'ACTIVE', specifications: { amperage: '300A', processes: ['MIG'] } },
+      
+      // Maintenance Equipment
+      { name: 'Hydraulic Test Bench', machineId: 'HTB-001', departmentId: departments[4]._id, type: 'Test Bench', manufacturer: 'HydroTest', model: 'HTB-1000', status: 'ACTIVE', specifications: { maxPressure: '1000bar', flowRate: '100L/min' } },
+      { name: 'Electrical Repair Station', machineId: 'ERS-001', departmentId: departments[4]._id, type: 'Electrical Repair', manufacturer: 'ElectroFix', model: 'ERS-500', status: 'ACTIVE', specifications: { voltage: '0-500V', instruments: 'complete' } }
+    ]);
+
+    /* COMMENTED OUT - Previous extensive machine list
     const machines = await Machine.insertMany([
       // Sheet Metal Machines
       { name: 'Laser Cutter LX-500', machineId: 'LC-001', departmentId: departments[0]._id, type: 'Laser Cutter', manufacturer: 'TechCut', model: 'LX-500', status: 'ACTIVE', specifications: { maxCutThickness: '20mm', power: '6kW', workArea: '3000x1500mm' } },
@@ -213,24 +180,55 @@ export async function seedDatabase() {
       { name: 'Hydraulic Test Bench HTB-1000', machineId: 'HTB-001', departmentId: departments[7]._id, type: 'Test Bench', manufacturer: 'HydroTest', model: 'HTB-1000', status: 'ACTIVE', specifications: { maxPressure: '1000bar', flowRate: '100L/min' } },
       { name: 'Electrical Repair Station ERS-500', machineId: 'ERS-001', departmentId: departments[7]._id, type: 'Electrical Repair', manufacturer: 'ElectroFix', model: 'ERS-500', status: 'ACTIVE', specifications: { voltage: '0-500V', instruments: 'complete' } }
     ]);
+    */
 
     console.log('Created machines:', machines.length);
 
-    // 4. Create Managers
+    // 4. Create Managers for each department
     const managers = await Manager.insertMany([
       { name: 'Ayesha Khan', email: 'ayesha.khan@dawlance.com', employeeId: 'MGR-001', departmentId: departments[0]._id, phone: '+92-300-1111111' },
       { name: 'Ali Raza', email: 'ali.raza@dawlance.com', employeeId: 'MGR-002', departmentId: departments[1]._id, phone: '+92-300-1111112' },
       { name: 'Fatima Ahmed', email: 'fatima.ahmed@dawlance.com', employeeId: 'MGR-003', departmentId: departments[2]._id, phone: '+92-300-1111113' },
       { name: 'Usman Tariq', email: 'usman.tariq@dawlance.com', employeeId: 'MGR-004', departmentId: departments[3]._id, phone: '+92-300-1111114' },
-      { name: 'Sana Malik', email: 'sana.malik@dawlance.com', employeeId: 'MGR-005', departmentId: departments[4]._id, phone: '+92-300-1111115' },
-      { name: 'Bilal Hussain', email: 'bilal.hussain@dawlance.com', employeeId: 'MGR-006', departmentId: departments[5]._id, phone: '+92-300-1111116' },
-      { name: 'Hira Shah', email: 'hira.shah@dawlance.com', employeeId: 'MGR-007', departmentId: departments[6]._id, phone: '+92-300-1111117' },
-      { name: 'Hamza Sheikh', email: 'hamza.sheikh@dawlance.com', employeeId: 'MGR-008', departmentId: departments[7]._id, phone: '+92-300-1111118' }
+      { name: 'Sana Malik', email: 'sana.malik@dawlance.com', employeeId: 'MGR-005', departmentId: departments[4]._id, phone: '+92-300-1111115' }
     ]);
 
     console.log('Created managers:', managers.length);
 
-    // 5. Create Employees
+    // 5. Create Employees with specific data as requested
+    const employees = await Employee.insertMany([
+      // Sheet Metal Department - Specific employees as requested
+      { name: 'Abdul Shakoor', employeeId: 'EMP-001', departmentId: departments[0]._id, gender: 'Male', title: 'Senior Metal Worker', email: 'abdul.shakoor@dawlance.com', yearsExperience: 8 },
+      { name: 'Imdad Hussain', employeeId: 'EMP-002', departmentId: departments[0]._id, gender: 'Male', title: 'Metal Fabricator', email: 'imdad.hussain@dawlance.com', yearsExperience: 6 },
+      { name: 'Waseem Ahmed', employeeId: 'EMP-003', departmentId: departments[0]._id, gender: 'Male', title: 'Press Operator', email: 'waseem.ahmed@dawlance.com', yearsExperience: 4 },
+      { name: 'Mumtaz Ali', employeeId: 'EMP-004', departmentId: departments[0]._id, gender: 'Male', title: 'Assembly Worker', email: 'mumtaz.ali@dawlance.com', yearsExperience: 5 },
+      
+      // Assembly Line Department
+      { name: 'Saba Yousaf', employeeId: 'EMP-005', departmentId: departments[1]._id, gender: 'Female', title: 'Assembly Technician', email: 'saba.yousaf@dawlance.com', yearsExperience: 3 },
+      { name: 'Saad Farooq', employeeId: 'EMP-006', departmentId: departments[1]._id, gender: 'Male', title: 'Senior Assembler', email: 'saad.farooq@dawlance.com', yearsExperience: 7 },
+      { name: 'Zara Javed', employeeId: 'EMP-007', departmentId: departments[1]._id, gender: 'Female', title: 'Assembly Worker', email: 'zara.javed@dawlance.com', yearsExperience: 2 },
+      { name: 'Asad Mehmood', employeeId: 'EMP-008', departmentId: departments[1]._id, gender: 'Male', title: 'Line Supervisor', email: 'asad.mehmood@dawlance.com', yearsExperience: 10 },
+      
+      // Quality Control Department
+      { name: 'Areeba Shahid', employeeId: 'EMP-009', departmentId: departments[2]._id, gender: 'Female', title: 'QC Analyst', email: 'areeba.shahid@dawlance.com', yearsExperience: 7 },
+      { name: 'Omar Siddiqui', employeeId: 'EMP-010', departmentId: departments[2]._id, gender: 'Male', title: 'Quality Inspector', email: 'omar.siddiqui@dawlance.com', yearsExperience: 4 },
+      { name: 'Adeel Akhtar', employeeId: 'EMP-011', departmentId: departments[2]._id, gender: 'Male', title: 'Senior QC Inspector', email: 'adeel.akhtar@dawlance.com', yearsExperience: 8 },
+      { name: 'Nida Hassan', employeeId: 'EMP-012', departmentId: departments[2]._id, gender: 'Female', title: 'Test Specialist', email: 'nida.hassan@dawlance.com', yearsExperience: 5 },
+      
+      // Welding Department
+      { name: 'Hassan Malik', employeeId: 'EMP-013', departmentId: departments[3]._id, gender: 'Male', title: 'Senior Welder', email: 'hassan.malik@dawlance.com', yearsExperience: 9 },
+      { name: 'Farah Sheikh', employeeId: 'EMP-014', departmentId: departments[3]._id, gender: 'Female', title: 'TIG Welder', email: 'farah.sheikh@dawlance.com', yearsExperience: 4 },
+      { name: 'Ahmad Raza', employeeId: 'EMP-015', departmentId: departments[3]._id, gender: 'Male', title: 'MIG Welder', email: 'ahmad.raza@dawlance.com', yearsExperience: 6 },
+      { name: 'Sana Qureshi', employeeId: 'EMP-016', departmentId: departments[3]._id, gender: 'Female', title: 'Welding Inspector', email: 'sana.qureshi@dawlance.com', yearsExperience: 5 },
+      
+      // Maintenance Department
+      { name: 'Tariq Mahmood', employeeId: 'EMP-017', departmentId: departments[4]._id, gender: 'Male', title: 'Senior Technician', email: 'tariq.mahmood@dawlance.com', yearsExperience: 12 },
+      { name: 'Hina Aslam', employeeId: 'EMP-018', departmentId: departments[4]._id, gender: 'Female', title: 'Electrical Technician', email: 'hina.aslam@dawlance.com', yearsExperience: 6 },
+      { name: 'Bilal Khan', employeeId: 'EMP-019', departmentId: departments[4]._id, gender: 'Male', title: 'Mechanical Technician', email: 'bilal.khan@dawlance.com', yearsExperience: 8 },
+      { name: 'Aisha Farooq', employeeId: 'EMP-020', departmentId: departments[4]._id, gender: 'Female', title: 'Maintenance Assistant', email: 'aisha.farooq@dawlance.com', yearsExperience: 3 }
+    ]);
+
+    /* COMMENTED OUT - Previous extensive employee list
     const employees = await Employee.insertMany([
       // Sheet Metal Department
       { name: 'Mahira Iqbal', employeeId: 'EMP-001', departmentId: departments[0]._id, gender: 'Female', title: 'Senior Metal Worker', email: 'mahira.iqbal@dawlance.com', yearsExperience: 8 },
@@ -269,9 +267,151 @@ export async function seedDatabase() {
       { name: 'Shahzad Nawaz', employeeId: 'EMP-022', departmentId: departments[6]._id, gender: 'Male', title: 'Senior Mold Tech', email: 'shahzad.nawaz@dawlance.com', yearsExperience: 8 },
       { name: 'Humaima Malik', employeeId: 'EMP-023', departmentId: departments[6]._id, gender: 'Female', title: 'Plastic Specialist', email: 'humaima.malik@dawlance.com', yearsExperience: 3 }
     ]);
+    */
 
     console.log('Created employees:', employees.length);
 
+    // 6. Create Employee Skills with specific skill levels (0-3 scale as requested)
+    // Where 0 = no skill, 1 = basic/low, 2 = medium, 3 = high, 4 = expert
+    const employeeSkills = [];
+    
+    // Define skill level mappings (0-4 scale)
+    const skillLevelMap = {
+      0: 'None',
+      1: 'Low', 
+      2: 'Medium',
+      3: 'High',
+      4: 'Expert'
+    };
+
+    // Sheet Metal Department Skills - Specific mappings for Abdul Shakoor, Imdad Hussain, Waseem Ahmed, Mumtaz Ali
+    const sheetMetalEmployees = employees.filter(emp => emp.departmentId.toString() === departments[0]._id.toString());
+    const sheetMetalSkills = skills.filter(skill => skill.departmentId?.toString() === departments[0]._id.toString());
+    
+    // Abdul Shakoor (EMP-001) - Senior Metal Worker with high skills
+    const abdulShakoorSkillLevels = [3, 4, 2, 3, 2, 2, 3, 2, 1, 2, 3, 2]; // Sample skill levels 0-4
+    sheetMetalSkills.forEach((skill, index) => {
+      const level = abdulShakoorSkillLevels[index] || 1;
+      employeeSkills.push({
+        employeeId: sheetMetalEmployees[0]._id, // Abdul Shakoor
+        skillId: skill._id,
+        level: skillLevelMap[level],
+        acquiredDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+        lastAssessedDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+      });
+    });
+
+    // Imdad Hussain (EMP-002) - Metal Fabricator
+    const imdadHussainSkillLevels = [2, 3, 1, 2, 1, 3, 2, 1, 0, 2, 2, 1];
+    sheetMetalSkills.forEach((skill, index) => {
+      const level = imdadHussainSkillLevels[index] || 1;
+      employeeSkills.push({
+        employeeId: sheetMetalEmployees[1]._id, // Imdad Hussain
+        skillId: skill._id,
+        level: skillLevelMap[level],
+        acquiredDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+        lastAssessedDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+      });
+    });
+
+    // Waseem Ahmed (EMP-003) - Press Operator
+    const waseemAhmedSkillLevels = [1, 3, 2, 4, 1, 2, 1, 1, 0, 1, 1, 2];
+    sheetMetalSkills.forEach((skill, index) => {
+      const level = waseemAhmedSkillLevels[index] || 1;
+      employeeSkills.push({
+        employeeId: sheetMetalEmployees[2]._id, // Waseem Ahmed
+        skillId: skill._id,
+        level: skillLevelMap[level],
+        acquiredDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+        lastAssessedDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+      });
+    });
+
+    // Mumtaz Ali (EMP-004) - Assembly Worker
+    const mumtazAliSkillLevels = [2, 2, 1, 2, 0, 1, 2, 4, 2, 2, 2, 1];
+    sheetMetalSkills.forEach((skill, index) => {
+      const level = mumtazAliSkillLevels[index] || 1;
+      employeeSkills.push({
+        employeeId: sheetMetalEmployees[3]._id, // Mumtaz Ali
+        skillId: skill._id,
+        level: skillLevelMap[level],
+        acquiredDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+        lastAssessedDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+      });
+    });
+
+    // Assembly Line Department Skills
+    const assemblyEmployees = employees.filter(emp => emp.departmentId.toString() === departments[1]._id.toString());
+    const assemblySkills = skills.filter(skill => skill.departmentId?.toString() === departments[1]._id.toString());
+    
+    assemblyEmployees.forEach((employee, empIndex) => {
+      assemblySkills.forEach(skill => {
+        const level = Math.floor(Math.random() * 5); // Random 0-4
+        employeeSkills.push({
+          employeeId: employee._id,
+          skillId: skill._id,
+          level: skillLevelMap[level],
+          acquiredDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+          lastAssessedDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+        });
+      });
+    });
+
+    // Quality Control Department Skills
+    const qcEmployees = employees.filter(emp => emp.departmentId.toString() === departments[2]._id.toString());
+    const qcSkills = skills.filter(skill => skill.departmentId?.toString() === departments[2]._id.toString());
+    
+    qcEmployees.forEach(employee => {
+      qcSkills.forEach(skill => {
+        const level = Math.floor(Math.random() * 5); // Random 0-4
+        employeeSkills.push({
+          employeeId: employee._id,
+          skillId: skill._id,
+          level: skillLevelMap[level],
+          acquiredDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+          lastAssessedDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+        });
+      });
+    });
+
+    // Welding Department Skills
+    const weldingEmployees = employees.filter(emp => emp.departmentId.toString() === departments[3]._id.toString());
+    const weldingSkills = skills.filter(skill => skill.departmentId?.toString() === departments[3]._id.toString());
+    
+    weldingEmployees.forEach(employee => {
+      weldingSkills.forEach(skill => {
+        const level = Math.floor(Math.random() * 5); // Random 0-4
+        employeeSkills.push({
+          employeeId: employee._id,
+          skillId: skill._id,
+          level: skillLevelMap[level],
+          acquiredDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+          lastAssessedDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+        });
+      });
+    });
+
+    // Maintenance Department Skills
+    const maintenanceEmployees = employees.filter(emp => emp.departmentId.toString() === departments[4]._id.toString());
+    const maintenanceSkills = skills.filter(skill => skill.departmentId?.toString() === departments[4]._id.toString());
+    
+    maintenanceEmployees.forEach(employee => {
+      maintenanceSkills.forEach(skill => {
+        const level = Math.floor(Math.random() * 5); // Random 0-4
+        employeeSkills.push({
+          employeeId: employee._id,
+          skillId: skill._id,
+          level: skillLevelMap[level],
+          acquiredDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+          lastAssessedDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+        });
+      });
+    });
+
+    await EmployeeSkill.insertMany(employeeSkills);
+    console.log('Created employee skills:', employeeSkills.length);
+
+    /* COMMENTED OUT - Previous employee skills logic
     // 6. Create Employee Skills (assign skills to employees with various levels)
     const employeeSkills = [];
     const skillLevels = ['Low', 'Medium', 'High', 'Expert', 'Advanced'];
@@ -304,6 +444,7 @@ export async function seedDatabase() {
 
     await EmployeeSkill.insertMany(employeeSkills);
     console.log('Created employee skills:', employeeSkills.length);
+    */
 
     // 7. Create Sample Work History
     const workHistory = [];
@@ -339,6 +480,54 @@ export async function seedDatabase() {
     await EmployeeWorkHistory.insertMany(workHistory);
     console.log('Created work history records:', workHistory.length);
 
+    // 8. Create Skill Matrices for each department
+    const skillMatrices = [];
+    
+    for (const department of departments) {
+      const departmentSkills = skills.filter(skill => 
+        skill.departmentId?.toString() === department._id.toString()
+      );
+      
+      // Create matrixData in the format expected by the frontend
+      const matrixData = {
+        employees: employees.filter(emp => emp.departmentId.toString() === department._id.toString()),
+        skills: departmentSkills.map(skill => skill.name), // Simple array of skill names
+        skillLevels: {} // Will be populated with employee skill levels
+      };
+
+      // Populate skillLevels object with employee-skill combinations
+      const deptEmployees = employees.filter(emp => emp.departmentId.toString() === department._id.toString());
+      deptEmployees.forEach(employee => {
+        departmentSkills.forEach(skill => {
+          const level = Math.floor(Math.random() * 5); // Random 0-4
+          const skillLevelMap = {
+            0: 'None',
+            1: 'Low', 
+            2: 'Medium',
+            3: 'High',
+            4: 'Expert'
+          };
+          matrixData.skillLevels[`${employee.name}-${skill.name}`] = skillLevelMap[level];
+        });
+      });
+
+      skillMatrices.push({
+        departmentId: department._id,
+        name: `${department.name} Skill Matrix`,
+        description: `Skill matrix for ${department.name} department with 0-4 skill level scale (None, Low, Medium, High, Expert)`,
+        matrixData: matrixData,
+        version: '1.0',
+        isActive: true,
+        createdBy: managers.find(manager => 
+          manager.departmentId.toString() === department._id.toString()
+        )?._id
+      });
+    }
+
+    await SkillMatrix.insertMany(skillMatrices);
+    console.log('Created skill matrices:', skillMatrices.length);
+
+    /* COMMENTED OUT - Previous skill matrices logic
     // 8. Create Sample Skill Matrices
     const skillMatrices = [];
     for (const department of departments) {
@@ -374,6 +563,7 @@ export async function seedDatabase() {
 
     await SkillMatrix.insertMany(skillMatrices);
     console.log('Created skill matrices:', skillMatrices.length);
+    */
 
     // 9. Create Sample Export Logs
     const exportLogs = [];
@@ -400,7 +590,12 @@ export async function seedDatabase() {
     await ExportLog.insertMany(exportLogs);
     console.log('Created export logs:', exportLogs.length);
 
-    console.log('✅ Database seeded successfully!');
+    console.log('✅ Database seeded successfully with specific dummy data!');
+    console.log('📋 Summary:');
+    console.log('- Sheet Metal Department with Abdul Shakoor, Imdad Hussain, Waseem Ahmed, Mumtaz Ali');
+    console.log('- 12 specific skills for Sheet Metal: Shearing & Cutting Operations, Press Operations, etc.');
+    console.log('- Skill levels using 0-4 scale (0=None, 1=Low, 2=Medium, 3=High, 4=Expert)');
+    console.log('- Complete skill matrices for all departments');
     
     return {
       departments: departments.length,
@@ -419,3 +614,6 @@ export async function seedDatabase() {
     throw error;
   }
 }
+
+
+

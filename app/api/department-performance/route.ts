@@ -22,6 +22,8 @@ export async function GET(req: NextRequest) {
       is_deleted: false
     }).sort({ month: 1 });
 
+    console.log(performanceData)
+
     // Group by month for the response format (only up to current month)
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
@@ -147,6 +149,7 @@ async function calculateDepartmentPerformance(year: number) {
         const percentageScore = ((avgScore - 1) / 3) * 100; // Convert 1-4 scale to 0-100%
 
         // Store or update the performance record
+      
         await DepartmentPerformance.findOneAndUpdate(
           {
             departmentId: department._id,

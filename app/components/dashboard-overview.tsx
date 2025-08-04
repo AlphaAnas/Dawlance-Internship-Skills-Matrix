@@ -102,6 +102,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
   // Calculate performance if data exists but performance data is empty
   useEffect(() => {
     if (data.length > 0 && performanceData.length === 0 && !perfLoading) {
+      console.log("Calculating the Data for the department again!!")
       calculateAndRefetch()
     }
   }, [data, performanceData, perfLoading, calculateAndRefetch])
@@ -871,7 +872,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                   <div className="bg-red-200 py-1 rounded relative z-50">Low</div>
                   <div className="bg-[#D0C569] py-1 rounded relative z-50">Medium</div>
                   <div className="bg-blue-200 py-1 rounded relative z-50">High</div>
-                  <div className="bg-[#79c87a] py-1 rounded relative z-50">Advanced</div>
+                  <div className="bg-[#79c87a] py-1 rounded relative z-50">Advanced/Expert</div>
                 </div>
                 {/* Set fixed height for chart container and remove background from CardHeader if present */}
                 <div className="relative h-[400px] w-full">
@@ -899,7 +900,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
                       <ReferenceArea y1={0.5} y2={1.5} fill="#FCA5A5" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Red for Low */}
                       <ReferenceArea y1={1.5} y2={2.5} fill="#D0C569" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Yellow for Medium */}
                       <ReferenceArea y1={2.5} y2={3.5} fill="#94BFA4" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Blue for High */}
-                      <ReferenceArea y1={3.5} y2={4.5} fill="#55CE57" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Green for Advanced */}
+                      <ReferenceArea y1={3.5} y2={4.5} fill="#55CE57" fillOpacity={0.65} ifOverflow="extendDomain" /> {/* Green for Advanced/Expert */}
                       <Tooltip
                         cursor={{ strokeDasharray: "3 3" }}
                         formatter={(value, name, props) => {
@@ -963,7 +964,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
       <div className="bg-[#FCA5A5] py-1 rounded">Low</div>
       <div className="bg-[#D0C569] py-1 rounded">Medium</div>
       <div className="bg-[#94BFA4] py-1 rounded">High</div>
-      <div className="bg-[#79c87a] py-1 rounded">Advanced </div>
+      <div className="bg-[#79c87a] py-1 rounded">Advanced/Expert</div>
     </div>
     <div className="relative h-full w-full">
     <ResponsiveContainer width="100%" height="100%">
@@ -1000,7 +1001,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
           cursor={{ strokeDasharray: "3 3" }}
           formatter={(value, name) => {
             if (name === "skillLevel") {
-              const levels = ["", "Low", "Medium", "High", "Advanced"]
+              const levels = ["", "Low", "Medium", "High", "Advanced/Expert"]
               return [levels[value as number], "Skill Level"]
             }
             return [value, name]
