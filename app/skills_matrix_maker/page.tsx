@@ -819,7 +819,7 @@ const SkillsMatrixManager = () => {
         className={`${
           isFullscreen
             ? "fixed inset-0 z-50 bg-white"
-            : "min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50"
+            : "min-h-screen min-w-full bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50"
         } flex transition-all duration-300`}
       >
         <div className={`flex ${!isFullscreen ? "pt-20" : ""} w-full`}>
@@ -1116,7 +1116,7 @@ const SkillsMatrixManager = () => {
                           : "overflow-x-auto overflow-y-auto max-h-[85vh]"
                       } ${
                         skills.length >= 7 ? "overflow-x-scroll" : ""
-                      } overflow-y-visible`}
+                      } overflow-y-visible bg-white rounded-lg`}
                     >
                       <Table
                         className={`${
