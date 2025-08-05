@@ -17,6 +17,8 @@ async function dbConnect() {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
+    console.log("Connecting to MongoDB...");
+    console.log("MONGODB_URI: ", MONGODB_URI);
     cached.promise = mongoose.connect(MONGODB_URI).then((mongoose) => mongoose);
   }
 
