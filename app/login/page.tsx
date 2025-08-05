@@ -17,7 +17,21 @@ export default function LoginPage() {
   const [userRole, setUserRole] = useState("user")
   const [isLoading, setIsLoading] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [showAdminWarning, setShowAdminWarning] = useState(false)
   const router = useRouter()
+
+  const handleRoleChange = (selectedRole: string) => {
+    if (selectedRole === 'admin') {
+      setShowAdminWarning(true)
+      // Auto-dismiss after 3 seconds and switch to manager
+      setTimeout(() => {
+        setShowAdminWarning(false)
+        setUserRole('manager')
+      }, 3000)
+    } else {
+      setUserRole(selectedRole)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,7 +96,7 @@ export default function LoginPage() {
   ]
 
   return (
-    <div className="h-screen w-screen fixed top-0 left-0 m-0 p-0 overflow-hidden bg-gradient-to-br from-[#3B82F6] via-[#8B5CF6] to-[#3B82F6]">
+    <div className="h-screen w-screen fixed top-0 left-0 m-0 p-0 overflow-hidden bg-gradient-to-br from-[#3B82F6] via-[#8B5CF6] to-[#1E40AF]">
       {/* Animated Background Shapes */}
       {floatingShapes.map((shape) => (
         <motion.div
@@ -279,16 +293,21 @@ export default function LoginPage() {
                             name="userRole"
                             value={role.value}
                             checked={userRole === role.value}
-                            onChange={(e) => setUserRole(e.target.value)}
+                            onChange={(e) => handleRoleChange(e.target.value)}
                             className="sr-only"
                           />
                           <div className={`p-3 rounded-lg border text-center transition-all duration-200 ${
                             userRole === role.value
                               ? 'bg-white/20 border-white/50 text-white'
+                              : role.value === 'admin'
+                              ? 'bg-red-500/20 border-red-400/50 text-red-200 opacity-75'
                               : 'bg-white/5 border-white/20 text-white/70 hover:bg-white/10'
                           }`}>
                             <div className="text-lg mb-1">{role.icon}</div>
                             <div className="text-xs font-medium">{role.label}</div>
+                            {role.value === 'admin' && (
+                              <div className="text-xs text-red-300 mt-1">Unavailable</div>
+                            )}
                           </div>
                         </label>
                       ))}
@@ -341,6 +360,42 @@ export default function LoginPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Admin Warning Modal */}
+      {showAdminWarning && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-gradient-to-br from-red-900/90 to-orange-900/90 backdrop-blur-xl rounded-2xl p-6 w-full max-w-md border border-red-400/30 shadow-2xl"
+          >
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Admin Access Unavailable</h3>
+              <p className="text-red-100 mb-4">
+                Admin functionality is currently unavailable. Please select <strong>Manager</strong> role instead.
+              </p>
+              <div className="bg-red-500/20 border border-red-400/30 rounded-lg p-3 mb-4">
+                <p className="text-red-200 text-sm">
+                  🔄 Automatically switching to Manager role in a few seconds...
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowAdminWarning(false)
+                  setUserRole('manager')
+                }}
+                className="w-full py-2 px-4 rounded-lg bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-medium transition-all duration-200 shadow-lg"
+              >
+                Switch to Manager Now
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Forgot Password Modal */}
       {showForgotPassword && (

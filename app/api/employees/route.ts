@@ -1,108 +1,3 @@
-
-// employeeWithSkills[0] = 
-//   {
-//     _id: ObjectId { buffer: Buffer {} },
-//     name: 'Mahira Iqbal',
-//     employeeId: 'EMP-001',
-//     departmentId: ObjectId { buffer: Buffer {} },
-//     gender: 'Female',
-//     title: 'Senior Metal Worker',
-//     yearsExperience: 8,
-//     employeeSkills: Array(6) [
-//       {
-//         _id: ObjectId { buffer: Buffer {} },
-//         employeeId: ObjectId { buffer: Buffer {} },
-//         skillId: ObjectId { buffer: Buffer {} },
-//         level: 'Expert',
-//         acquiredDate: new Date('2025-04-07T00:51:13.000Z'),
-//         lastAssessedDate: new Date('2025-07-25T07:06:06.000Z'),
-//         notes: '',
-//         is_deleted: false,
-//         __v: 0,
-//         createdAt: new Date('2025-07-23T22:32:58.000Z'),
-//         updatedAt: new Date('2025-07-25T07:06:06.000Z')
-//       },
-//       {
-//         _id: ObjectId { buffer: Buffer {} },
-//         employeeId: ObjectId { buffer: Buffer {} },
-//         skillId: ObjectId { buffer: Buffer {} },
-//         level: 'Low',
-//         acquiredDate: new Date('2025-05-16T12:40:00.000Z'),
-//         lastAssessedDate: new Date('2025-07-07T20:19:25.000Z'),
-//         notes: '',
-//         is_deleted: false,
-//         __v: 0,
-//         createdAt: new Date('2025-07-23T22:32:58.000Z'),
-//         updatedAt: new Date('2025-07-23T22:32:58.000Z')
-//       },
-//       {
-//         _id: ObjectId { buffer: Buffer {} },
-//         employeeId: ObjectId { buffer: Buffer {} },
-//         skillId: ObjectId { buffer: Buffer {} },
-//         level: 'High',
-//         acquiredDate: new Date('2024-09-10T02:31:24.000Z'),
-//         lastAssessedDate: new Date('2025-07-15T14:20:19.000Z'),
-//         notes: '',
-//         is_deleted: false,
-//         __v: 0,
-//         createdAt: new Date('2025-07-23T22:32:58.000Z'),
-//         updatedAt: new Date('2025-07-23T22:32:58.000Z')
-//       },
-//       {
-//         _id: ObjectId { buffer: Buffer {} },
-//         employeeId: ObjectId { buffer: Buffer {} },
-//         skillId: ObjectId { buffer: Buffer {} },
-//         level: 'High',
-//         acquiredDate: new Date('2025-01-23T22:54:08.000Z'),
-//         lastAssessedDate: new Date('2025-07-13T21:28:47.000Z'),
-//         notes: '',
-//         is_deleted: false,
-//         __v: 0,
-//         createdAt: new Date('2025-07-23T22:32:58.000Z'),
-//         updatedAt: new Date('2025-07-23T22:32:58.000Z')
-//       },
-//       {
-//         _id: ObjectId { buffer: Buffer {} },
-//         employeeId: ObjectId { buffer: Buffer {} },
-//         skillId: ObjectId { buffer: Buffer {} },
-//         level: 'Advanced',
-//         acquiredDate: new Date('2025-07-25T06:28:30.000Z'),
-//         lastAssessedDate: new Date('2025-07-25T07:06:58.000Z'),
-//         notes: '',
-//         is_deleted: false,
-//         createdAt: new Date('2025-07-25T06:28:30.000Z'),
-//         updatedAt: new Date('2025-07-25T07:06:58.000Z'),
-//         __v: 0
-//       },
-//       {
-//         _id: ObjectId { buffer: Buffer {} },
-//         employeeId: ObjectId { buffer: Buffer {} },
-//         skillId: ObjectId { buffer: Buffer {} },
-//         level: 'Expert',
-//         acquiredDate: new Date('2025-07-25T06:28:30.000Z'),
-//         lastAssessedDate: new Date('2025-07-25T07:06:06.000Z'),
-//         notes: '',
-//         is_deleted: false,
-//         createdAt: new Date('2025-07-25T06:28:30.000Z'),
-//         updatedAt: new Date('2025-07-25T07:06:06.000Z'),
-//         __v: 0
-//       }
-//     ],
-//     skills: {
-//       Welding: 'Expert',
-//       'Blueprint Reading': 'Low',
-//       'Problem Solving': 'High',
-//       'Equipment Maintenance': 'High',
-//       'Press Brake PB-200': 'Advanced',
-//       'Laser Cutter LX-500': 'Expert'
-//     },
-//     skillCount: 6,
-//     department: 'Sheet Metal',
-//     skillLevel: 'High'
-//   }
-
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { Employee, Department, EmployeeSkill, Skill } from '@/lib/models';
@@ -121,7 +16,7 @@ export async function GET(req: NextRequest) {
         { 
           $match: { 
             _id: new mongoose.Types.ObjectId(employeeId),
-            is_deleted: false 
+            is_deleted: false
           } 
         },
         {
@@ -148,7 +43,7 @@ export async function GET(req: NextRequest) {
             from: 'skills',
             localField: 'employeeSkills.skillId',
             foreignField: '_id',
-            as: 'skills'
+            as: 'skillDetails'
           }
         },
         {
@@ -170,7 +65,7 @@ export async function GET(req: NextRequest) {
             skillLevel: 1,
             skillCount: 1,
             employeeSkills: 1,
-            skills: 1
+            skillDetails: 1
           }
         }
       ]);
@@ -184,19 +79,16 @@ export async function GET(req: NextRequest) {
 
       // Map skills to { [skillName]: level } format
       const skillsMap = (employee: any) => {
-        if (!employee.employeeSkills || !employee.skills) return {};
+        if (!employee.employeeSkills || !employee.skillDetails) return {};
         
         const map: Record<string, string> = {};
         
         employee.employeeSkills.forEach((es: any) => {
-          const skill = employee.skills.find((sk: any) => sk._id.toString() === es.skillId.toString());
-          // if (skill && skill.name && es.level) {
-          //   map[skill.name] = es.level;
-          // }
+          const skill = employee.skillDetails.find((sk: any) => sk._id.toString() === es.skillId.toString());
           if (skill && skill.name && es.level && es.level !== 'None') {
-              const normalizedLevel = es.level === 'Advanced' ? 'Expert' : es.level;
-              map[skill.name] = normalizedLevel;
-            }
+            const normalizedLevel = es.level === 'Advanced' ? 'Expert' : es.level;
+            map[skill.name] = normalizedLevel;
+          }
         });
         return map;
       };
@@ -229,7 +121,10 @@ export async function GET(req: NextRequest) {
           from: 'employeeskills',
           localField: '_id',
           foreignField: 'employeeId',
-          as: 'employeeSkills'
+          as: 'employeeSkills',
+          pipeline: [
+            { $match: { is_deleted: false } }
+          ]
         }
       },
       {
@@ -237,14 +132,13 @@ export async function GET(req: NextRequest) {
           from: 'skills',
           localField: 'employeeSkills.skillId',
           foreignField: '_id',
-          as: 'skills'
+          as: 'skillDetails'
         }
       },
       {
         $addFields: {
           department: { $arrayElemAt: ['$department', 0] },
           skillCount: { $size: '$employeeSkills' }
-          // Remove hardcoded skillLevel - will calculate it below
         }
       },
       {
@@ -255,31 +149,28 @@ export async function GET(req: NextRequest) {
           gender: 1,
           title: 1,
           yearsExperience: 1,
-          departmentId: 1,  // Add departmentId to the projection
+          departmentId: 1,
           department: '$department.name',
-          skillLevel: 1,
           skillCount: 1,
           employeeSkills: 1,
-          skills: 1
+          skillDetails: 1
         }
       }
     ]);
 
     // Map skills to { [skillName]: level } for each employee and calculate overall skill level
     const skillsMap = (employee: any) => {
-      if (!employee.employeeSkills || !employee.skills) return {};
+      if (!employee.employeeSkills || !employee.skillDetails) return {};
       const map: Record<string, string> = {};
       
       employee.employeeSkills.forEach((es: any) => {
-        const skill = employee.skills.find((sk: any) => sk._id.toString() === es.skillId.toString());
-        // if (skill && skill.name && es.level) {
-        //   // Level is already stored as text in the database
-        //   map[skill.name] = es.level;
-        // }
+        const skill = employee.skillDetails.find((sk: any) => sk._id.toString() === es.skillId.toString());
         if (skill && skill.name && es.level && es.level !== 'None') {
-  const normalizedLevel = es.level === 'Advanced' ? 'Expert' : es.level;
-  map[skill.name] = normalizedLevel;
-}
+          // Normalize levels consistently
+          let normalizedLevel = es.level;
+          if (es.level === 'Advanced') normalizedLevel = 'Expert';
+          map[skill.name] = normalizedLevel;
+        }
       });
       return map;
     };
@@ -293,7 +184,7 @@ export async function GET(req: NextRequest) {
         switch (level.toLowerCase()) {
           case 'expert': return 4;
           case 'advanced': return 4;
-          case 'high': return 3; // Treat High as Advanced
+          case 'high': return 3;
           case 'medium': return 2;
           case 'low': return 1;
           default: return 1;
@@ -302,10 +193,9 @@ export async function GET(req: NextRequest) {
       
       const avgScore = skillScores.reduce((sum, score) => sum + score, 0) / skillScores.length;
       
-      // Map average score back to skill level, treating Expert/Advanced as "Advanced"
-      if (avgScore >= 3.5) return 'Expert'; // Expert level
-      if (avgScore >= 3.5) return 'Expert'; // Advanced/ level  
-      if (avgScore >= 2.5) return 'High'; // high level  
+      // Map average score back to skill level
+      if (avgScore >= 3.5) return 'Expert';
+      if (avgScore >= 2.5) return 'High';
       if (avgScore >= 1.5) return 'Medium';
       return 'Low';
     };
@@ -320,7 +210,8 @@ export async function GET(req: NextRequest) {
         skillLevel: overallSkillLevel
       };
     });
-    console.log("An employees with skills ", employeesWithSkills[0])
+
+    console.log("Employees fetched successfully:", employeesWithSkills.length);
     return NextResponse.json({
       success: true,
       data: employeesWithSkills,
@@ -387,48 +278,27 @@ export async function POST(req: NextRequest) {
 
     // Handle skills creation/association
     let skillsObj: Record<string, string> = {};
-    // if (Array.isArray(skills) && skills.length > 0) {
-    //   for (const skill of skills) {
-    //     if (!skill.name || !skill.level) continue;
-    //     let level = skill.level === 'Advanced' ? 'Expert' : skill.level;
-    //     if (level === 'None') continue; // Skip invalid levels
-
-    //     // Find or create the skill
-    //     let skillDoc = await Skill.findOne({ name: skill.name, is_deleted: false });
-    //     if (!skillDoc) {
-    //       skillDoc = await Skill.create({ name: skill.name, category: 'TECHNICAL' }); // Default category
-    //     }
-    //     // Create EmployeeSkill
-    //     await EmployeeSkill.create({
-    //       employeeId: newEmployee._id,
-    //       skillId: skillDoc._id,
-    //       level: skill.level,
-    //     });
-    //     skillsObj[skill.name] = skill.level;
-    //   }
-    // }
     if (Array.isArray(skills) && skills.length > 0) {
-  for (const skill of skills) {
-    if (!skill.name || !skill.level) continue;
+      for (const skill of skills) {
+        if (!skill.name || !skill.level) continue;
 
-    let level = skill.level === 'Advanced' ? 'Expert' : skill.level;
-    if (level === 'None') continue; // Skip invalid levels
+        let level = skill.level === 'Advanced' ? 'Expert' : skill.level;
+        if (level === 'None') continue; // Skip invalid levels
 
-    let skillDoc = await Skill.findOne({ name: skill.name, is_deleted: false });
-    if (!skillDoc) {
-      skillDoc = await Skill.create({ name: skill.name, category: 'TECHNICAL' });
+        let skillDoc = await Skill.findOne({ name: skill.name, is_deleted: false });
+        if (!skillDoc) {
+          skillDoc = await Skill.create({ name: skill.name, category: 'TECHNICAL' });
+        }
+
+        await EmployeeSkill.create({
+          employeeId: newEmployee._id,
+          skillId: skillDoc._id,
+          level,
+        });
+
+        skillsObj[skill.name] = level;
+      }
     }
-
-    await EmployeeSkill.create({
-      employeeId: newEmployee._id,
-      skillId: skillDoc._id,
-      level,
-    });
-
-    skillsObj[skill.name] = level;
-  }
-}
-
 
     // Return the created employee (add skills object for UI compatibility)
     return NextResponse.json({
@@ -446,3 +316,4 @@ export async function POST(req: NextRequest) {
     }, { status: 500 });
   }
 }
+

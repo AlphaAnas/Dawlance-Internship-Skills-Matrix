@@ -42,6 +42,7 @@ export default function EmployeesPage() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchEmployeeId, setSearchEmployeeId] = useState("");
+  const [selectedDepartmentFilter, setSelectedDepartmentFilter] = useState<string>("all");
   const [isSearching, setIsSearching] = useState(false);
   const [selectedEmployeeForInspection, setSelectedEmployeeForInspection] =
     useState<Employee | null>(null);
@@ -207,13 +208,31 @@ export default function EmployeesPage() {
 
   // Enhanced search filter logic using useMemo for performance optimization
   const filteredEmployees = useMemo(() => {
+    let result = employees;
+
+    // Apply department filter first
+    if (selectedDepartmentFilter && selectedDepartmentFilter !== "all") {
+      console.log("Filtering by department:", selectedDepartmentFilter);
+      console.log("Sample employee data:", employees[0]);
+      
+      result = result.filter((employee) => {
+        // Try multiple possible department ID fields and convert to string for comparison
+        const empDeptId = (employee.departmentId || (employee as any).current_department_id || "").toString();
+        console.log(`Employee ${employee.name}: departmentId=${empDeptId}, selected=${selectedDepartmentFilter}`);
+        return empDeptId === selectedDepartmentFilter;
+      });
+      
+      console.log("Filtered result count:", result.length);
+    }
+
+    // Apply search filter
     if (!searchEmployeeId.trim()) {
-      return employees;
+      return result;
     }
 
     const searchTerm = searchEmployeeId.toLowerCase().trim();
 
-    return employees.filter((employee) => {
+    return result.filter((employee) => {
       // Safe field extraction with fallbacks
       const name = employee.name?.toLowerCase() || "";
       const displayId = employee.displayId?.toLowerCase() || "";
@@ -258,7 +277,7 @@ export default function EmployeesPage() {
 
       return false;
     });
-  }, [employees, searchEmployeeId, departments]);
+  }, [employees, searchEmployeeId, selectedDepartmentFilter, departments]);
 
   // Get the first matching employee for single employee display
   const searchedEmployee = useMemo(() => {
@@ -268,6 +287,12 @@ export default function EmployeesPage() {
 
     return filteredEmployees.length > 0 ? filteredEmployees[0] : null;
   }, [filteredEmployees, searchEmployeeId]);
+
+  // Check if we should show the search results section
+  const shouldShowSearchResults = searchEmployeeId.trim() || selectedDepartmentFilter !== "all";
+  
+  // Check if we have results to show (either from search or filter)
+  const hasResults = filteredEmployees.length > 0;
 
   const getSkillColor = (level: string) => {
     switch (level) {
@@ -286,10 +311,89 @@ export default function EmployeesPage() {
 
 
   const columns = [
-    { key: "employeeId", label: "Employee ID" },
-    { key: "name", label: "Name" },
-    { key: "department", label: "Department" },
-    { key: "totalSkills", label: "Total Skills" },
+    { 
+      key: "employeeId", 
+      label: "Employee ID",
+      render: (value: any, row: any) => (
+        <span className="font-mono text-blue-700 dark:text-blue-300 font-medium">
+          {value}
+        </span>
+      )
+    },
+    { 
+      key: "name", 
+      label: "Name",
+      render: (value: any, row: any) => (
+        <span className="font-semibold text-gray-900 dark:text-gray-100">
+          {value}
+        </span>
+      )
+    },
+    { 
+      key: "department", 
+      label: "Department",
+      render: (value: any, row: any) => (
+        <Badge variant="outline" className="bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 border-purple-200 font-medium">
+          {value}
+        </Badge>
+      )
+    },
+    { 
+      key: "gender", 
+      label: "Gender",
+      render: (value: any, row: any) => (
+        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+          value === "MALE"
+            ? "bg-blue-100 text-blue-800 border border-blue-200"
+            : "bg-pink-100 text-pink-800 border border-pink-200"
+        }`}>
+          {value}
+        </span>
+      )
+    },
+    { 
+      key: "skills", 
+      label: "Skills",
+      render: (value: any, row: any) => (
+        <div className="flex flex-wrap gap-1 max-w-xs">
+          {value && typeof value === "object" && Object.keys(value).length > 0 ? (
+            Object.entries(value).slice(0, 3).map(([skill, level]: [string, any]) => (
+              <Badge
+                key={skill}
+                variant="outline"
+                className={`text-xs px-2 py-1 border ${
+                  level === "Beginner"
+                    ? "bg-yellow-50 text-yellow-800 border-yellow-200"
+                    : level === "Intermediate"
+                    ? "bg-orange-50 text-orange-800 border-orange-200"
+                    : level === "Advanced"
+                    ? "bg-green-50 text-green-800 border-green-200"
+                    : level === "Expert"
+                    ? "bg-blue-50 text-blue-800 border-blue-200"
+                    : "bg-gray-50 text-gray-800 border-gray-200"
+                }`}
+              >
+                {skill}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-sm text-gray-500 italic">No skills</span>
+          )}
+          {value && typeof value === "object" && Object.keys(value).length > 3 && (
+            <span className="text-xs text-gray-500">+{Object.keys(value).length - 3} more</span>
+          )}
+        </div>
+      )
+    },
+    { 
+      key: "totalSkills", 
+      label: "Total Skills",
+      render: (value: any, row: any) => (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+          {value || 0}
+        </span>
+      )
+    },
   ];
 
   // Employee inspection with API call
@@ -561,20 +665,43 @@ export default function EmployeesPage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 space-y-2">
                   <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
                       id="search-input"
                       placeholder="Search by name, ID, department, or skills..."
                       value={searchEmployeeId}
                       onChange={(e) => setSearchEmployeeId(e.target.value)}
                       onKeyPress={(e) => e.key === "Enter"}
-                      className="pl-10 h-12 text-base"
+                      className="pl-11 h-12 text-base border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800 transition-all duration-200 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md"
                     />
                   </div>
+                </div>
+                <div className="w-full sm:w-64 space-y-2">
+                  <Select
+                    value={selectedDepartmentFilter}
+                    onValueChange={setSelectedDepartmentFilter}
+                  >
+                    <SelectTrigger className="h-12 border-2 border-gray-200 dark:border-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 dark:focus:ring-purple-800 transition-all duration-200 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md">
+                      <SelectValue placeholder="Filter by Department" />
+                    </SelectTrigger>
+                    <SelectContent className="border-2 border-gray-200 dark:border-gray-700 shadow-lg">
+                      <SelectItem value="all" className="hover:bg-purple-50 dark:hover:bg-purple-900/20">All Departments</SelectItem>
+                      {departments.map((dept) => (
+                        <SelectItem 
+                          key={dept._id || dept.id} 
+                          value={(dept._id || dept.id)?.toString() || ""}
+                          className="hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                        >
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               {/* Search Results */}
-              {searchEmployeeId && (
+              {shouldShowSearchResults && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -582,7 +709,61 @@ export default function EmployeesPage() {
                   className="pt-4"
                 >
                   <Separator className="mb-6" />
-                  {searchedEmployee ? (
+                  
+                  {/* Filter Summary */}
+                  <div className="mb-4 flex flex-wrap gap-2 items-center">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Active Filters:
+                    </span>
+                    {searchEmployeeId && (
+                      <Badge variant="outline" className="bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 border-blue-300 shadow-sm hover:shadow-md transition-all duration-200">
+                        Search: "{searchEmployeeId}"
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ml-2 p-0 h-4 w-4 hover:bg-blue-200 rounded-full transition-colors duration-200"
+                          onClick={() => setSearchEmployeeId("")}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    )}
+                    {selectedDepartmentFilter !== "all" && (
+                      <Badge variant="outline" className="bg-gradient-to-r from-purple-50 to-purple-100 text-purple-800 border-purple-300 shadow-sm hover:shadow-md transition-all duration-200">
+                        Department: {getDepartmentName(selectedDepartmentFilter)}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ml-2 p-0 h-4 w-4 hover:bg-purple-200 rounded-full transition-colors duration-200"
+                          onClick={() => setSelectedDepartmentFilter("all")}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    )}
+                    {shouldShowSearchResults && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSearchEmployeeId("");
+                          setSelectedDepartmentFilter("all");
+                        }}
+                        className="text-xs bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border-gray-300 text-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
+                      >
+                        Clear All
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Showing {filteredEmployees.length} of {employees.length} employees
+                    </span>
+                  </div>
+
+                  {/* Show individual employee card only if there's a search term AND results */}
+                  {searchedEmployee && searchEmployeeId.trim() ? (
                     <Card className="border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/50 dark:to-purple-950/50">
                       <CardContent className="p-6">
                         <div className="flex items-start gap-6">
@@ -645,7 +826,7 @@ export default function EmployeesPage() {
                         </div>
                       </CardContent>
                     </Card>
-                  ) : (
+                  ) : !hasResults ? (
                     <Card className="border-2 border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/50">
                       <CardContent className="p-6">
                         <div className="flex items-center gap-3">
@@ -654,13 +835,16 @@ export default function EmployeesPage() {
                           </div>
                           <div>
                             <h4 className="font-semibold text-red-800 dark:text-red-300">
-                              No Employee Found: "{searchEmployeeId}"
+                              No employees found matching the current filters
                             </h4>
+                            <p className="text-sm text-red-600 dark:text-red-400">
+                              Try adjusting your search criteria or department filter
+                            </p>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  )}
+                  ) : null}
                 </motion.div>
               )}
             </CardContent>
@@ -676,7 +860,7 @@ export default function EmployeesPage() {
               <CardContent>
                 <Table
                   columns={columns}
-                  data={employees}
+                  data={filteredEmployees}
                   isLoading={isLoading}
                   emptyMessage="No employees found"
                   onInspect={(employee) => {
