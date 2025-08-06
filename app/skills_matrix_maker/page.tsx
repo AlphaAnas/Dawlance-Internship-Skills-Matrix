@@ -379,6 +379,13 @@ const SkillsMatrixManager = () => {
     refetch: refetchMatrices,
     getMatrixById,
   } = useSkillMatrices();
+
+
+
+  // console.log(matrices, "Matrices from useSkillMatrices hook");
+
+
+
   const {
     skills: dbSkills,
     loading: skillsLoading,
@@ -496,17 +503,36 @@ const SkillsMatrixManager = () => {
       !skills.includes(item.name)
   );
 
-  // Initialize skill levels when employees and skills are selected
+  // Initialize skill levels when employees and skills are selected (but not when loading existing matrix)
   useEffect(() => {
-    if (selectedEmployees.length > 0 && skills.length > 0) {
+    console.log("=== USEEFFECT SKILLLEVELS TRIGGERED ===");
+    console.log("selectedEmployees.length:", selectedEmployees.length);
+    console.log("skills.length:", skills.length);
+    console.log("Current skillLevels before useEffect:", skillLevels);
+    console.log("selectedMatrix exists:", !!selectedMatrix);
+    
+    // Only generate skill levels if we're creating a NEW matrix, not loading an existing one
+    if (selectedEmployees.length > 0 && skills.length > 0 && !selectedMatrix) {
+      console.log("useEffect is generating new skill levels for NEW matrix");
       const newSkillLevels = {};
       selectedEmployees.forEach((employee) => {
         const employeeSkillLevels = generateSkillLevels(employee, skills);
         Object.assign(newSkillLevels, employeeSkillLevels);
       });
-      setSkillLevels((prev) => ({ ...prev, ...newSkillLevels }));
+      console.log("useEffect generated skill levels:", newSkillLevels);
+      console.log("useEffect is about to merge with existing skillLevels");
+      setSkillLevels((prev) => {
+        const merged = { ...prev, ...newSkillLevels };
+        console.log("useEffect merged result:", merged);
+        return merged;
+      });
+    } else if (selectedMatrix) {
+      console.log("useEffect SKIPPED because we're loading an existing matrix (selectedMatrix exists)");
+    } else {
+      console.log("useEffect SKIPPED because conditions not met");
     }
-  }, [selectedEmployees, skills]);
+    console.log("=== USEEFFECT SKILLLEVELS END ===");
+  }, [selectedEmployees, skills, selectedMatrix]);
 
   // Load specific matrix if matrixId is provided in URL
   useEffect(() => {
@@ -615,16 +641,21 @@ const SkillsMatrixManager = () => {
 
   const deleteSkillColumn = (skillIndex: number) => {
     const skillToRemove = skills[skillIndex];
+    /* eslint-disable */console.log(`[deleteSkillColumn] Removing skill: ${skillToRemove}`);
     setSkills(skills.filter((_, index) => index !== skillIndex));
     const updatedSkillLevels = { ...skillLevels };
     selectedEmployees.forEach((emp) => {
-      delete updatedSkillLevels[`${emp.name}-${skillToRemove}`];
+      const keyToDelete = `${emp.name}-${skillToRemove}`;
+      /* eslint-disable */console.log(`[deleteSkillColumn] Deleting key: ${keyToDelete}`);
+      delete updatedSkillLevels[keyToDelete];
     });
+    /* eslint-disable */console.log(`[deleteSkillColumn] Updated skill levels:`, updatedSkillLevels);
     setSkillLevels(updatedSkillLevels);
   };
 
   const updateSkillName = (skillIndex: number, newName: string) => {
     const oldSkill = skills[skillIndex];
+    /* eslint-disable */console.log(`[updateSkillName] Changing ${oldSkill} to ${newName}`);
     const updatedSkills = [...skills];
     updatedSkills[skillIndex] = newName;
     setSkills(updatedSkills);
@@ -634,10 +665,12 @@ const SkillsMatrixManager = () => {
       const oldKey = `${emp.name}-${oldSkill}`;
       const newKey = `${emp.name}-${newName}`;
       if (updatedSkillLevels[oldKey]) {
+        /* eslint-disable */console.log(`[updateSkillName] Moving ${oldKey} -> ${newKey}: ${updatedSkillLevels[oldKey]}`);
         updatedSkillLevels[newKey] = updatedSkillLevels[oldKey];
         delete updatedSkillLevels[oldKey];
       }
     });
+    /* eslint-disable */console.log(`[updateSkillName] Updated skill levels:`, updatedSkillLevels);
     setSkillLevels(updatedSkillLevels);
   };
 
@@ -650,23 +683,50 @@ const SkillsMatrixManager = () => {
     skill: string,
     level: string
   ) => {
-    setSkillLevels((prev) => ({
-      ...prev,
-      [`${employeeName}-${skill}`]: level,
-    }));
+    const key = `${employeeName}-${skill}`;
+    /* eslint-disable */console.log(`[handleSkillChange] Setting ${key} to ${level}`);
+    setSkillLevels((prev) => {
+      const newState = {
+        ...prev,
+        [key]: level,
+      };
+      /* eslint-disable */console.log(`[handleSkillChange] New state for ${key}:`, newState[key]);
+      return newState;
+    });
   };
 
   const getSkillLevel = (employee: any, skill: string) => {
     const key = `${employee.name}-${skill}`;
     const level = skillLevels[key] || "None";
     
-    // Debug logging to help troubleshoot
+    // Enhanced debug logging to help troubleshoot
     if (process.env.NODE_ENV === "development") {
       console.log(`Getting skill level for ${key}: ${level}`, {
         availableKeys: Object.keys(skillLevels),
         requestedKey: key,
-        allSkillLevels: skillLevels
+        allSkillLevels: skillLevels,
+        employeeName: employee.name,
+        skillName: skill,
+        selectedMatrixSkillLevels: selectedMatrix?.matrixData?.skillLevels
       });
+      
+      // Check if the key exists in selectedMatrix
+      if (selectedMatrix?.matrixData?.skillLevels) {
+        const matrixLevel = selectedMatrix.matrixData.skillLevels[key];
+        if (matrixLevel) {
+          console.log(`Matrix has level for ${key}: ${matrixLevel}`);
+          if (matrixLevel.toLowerCase() !== level.toLowerCase()) {
+            console.error(`MISMATCH DETECTED for ${key}:`, {
+              localStateLevel: level,
+              matrixLevel: matrixLevel,
+              shouldBe: matrixLevel
+            });
+          }
+        } else {
+          console.log(`Matrix does NOT have level for ${key}`);
+          console.log("Available matrix keys:", Object.keys(selectedMatrix.matrixData.skillLevels));
+        }
+      }
     }
     
     return level;
@@ -734,6 +794,12 @@ const SkillsMatrixManager = () => {
       // Use the new matrix data returned from the update
       if (result.data) {
         console.log("Loading updated matrix with new ID:", result.data._id);
+        
+        // Update the URL with the new matrix ID
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('matrixId', result.data._id);
+        window.history.replaceState({}, '', newUrl.toString());
+        
         setSelectedMatrix(result.data);
         loadMatrix(result.data);
       } else {
@@ -876,16 +942,27 @@ const SkillsMatrixManager = () => {
 
     // Load skill levels from the matrix data
     const loadedSkillLevels = matrix.matrixData?.skillLevels || {};
-    console.log("Loading skill levels from matrix:", loadedSkillLevels);
+    const employees = matrix.matrixData?.employees || [];
+    
+    console.log("=== LOADMATRIX DEBUG START ===");
+    console.log("Raw matrix data:", matrix.matrixData);
+    console.log("Raw skill levels from matrix:", loadedSkillLevels);
+    console.log("Matrix skills:", skillStrings);
+    console.log("Matrix employees:", employees.map((e: any) => e.name));
+    
+    // Log each skill level entry from the matrix
+    console.log("=== MATRIX SKILL LEVELS DETAILED ===");
+    Object.entries(loadedSkillLevels).forEach(([key, value]) => {
+      console.log(`Matrix DB: ${key} = ${value}`);
+    });
     
     // Ensure skill levels are properly formatted with employee-skill keys
     const formattedSkillLevels: { [key: string]: string } = {};
-    const employees = matrix.matrixData?.employees || [];
     
-    // If the loaded skill levels are in the correct format, use them
-    // Otherwise, try to reconstruct them from the matrix data
+    // DIRECTLY copy the loaded skill levels without modification first
     Object.keys(loadedSkillLevels).forEach(key => {
       formattedSkillLevels[key] = loadedSkillLevels[key];
+      console.log(`Copying to state: ${key} = ${loadedSkillLevels[key]}`);
     });
     
     // Fill in any missing skill levels with default values
@@ -894,12 +971,31 @@ const SkillsMatrixManager = () => {
         const key = `${employee.name}-${skill}`;
         if (!formattedSkillLevels[key]) {
           formattedSkillLevels[key] = "None";
+          console.log(`Setting default skill level for missing: ${key} = None`);
         }
       });
     });
     
-    console.log("Formatted skill levels for UI:", formattedSkillLevels);
+    console.log("=== FINAL FORMATTED SKILL LEVELS ===");
+    Object.entries(formattedSkillLevels).forEach(([key, value]) => {
+      console.log(`Final state: ${key} = ${value}`);
+    });
+    
+    console.log("About to set skillLevels state with:", formattedSkillLevels);
+    
+    // Add a listener to track all changes to skillLevels
+    console.log("Current skillLevels before setting:", skillLevels);
+    
     setSkillLevels(formattedSkillLevels);
+    
+    console.log("=== LOADMATRIX DEBUG END ===");
+    
+    // Add a small delay to check if state was set correctly
+    setTimeout(() => {
+      console.log("=== STATE CHECK AFTER UPDATE ===");
+      console.log("Current skillLevels state:", skillLevels);
+      console.log("Keys in current state:", Object.keys(skillLevels));
+    }, 100);
     
     setSelectedMatrix(matrix);
     setShowFinalTable(true);
@@ -1291,7 +1387,11 @@ const SkillsMatrixManager = () => {
                               const skillName = typeof skill === 'object' && skill && (skill as any).name ? (skill as any).name : skill;
 
                               // Try to get skill properties from saved matrix data first, then fallback to database lookup
+                              
+                              
+                              
                               let skillProperties = null;
+                              console.log("selected matrix is ", selectedMatrix);
                               if (selectedMatrix?.matrixData?.skillProperties) {
                                 skillProperties = selectedMatrix.matrixData.skillProperties.find((prop: any) => prop.name === skillName);
                               }

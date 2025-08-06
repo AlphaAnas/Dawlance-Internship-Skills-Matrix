@@ -122,7 +122,7 @@ async function calculateDepartmentPerformance(year: number) {
             case 'high':
               score = 3;
               break;
-            case 'advanced':
+            // case 'advanced':
             case 'expert':
               score = 4;
               break;

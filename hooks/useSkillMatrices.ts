@@ -51,7 +51,7 @@ export const useSkillMatrices = (departmentId?: string): UseSkillMatricesReturn 
       
       const response = await fetch(url);
       const result = await response.json();
-      
+      // console.log("Fetched skill matrices:", result);
       if (result.success) {
         setMatrices(result.data);
       } else {
