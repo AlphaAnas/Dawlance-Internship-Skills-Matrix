@@ -38,6 +38,7 @@ interface FlexibleEmployee {
   gender?: string
   name?: string
   yearsExperience?: number
+  skills?: Record<string, string> // Add skills property
 }
 
 interface DepartmentOverviewProps {
@@ -161,7 +162,7 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">
                 <Award className="h-6 w-6" />
-                Advanced Level
+                Highly Skilled / Advanced
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -213,7 +214,17 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
 
   // Calculate meaningful metrics with safe guards for empty data
   const totalEmployees = data.length
-  const AdvancedEmployees = data.filter((e) => normalizeSkillLevel(e.skillLevel) === "Advanced").length
+  
+  // Count employees who have at least one Expert level skill
+  const expertEmployees = data.filter((e) => {
+    if (!e.skills || typeof e.skills !== 'object') return false;
+    return Object.values(e.skills).some(skillLevel => skillLevel === 'Expert');
+  }).length;
+  
+  console.log(data)
+  console.log("Expert Employees Count:", expertEmployees)
+
+
   const femaleEmployees = data.filter((e) => 
     e.gender?.toLowerCase() === "female" || e.gender === "Female" || e.gender === "FEMALE").length
   const maleEmployees = data.filter((e) => 
@@ -419,13 +430,13 @@ export default function DepartmentOverview({ data }: DepartmentOverviewProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-medium flex items-center gap-2">
               <Award className="h-6 w-6" />
-              Advanced Level
+              Highly Skilled / Expert
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold mb-1">{AdvancedEmployees}</div>
+            <div className="text-3xl font-bold mb-1">{expertEmployees}</div>
             <p className="text-emerald-100 text-sm">
-              {totalEmployees > 0 ? Math.round((AdvancedEmployees / totalEmployees) * 100) : 0}% of workforce
+              {totalEmployees > 0 ? Math.round((expertEmployees / totalEmployees) * 100) : 0}% have Expert skills
             </p>
           </CardContent>
         </Card>

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 interface SkillMatrix {
   _id: string;
   name: string;
+  employeeId: string; 
   description: string;
   department?: string; // Department name from populated field
   departmentId: string; // MongoDB ObjectId
@@ -29,7 +30,7 @@ interface UseSkillMatricesReturn {
   error: string | null;
   refetch: () => Promise<void>;
   saveMatrix: (matrixData: any) => Promise<{ success: boolean; data?: any; error?: string }>;
-  updateMatrix: (id: string, matrixData: any) => Promise<boolean>;
+  updateMatrix: (id: string, matrixData: any) => Promise<{ success: boolean; data?: any }>;
   deleteMatrix: (id: string) => Promise<boolean>;
   getMatrixById: (id: string) => Promise<SkillMatrix | null>;
 }
@@ -99,7 +100,7 @@ export const useSkillMatrices = (departmentId?: string): UseSkillMatricesReturn 
     }
   };
 
-  const updateMatrix = async (id: string, matrixData: any): Promise<boolean> => {
+  const updateMatrix = async (id: string, matrixData: any): Promise<{ success: boolean; data?: any }> => {
     try {
       const response = await fetch('/api/skill-matrices', {
         method: 'PUT',
@@ -113,15 +114,15 @@ export const useSkillMatrices = (departmentId?: string): UseSkillMatricesReturn 
       
       if (result.success) {
         await fetchMatrices(); // Refresh the list
-        return true;
+        return { success: true, data: result.data };
       } else {
         setError(result.message || 'Failed to update skill matrix');
-        return false;
+        return { success: false };
       }
     } catch (err) {
       setError('Network error occurred while updating');
       console.error('Error updating skill matrix:', err);
-      return false;
+      return { success: false };
     }
   };
 

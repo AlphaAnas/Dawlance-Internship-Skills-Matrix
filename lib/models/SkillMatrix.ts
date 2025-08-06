@@ -10,6 +10,12 @@ const SkillMatrixSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  employeeId: {
+    type: String,
+    ref: 'Employee',
+    required: true
+  },
+  
   description: {
     type: String,
     default: ''

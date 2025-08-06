@@ -76,7 +76,7 @@ export default function FridgeManufacturingDashboard() {
     return true
   })
 
-  console.log("Filtered Data:", filteredData[0])
+  console.log("Filtered Data:", filteredData)
   console.log("Filtered Data Length:", filteredData.length)
   console.log("Sample departments:", filteredData.slice(0, 5).map(emp => emp.department))
   console.log("Sample employee structure:", {
@@ -167,25 +167,25 @@ export default function FridgeManufacturingDashboard() {
                     <SelectItem value="Advanced">
                       <div className="flex items-center gap-2">
                         <span className="h-3 w-3 rounded-full bg-purple-600"></span>
-                        Advanced/Expert
+                        Highly Skilled / Advanced
                       </div>
                     </SelectItem>
                     <SelectItem value="high">
                       <div className="flex items-center gap-2">
                         <span className="h-3 w-3 rounded-full bg-blue-500"></span>
-                        High
+                        Skilled
                       </div>
                     </SelectItem>
                     <SelectItem value="medium">
                       <div className="flex items-center gap-2">
                         <span className="h-3 w-3 rounded-full bg-yellow-400"></span>
-                        Medium
+                        Semi-Skilled
                       </div>
                     </SelectItem>
                     <SelectItem value="low">
                       <div className="flex items-center gap-2">
                         <span className="h-3 w-3 rounded-full bg-red-500"></span>
-                        Low
+                        Low Skilled
                       </div>
                     </SelectItem>
                   </SelectContent>
